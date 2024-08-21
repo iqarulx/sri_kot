@@ -1,0 +1,71 @@
+name: sri_kot
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.14.0
+  firebase_storage: ^11.6.0
+  shared_preferences: ^2.3.1
+  image_picker: ^1.1.2
+  device_info_plus: ^10.1.2
+  dotted_border: ^2.1.0
+  file_picker: ^8.1.1
+  excel: ^4.0.2
+  intl: ^0.19.0
+  flutter_svg: ^2.0.10+1
+  dio: ^5.6.0
+  permission_handler: ^11.3.1
+  syncfusion_flutter_pdf: ^26.2.9
+  syncfusion_flutter_pdfviewer: ^26.2.9
+  printing: ^5.13.2
+  flutter_barcode_scanner: ^2.0.0
+  path_provider: ^2.1.4
+  pdf: ^3.11.1
+  open_file_plus: ^3.4.1+1
+  esc_pos_utils_new: ^0.0.3
+  audioplayers: ^5.2.1
+  esc_pos_printer_new:
+    path: ./package/esc_pos_printer_new
+  file_service:
+    path: ./package/file_service
+  logger: ^2.4.0
+  path: ^1.9.0
+  logging: ^1.2.0
+  provider: ^6.1.2
+  json_annotation: ^4.9.0
+  bloc: ^8.1.4
+  equatable: ^2.0.5
+  flutter_bloc: ^8.1.6
+    
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.11
+  flutter_gen_runner: ^5.6.0  #If you want to generate assets then run this -> dart pub global activate flutter_gen, dart run build_runner build
+  json_serializable: ^6.8.0
+
+flutter_gen:
+  outputs:
+    dart:
+      - lib/gen/assets.gen.dart
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/images/
+    - assets/audio/store-scanner.mp3

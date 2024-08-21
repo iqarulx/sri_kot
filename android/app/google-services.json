@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565962941142",
+    "project_id": "sri-kot",
+    "storage_bucket": "sri-kot.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565962941142:android:1f17c41c331d4464cf9f77",
+        "android_client_info": {
+          "package_name": "com.srisoftwarez.sri_kot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3fDYP_rqEd00w2g5KYFi2PvqKlu_C7i8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
