@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseAuthProvider {
@@ -78,9 +76,7 @@ class FirebaseAuthProvider {
       if (userCredential.user != null) {
         userCredential.user!
           ..updateEmail(email)
-          ..updatePassword(password).then((value) {
-            log("Update Success");
-          });
+          ..updatePassword(password);
       }
     } on FirebaseAuthException catch (e) {
       throw e.message.toString();

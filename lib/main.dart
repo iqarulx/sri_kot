@@ -1,8 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'app/app.dart';
 import 'firebase_options.dart';
-import '/app/view/app.dart';
-import 'provider/localdb.dart';
+import 'services/services.dart';
 
 Future<List> checklogin() async {
   LocalDbProvider localdb = LocalDbProvider();

@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../constants/enum.dart';
 import '/model/model.dart';
-import '/provider/logger.dart';
-import '/utils/utlities.dart';
+import '../../provider/src/logger.dart';
+import '../../utils/src/utilities.dart';
 
 final _instances = FirebaseFirestore.instance;
 

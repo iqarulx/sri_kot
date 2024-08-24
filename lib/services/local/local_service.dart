@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:sri_kot/provider/localdb.dart';
+import 'package:sri_kot/services/database/localdb.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/enum.dart';
-import '../../view/ui/modal.dart';
+import '../../view/ui/src/modal.dart';
 
 final _instances = FirebaseFirestore.instance;
 
@@ -158,7 +158,7 @@ class LocalService {
 
   static Future<bool> checkCount({
     required String uid,
-    required Type type,
+    required ProfileType type,
   }) async {
     try {
       var result = await _instances.collection('profile').doc(uid).get();
@@ -170,12 +170,12 @@ class LocalService {
       int userCount = await _getCount('users', uid);
       int staffCount = await _getCount('staff', uid);
 
-      if (type == Type.admin) {
+      if (type == ProfileType.admin) {
         int maxUserCount = result.data()?['max_user_count'] ?? 0;
         return maxUserCount >= (userCount + 1);
       }
 
-      if (type == Type.staff) {
+      if (type == ProfileType.staff) {
         int maxStaffCount = result.data()?['max_staff_count'] ?? 0;
         return maxStaffCount >= (staffCount + 1);
       }

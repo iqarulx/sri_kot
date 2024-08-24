@@ -1,11 +1,11 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../provider/localdb.dart';
+import '/constants/enum.dart';
+import '/services/services.dart';
 
 final _instances = FirebaseFirestore.instance;
 
@@ -63,7 +63,7 @@ class FireStorageProvider {
       await uploadDir.putFile(fileData);
       downloadLink = await uploadDir.getDownloadURL();
     } catch (e) {
-      log(e.toString());
+      print(e);
     }
     return downloadLink;
   }
