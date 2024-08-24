@@ -4,7 +4,7 @@ import 'firebase_options.dart';
 import '/app/view/app.dart';
 import 'provider/localdb.dart';
 
-Future<bool> checklogin() async {
+Future<List> checklogin() async {
   LocalDbProvider localdb = LocalDbProvider();
   return localdb.checklogin();
 }
@@ -15,9 +15,14 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  var result = await checklogin();
+  var login = result[0];
+  var isSuperAdmin = result[1] == 1 ? true : false;
+
   runApp(
     MyApp(
-      login: await checklogin(),
+      login: login,
+      isSuperAdmin: isSuperAdmin,
     ),
   );
 }

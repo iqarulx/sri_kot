@@ -2,7 +2,9 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sri_kot/services/local/local_service.dart';
 import 'package:sri_kot/view/auth/forgot_pass.dart';
+import '../../constants/enum.dart';
 import '../../model/model.dart';
 import '../../services/firebase/firebase_auth_provider.dart';
 import '../../services/firebase/firestore_provider.dart';
@@ -10,7 +12,8 @@ import '/provider/device_info_provider.dart';
 import '../../provider/localdb.dart';
 import '../../utils/utlities.dart';
 import '/view/screens/homelanding.dart';
-import 'registercompany.dart';
+import '../admin/screens/register/registercompany.dart';
+import 'plans_overview.dart';
 
 class Signin extends StatefulWidget {
   const Signin({super.key});
@@ -133,9 +136,12 @@ class _SigninState extends State<Signin> {
                   docid: companyData.docs.first.id,
                   deviceData: deviceDetails,
                 )
-                    .then((value) {
-                  Navigator.pop(context);
-                  accountHolderLoginFn();
+                    .then((value) async {
+                  await LocalService.updateOpened(
+                          uid: companyData.docs.first.id)
+                      .then((value) {
+                    accountHolderLoginFn();
+                  });
                 });
               }
             }
@@ -143,7 +149,10 @@ class _SigninState extends State<Signin> {
         } else {
           Navigator.pop(context);
           snackBarCustom(
-              context, false, "Something went wrong please try again later");
+            context,
+            false,
+            "Something went wrong please try again later",
+          );
         }
       }
     } catch (e) {
@@ -595,42 +604,50 @@ class _SigninState extends State<Signin> {
                               const SizedBox(
                                 height: 15,
                               ),
-                              // GestureDetector(
-                              //   onTap: () {
-                              //     // loginauth();
-                              //     setState(() {
-                              //       authPage.animateToPage(
-                              //         1,
-                              //         duration:
-                              //             const Duration(milliseconds: 600),
-                              //         curve: Curves.easeIn,
-                              //       );
-                              //     });
-                              //   },
-                              //   child: Container(
-                              //     decoration: BoxDecoration(
-                              //       borderRadius: BorderRadius.circular(5),
-                              //       color: Theme.of(context)
-                              //           .primaryColor
-                              //           .withOpacity(0.2),
-                              //     ),
-                              //     padding: const EdgeInsets.symmetric(
-                              //       horizontal: 10,
-                              //       vertical: 15,
-                              //     ),
-                              //     width: double.infinity,
-                              //     child: Center(
-                              //       child: Text(
-                              //         "Register",
-                              //         style: TextStyle(
-                              //           color: Theme.of(context).primaryColor,
-                              //           fontSize: 20,
-                              //           fontWeight: FontWeight.w800,
-                              //         ),
-                              //       ),
-                              //     ),
-                              //   ),
-                              // ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                      builder: (context) =>
+                                          const PlansOverview(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(5),
+                                    color: Theme.of(context)
+                                        .primaryColor
+                                        .withOpacity(0.2),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 15,
+                                  ),
+                                  width: double.infinity,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.star_circle_fill,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      const SizedBox(
+                                        width: 5,
+                                      ),
+                                      Text(
+                                        "Buy Premium",
+                                        style: TextStyle(
+                                          color: Theme.of(context).primaryColor,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),

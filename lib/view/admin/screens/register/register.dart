@@ -1,10 +1,11 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import '../../model/model.dart';
-import '../../utils/utlities.dart';
-import '../../utils/validation.dart';
-import '../../services/firebase/firebase_auth_provider.dart';
-import '../../services/firebase/firestore_provider.dart';
+import '../../../../model/model.dart';
+import '../../../../utils/utlities.dart';
+import '../../../../utils/validation.dart';
+import '../../../../services/firebase/firebase_auth_provider.dart';
+import '../../../../services/firebase/firestore_provider.dart';
+import '../../home_page.dart';
 import 'registercompany.dart';
 
 class Register extends StatefulWidget {
@@ -82,6 +83,16 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          splashRadius: 20,
+          onPressed: () {
+            homeKey.currentState!.openDrawer();
+          },
+          icon: const Icon(Icons.menu),
+        ),
+        title: const Text("Register a company"),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -344,62 +355,6 @@ class _RegisterState extends State<Register> {
                         ),
                       ],
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.only(
-                      left: 40,
-                      right: 40,
-                      top: 30,
-                      bottom: 15,
-                    ),
-                    width: double.infinity,
-                    //color: Colors.grey.shade100,
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        text: "By clicking the button above, you agree to our ",
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 10,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: "Terms of Use ",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextSpan(
-                            text: "and ",
-                            style: TextStyle(
-                              color: Colors.black87,
-                            ),
-                          ),
-                          TextSpan(
-                            text: "Privacy Policy.",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  Text(
-                    "App Version (1.2.4)",
-                    style: TextStyle(
-                      color: Colors.grey.shade400,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15,
                   ),
                 ],
               ),

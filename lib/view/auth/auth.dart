@@ -7,8 +7,7 @@ import 'sign.dart';
 PageController authPage = PageController();
 
 class Auth extends StatefulWidget {
-  final bool isLanding;
-  const Auth({super.key, required this.isLanding});
+  const Auth({super.key});
 
   @override
   State<Auth> createState() => _AuthState();
@@ -38,13 +37,6 @@ class _AuthState extends State<Auth> {
       },
       child: Scaffold(
         appBar: AppBar(
-          leading: widget.isLanding
-              ? IconButton(
-                  icon: const Icon(CupertinoIcons.back, color: Colors.black),
-                  onPressed: () => Navigator.of(context).pop(),
-                )
-              : null,
-          automaticallyImplyLeading: widget.isLanding,
           centerTitle: false,
           elevation: 0,
           backgroundColor: Colors.white,
@@ -62,29 +54,30 @@ class _AuthState extends State<Auth> {
           ),
           actions: [
             TextButton(
-              onPressed: () async {
-                if (crtTab == 1) {
-                  setState(() {
-                    authPage.animateToPage(
-                      0,
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeIn,
-                    );
-                  });
-                } else if (crtTab == 0) {
-                  setState(() {
-                    authPage.animateToPage(
-                      1,
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeIn,
-                    );
-                  });
-                }
-              },
-              child: Text(
-                crtTab == 0 ? "Register" : "Login",
-              ),
-            ),
+                onPressed: () async {
+                  if (crtTab == 1) {
+                    setState(() {
+                      authPage.animateToPage(
+                        0,
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeIn,
+                      );
+                    });
+                  } else if (crtTab == 0) {
+                    setState(() {
+                      authPage.animateToPage(
+                        1,
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeIn,
+                      );
+                    });
+                  }
+                },
+                child: crtTab != 0
+                    ? const Text(
+                        "Login",
+                      )
+                    : const Icon(CupertinoIcons.person)),
           ],
         ),
         backgroundColor: Colors.white,

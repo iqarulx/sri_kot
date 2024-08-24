@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../gen/assets.gen.dart';
 import '../../../model/model.dart';
 import '../../../services/firebase/firebase_auth_provider.dart';
 import '../../../services/firebase/firestorageprovider.dart';
@@ -11,6 +13,7 @@ import '../../../provider/imagepickerprovider.dart';
 import '../../../provider/localdb.dart';
 import '../../ui/commonwidget.dart';
 import '../homelanding.dart';
+import 'package:path/path.dart' as path;
 
 class CompanyListing extends StatefulWidget {
   const CompanyListing({super.key});
@@ -37,7 +40,7 @@ class _CompanyListingState extends State<CompanyListing> {
 
   var companyFormKey = GlobalKey<FormState>();
 
-  String? prfileImage;
+  File? prfileImage;
 
   Future getCompanyInfo(context) async {
     try {
@@ -55,14 +58,22 @@ class _CompanyListingState extends State<CompanyListing> {
             phoneNo.text = result["contact"]["phone_no"].toString();
             gstno.text = result["gst_no"] ?? "";
             userid.text = result["user_login_id"].toString();
-            prfileImage = result["company_logo"].toString();
             password.text = result["password"].toString();
             oldEmail = result["user_login_id"].toString();
             oldPassword = result["password"].toString();
           });
+
+          var directory = await getApplicationDocumentsDirectory();
+          prfileImage = File(path.join(
+            directory.path,
+            'company',
+            cid,
+          ));
+
           return result;
         }
       }
+
       return null;
     } catch (e) {
       throw e.toString();
@@ -113,13 +124,21 @@ class _CompanyListingState extends State<CompanyListing> {
                     if (downloadLink != null && downloadLink.isNotEmpty) {
                       await FireStoreProvider()
                           .updateCompanyPic(docId: cid, imageLink: downloadLink)
-                          .then((value) {
-                        Navigator.pop(context);
-                        snackBarCustom(
-                          context,
-                          true,
-                          "Successfully Updated Company Information",
-                        );
+                          .then((value) async {
+                        await FireStorageProvider()
+                            .saveLocal(
+                          fileData: uploadCompanyPic!,
+                          id: cid,
+                          folder: "company",
+                        )
+                            .then((value) {
+                          Navigator.pop(context);
+                          snackBarCustom(
+                            context,
+                            true,
+                            "Successfully Updated Company Information",
+                          );
+                        });
                       });
                     } else {
                       // exit Loading Progroccess
@@ -219,24 +238,28 @@ class _CompanyListingState extends State<CompanyListing> {
                                           height: 120,
                                           width: 120,
                                           decoration: BoxDecoration(
-                                            color: Colors.grey.shade300,
-                                            shape: BoxShape.circle,
-                                            image: uploadCompanyPic != null
-                                                ? DecorationImage(
-                                                    image: FileImage(
-                                                      uploadCompanyPic!,
-                                                    ),
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : prfileImage != null
-                                                    ? DecorationImage(
-                                                        image: NetworkImage(
-                                                          prfileImage!,
-                                                        ),
-                                                        fit: BoxFit.cover,
-                                                      )
-                                                    : null,
-                                          ),
+                                              color: Colors.grey.shade300,
+                                              shape: BoxShape.circle,
+                                              image: uploadCompanyPic != null
+                                                  ? DecorationImage(
+                                                      image: FileImage(
+                                                        uploadCompanyPic!,
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : DecorationImage(
+                                                      image: prfileImage !=
+                                                                  null &&
+                                                              prfileImage!
+                                                                  .existsSync()
+                                                          ? FileImage(
+                                                              prfileImage!)
+                                                          : AssetImage(Assets
+                                                              .images
+                                                              .noImage
+                                                              .path),
+                                                      fit: BoxFit.cover,
+                                                    )),
                                         ),
                                         Align(
                                           alignment: Alignment.bottomRight,

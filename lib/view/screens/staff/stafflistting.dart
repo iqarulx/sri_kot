@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../gen/assets.gen.dart';
 import '../../../model/model.dart';
 import '../../../provider/logger.dart';
 import '/utils/utlities.dart';
@@ -9,6 +13,7 @@ import '/utils/varibales.dart';
 import '../../ui/commonwidget.dart';
 import '../homelanding.dart';
 import 'staffdetails.dart';
+import 'package:path/path.dart' as path;
 
 PageController staffListingcontroller = PageController();
 StaffListingPageProvider staffListingPageProvider = StaffListingPageProvider();
@@ -51,7 +56,14 @@ class _StaffListingState extends State<StaffListing> {
             model.phoneNo = element["phone_no"] ?? "";
             model.userid = element["user_login_id"] ?? "";
             model.password = element["password"] ?? "";
-            model.profileImg = element["profile_img"] ?? "";
+
+            var directory = await getApplicationDocumentsDirectory();
+            model.profileImg = path.join(
+              directory.path,
+              'staff',
+              element.id,
+            );
+
             model.docID = element.id;
             StaffPermissionModel permissionModel = StaffPermissionModel();
             permissionModel.product = element["permission"]["product"];
@@ -186,9 +198,16 @@ class _StaffListingState extends State<StaffListing> {
                                             null
                                         ? null
                                         : DecorationImage(
-                                            image: NetworkImage(
-                                              staffDataList[index].profileImg!,
-                                            ),
+                                            image: File(staffDataList[index]
+                                                        .profileImg!)
+                                                    .existsSync()
+                                                ? FileImage(
+                                                    File(staffDataList[index]
+                                                        .profileImg!),
+                                                  )
+                                                : AssetImage(
+                                                    Assets.images.noImage.path,
+                                                  ),
                                             fit: BoxFit.cover,
                                           ),
                                   ),

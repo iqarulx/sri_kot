@@ -1,8 +1,10 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sri_kot/model/model.dart';
+import '../../../gen/assets.gen.dart';
 import '../../../services/firebase/firestore_provider.dart';
 import 'add_customer_box.dart';
 import 'billing_two.dart';
@@ -813,15 +815,18 @@ class _CartDrawerState extends State<CartDrawer> {
                                     decoration: BoxDecoration(
                                       color: Colors.grey.shade300,
                                       borderRadius: BorderRadius.circular(5),
-                                      image: cartDataList[index].productImg !=
-                                              null
-                                          ? DecorationImage(
-                                              image: NetworkImage(
-                                                cartDataList[index].productImg!,
-                                              ),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
+                                      image: DecorationImage(
+                                        image: File(cartDataList[index]
+                                                    .productImg!)
+                                                .existsSync()
+                                            ? FileImage(
+                                                File(cartDataList[index]
+                                                    .productImg!),
+                                              )
+                                            : AssetImage(
+                                                Assets.images.noImage.path),
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -834,9 +839,15 @@ class _CartDrawerState extends State<CartDrawer> {
                                   borderRadius: BorderRadius.circular(5),
                                   image: cartDataList[index].productImg != null
                                       ? DecorationImage(
-                                          image: NetworkImage(
-                                            cartDataList[index].productImg!,
-                                          ),
+                                          image: File(cartDataList[index]
+                                                      .productImg!)
+                                                  .existsSync()
+                                              ? FileImage(
+                                                  File(cartDataList[index]
+                                                      .productImg!),
+                                                )
+                                              : AssetImage(
+                                                  Assets.images.noImage.path),
                                           fit: BoxFit.cover,
                                         )
                                       : null,

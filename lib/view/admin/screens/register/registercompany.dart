@@ -5,14 +5,13 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../model/model.dart';
-import '../../services/firebase/firestorageprovider.dart';
-import '../screens/homelanding.dart';
-import '../../utils/utlities.dart';
-import '../../utils/validation.dart';
-import '../../utils/varibales.dart';
-import '../../provider/imagepickerprovider.dart';
-import '../../provider/localdb.dart';
+import 'package:sri_kot/view/admin/home_page.dart';
+import '../../../../model/model.dart';
+import '../../../../services/firebase/firestorageprovider.dart';
+import '../../../../utils/utlities.dart';
+import '../../../../utils/validation.dart';
+import '../../../../utils/varibales.dart';
+import '../../../../provider/imagepickerprovider.dart';
 
 class RegisterCompany extends StatefulWidget {
   final String uid;
@@ -112,9 +111,14 @@ class _RegisterCompanyState extends State<RegisterCompany> {
         deviceData.lastlogin = DateTime.now();
         deviceData.deviceType = null;
 
-        await profile
-            .doc(widget.docid)
-            .update({"device": deviceData.toMap(), "invoice_entry": false});
+        await profile.doc(widget.docid).update({
+          "device": deviceData.toMap(),
+          "invoice_entry": false,
+          "created": DateTime.now(),
+          "free_trial": {"opened": null, "ends_in": null},
+          "max_user_count": 1,
+          "max_staff_count": 1,
+        });
 
         // Once update Data to upload Image
         FireStorageProvider storage = FireStorageProvider();
@@ -130,32 +134,14 @@ class _RegisterCompanyState extends State<RegisterCompany> {
             },
             SetOptions(merge: true),
           ).then((value) async {
-            LocalDbProvider localdb = LocalDbProvider();
-            await localdb
-                .createNewUser(
-              username: username.text,
-              uID: widget.uid,
-              companyID: widget.docid,
-              loginEmail: widget.email,
-              companyUniqueId: companyUnquieId.text,
-              isAdmin: true,
-              prCategory: true,
-              prCustomer: true,
-              prEstimate: true,
-              prOrder: true,
-              prProduct: true,
-              prBillofSupply: true,
-            )
-                .then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HomeLanding(),
-                ),
-              );
-            });
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomePage(),
+              ),
+            );
           });
         } else {
           // exit Loading Progroccess

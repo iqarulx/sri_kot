@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
 import 'package:sri_kot/services/firebase/firestore_provider.dart';
+import 'package:sri_kot/services/local/local_service.dart';
 import '../screens/homelanding.dart';
 import '../screens/product/product_detais.dart';
 import 'commonwidget.dart';
@@ -37,6 +39,7 @@ class _SideBarState extends State<SideBar> {
   bool? isAdmin;
   bool? billofSupply;
   bool? invoiceEntry;
+  DateTime? endsIn;
 
   changeEvent() {
     if (mounted) {
@@ -66,6 +69,26 @@ class _SideBarState extends State<SideBar> {
             await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '');
     setState(() {
       invoiceEntry = result;
+    });
+
+    await LocalService.updateLogin(
+        uid:
+            await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '');
+
+    await LocalService.checkTrialEnd(
+      uid: await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '',
+    ).then((value) {
+      if (value.isNotEmpty) {
+        var valueEndsIn = value["ends_in"];
+
+        if (valueEndsIn != null) {
+          if (valueEndsIn is Timestamp) {
+            setState(() {
+              endsIn = (valueEndsIn).toDate();
+            });
+          }
+        }
+      }
     });
   }
 
@@ -332,6 +355,7 @@ class _SideBarState extends State<SideBar> {
                             index: 13,
                           )
                         : const SizedBox(),
+
                     isAdmin != null && isAdmin == true
                         ? breakBar()
                         : const SizedBox(),
@@ -354,6 +378,59 @@ class _SideBarState extends State<SideBar> {
                             index: 12,
                           )
                         : const SizedBox(),
+
+                    // isAdmin != null && isAdmin == true
+                    //     ? Column(
+                    //         children: [
+                    //           Column(
+                    //             crossAxisAlignment: CrossAxisAlignment.start,
+                    //             children: [
+                    //               breakBar(),
+                    //               menuTitle(data: "Account"),
+                    //               menuView(
+                    //                 context,
+                    //                 icon: Icons.person,
+                    //                 lable: "Account Information",
+                    //                 index: 15,
+                    //               ),
+                    //               menuView(
+                    //                 context,
+                    //                 icon: Icons.credit_card,
+                    //                 lable: "Payment History",
+                    //                 index: 16,
+                    //               ),
+                    //               menuView(
+                    //                 context,
+                    //                 icon: Icons.card_giftcard,
+                    //                 lable: "Plan Details",
+                    //                 index: 17,
+                    //               ),
+                    //               menuView(
+                    //                 context,
+                    //                 icon: Icons.help,
+                    //                 lable: "Help",
+                    //                 index: 18,
+                    //               ),
+                    //               menuView(
+                    //                 context,
+                    //                 icon: Icons.support_agent,
+                    //                 lable: "Support",
+                    //                 index: 19,
+                    //               ),
+                    //               planUpgrade(context),
+                    //             ],
+                    //           ),
+                    //         ],
+                    //       )
+                    //     : Container(),
+
+                    // endsIn != null
+                    //     ? freeTrial(
+                    //         context,
+                    //         DateFormat('dd-MM-yyyy').format(endsIn!),
+                    //       )
+                    //     : Container(),
+
                     GestureDetector(
                       onTap: () async {
                         await confirmationDialog(context,
@@ -367,9 +444,7 @@ class _SideBarState extends State<SideBar> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const Auth(
-                                      isLanding: false,
-                                    ),
+                                    builder: (context) => const Auth(),
                                   ),
                                 );
                               }
@@ -380,7 +455,6 @@ class _SideBarState extends State<SideBar> {
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Container(
-                          margin: const EdgeInsets.only(top: 25),
                           height: 40,
                           width: double.infinity,
                           decoration: BoxDecoration(
@@ -416,94 +490,6 @@ class _SideBarState extends State<SideBar> {
               ),
             ),
           ),
-          // Visibility(
-          //   visible: accountSelect,
-          //   child: Expanded(
-          //     child: Column(
-          //       children: [
-          //         Expanded(
-          //           child: SingleChildScrollView(
-          //             padding: const EdgeInsets.all(10),
-          //             child: Column(
-          //               crossAxisAlignment: CrossAxisAlignment.start,
-          //               children: [
-          //                 planUpgrade(context),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.person,
-          //                   lable: "Account Information",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.credit_card,
-          //                   lable: "Payment History",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.card_giftcard,
-          //                   lable: "Plan Details",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.help,
-          //                   lable: "Help",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.support_agent,
-          //                   lable: "Support",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.quiz,
-          //                   lable: "FAQ",
-          //                   index: -1,
-          //                 ),
-          //               ],
-          //             ),
-          //           ),
-          //         ),
-          //         Padding(
-          //           padding: const EdgeInsets.all(8.0),
-          //           child: Container(
-          //             height: 40,
-          //             width: double.infinity,
-          //             decoration: BoxDecoration(
-          //               color: Colors.grey.shade300,
-          //               borderRadius: BorderRadius.circular(5),
-          //             ),
-          //             child: Row(
-          //               mainAxisAlignment: MainAxisAlignment.center,
-          //               children: [
-          //                 Icon(
-          //                   Icons.power_settings_new,
-          //                   size: 19,
-          //                   color: Colors.grey.shade700,
-          //                 ),
-          //                 const SizedBox(
-          //                   width: 15,
-          //                 ),
-          //                 Text(
-          //                   "Logout",
-          //                   style: TextStyle(
-          //                     color: Colors.grey.shade700,
-          //                     fontSize: 15,
-          //                     fontWeight: FontWeight.w500,
-          //                   ),
-          //                 ),
-          //               ],
-          //             ),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
           Container(
             padding: const EdgeInsets.only(
               left: 3,

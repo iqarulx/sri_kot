@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'account_info/account_information.dart';
 import 'billing/app_settings/app_settings.dart';
 import 'billing/billing_two.dart';
 import 'category/category_listing.dart';
@@ -10,9 +9,13 @@ import 'customer/customerlisting.dart';
 import 'dashboard/dashboard.dart';
 import 'enquiry/enquiry_listing.dart';
 import 'estimate/estimate_listing.dart';
+import 'help/help.dart';
 import 'invoice/invoice_listing.dart';
+import 'payment/payment_history.dart';
+import 'plan_details/plan_details.dart';
 import 'product/productlisting.dart';
 import 'staff/stafflistting.dart';
+import 'support/support.dart';
 import 'user/userlisting.dart';
 import '../ui/sidebar.dart';
 import 'billing/billing_one.dart';
@@ -43,6 +46,11 @@ class _HomeLandingState extends State<HomeLanding> {
     AppSettings(),
     InvoiceListing(),
     CategoryDiscountView(),
+    AccountInformation(),
+    PaymentHistory(),
+    PlanDetails(),
+    Help(),
+    Support(),
   ];
 
   @override
@@ -64,6 +72,7 @@ class _HomeLandingState extends State<HomeLanding> {
   }
 
   Future<bool> _onWillPop() async {
+    // Make sure this logic doesn't cause unintended side effects
     if (sidebar.crttab != 0) {
       return Future.value(false);
     }

@@ -60,6 +60,50 @@ Widget planUpgrade(context) {
   );
 }
 
+Widget freeTrial(context, String date) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    decoration: BoxDecoration(
+      color: Colors.black12,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+    child: Row(
+      children: [
+        Row(
+          children: [
+            const SizedBox(
+              width: 45,
+            ),
+            Icon(
+              CupertinoIcons.info_circle,
+              size: 19,
+              color: Colors.grey.shade700,
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            Column(
+              children: [
+                const Text(
+                  "Your free trial ends in",
+                ),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 Widget inputForm(
   context, {
   required TextEditingController controller,

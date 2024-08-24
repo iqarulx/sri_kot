@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../../constants/enum.dart';
 import '/model/model.dart';
 import '/provider/logger.dart';
 import '/utils/utlities.dart';
@@ -82,6 +83,14 @@ class FireStoreProvider {
   Future<DocumentSnapshot?> getCompanyDocInfo({required String cid}) async {
     try {
       return await _profile.doc(cid).get();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<QuerySnapshot?> getAllCompany() async {
+    try {
+      return await _profile.get();
     } catch (e) {
       rethrow;
     }
@@ -206,18 +215,15 @@ class FireStoreProvider {
   }) async {
     QuerySnapshot? resultData;
     try {
+      print(uid);
       if (type == UserType.accountHolder) {
-        await getCompanyInfo(uid: uid).then((value) async {
-          if (value!.docs.isNotEmpty) {
-            resultData = await _profile
-                .where('device.device_id', isEqualTo: deviceData.deviceId)
-                .where('device.model_name', isEqualTo: deviceData.modelName)
-                .where('device.device_name', isEqualTo: deviceData.deviceName)
-                .get();
-          } else {
-            throw "Login Credential Not Match";
-          }
-        }).catchError((onError) {
+        resultData = await _profile
+            .where('uid', isEqualTo: uid)
+            .where('device.device_id', isEqualTo: deviceData.deviceId)
+            .where('device.model_name', isEqualTo: deviceData.modelName)
+            .where('device.device_name', isEqualTo: deviceData.deviceName)
+            .get()
+            .catchError((onError) {
           throw onError;
         });
       } else if (type == UserType.admin) {
@@ -1836,39 +1842,48 @@ class FireStoreProvider {
     }
   }
 
-  Future<List> getFiles({required String cid}) async {
+  Future<Map<String, List<Map<String, String>>>> getFiles(
+      {required String cid}) async {
     try {
-      var files = [];
+      // Initialize the map to hold the results
+      Map<String, List<Map<String, String>>> files = {
+        'company': [],
+        'user': [],
+        'staff': [],
+        'product': []
+      };
+
+      // Fetch user files
       var userFiles = await _users.where("company_id", isEqualTo: cid).get();
       if (userFiles.docs.isNotEmpty) {
         for (var item in userFiles.docs) {
-          files.add({"id": item.id, "url": item["image_url"], "type": "user"});
+          files['user']!.add({'id': item.id, 'url': item["image_url"] ?? ''});
         }
       }
 
+      // Fetch company files
       var companyFiles = await _profile.doc(cid).get();
       if (companyFiles.exists) {
-        files.add({
-          "id": cid,
-          "url": companyFiles["company_logo"],
-          "type": "company"
-        });
+        files['company']!
+            .add({'id': cid, 'url': companyFiles["company_logo"] ?? ''});
       }
 
+      // Fetch staff files
       var staffFiles = await _staff.where("company_id", isEqualTo: cid).get();
       if (staffFiles.docs.isNotEmpty) {
         for (var item in staffFiles.docs) {
-          files.add(
-              {"id": item.id, "url": item["profile_img"], "type": "staff"});
+          files['staff']!
+              .add({'id': item.id, 'url': item["profile_img"] ?? ''});
         }
       }
 
+      // Fetch product files
       var productFiles =
           await _products.where("company_id", isEqualTo: cid).get();
       if (productFiles.docs.isNotEmpty) {
         for (var item in productFiles.docs) {
-          files.add(
-              {"id": item.id, "url": item["product_img"], "type": "product"});
+          files['product']!
+              .add({'id': item.id, 'url': item["product_img"] ?? ''});
         }
       }
 
@@ -1877,10 +1892,47 @@ class FireStoreProvider {
       rethrow;
     }
   }
-}
 
-enum UserType {
-  accountHolder,
-  admin,
-  staff,
+  Future<Map<String, dynamic>> getCompanyDetails({required String uid}) async {
+    try {
+      // Initialize the map with default values
+      var map = {
+        "company_id": "",
+        "company": {},
+        "product": [],
+        "user": [],
+        "staff": []
+      };
+
+      map['company_id'] = uid;
+
+      // Fetch data from Firestore
+      var companySnapshot = await _profile.doc(uid).get();
+      var userSnapshot = await _users.where('company_id', isEqualTo: uid).get();
+      var productSnapshot =
+          await _products.where('company_id', isEqualTo: uid).get();
+      var staffSnapshot =
+          await _staff.where('company_id', isEqualTo: uid).get();
+
+      // Process and store the company data
+      if (companySnapshot.exists) {
+        map['company'] = companySnapshot.data() ?? {};
+      }
+
+      // Process and store the user data
+      map['user'] = userSnapshot.docs.map((doc) => doc.data()).toList();
+
+      // Process and store the product data
+      map['product'] = productSnapshot.docs.map((doc) => doc.data()).toList();
+
+      // Process and store the staff data
+      map['staff'] = staffSnapshot.docs.map((doc) => doc.data()).toList();
+
+      return map;
+    } catch (e) {
+      // Handle or log the error as necessary
+      print('Error fetching company details: $e');
+      rethrow;
+    }
+  }
 }

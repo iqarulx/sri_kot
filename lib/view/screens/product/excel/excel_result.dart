@@ -6,6 +6,7 @@ import '../../../ui/commonwidget.dart';
 import '../../../../utils/utlities.dart';
 import '../../../../utils/varibales.dart';
 import '../../../../provider/localdb.dart';
+import 'package:sri_kot/model/class.dart';
 
 class ExcelResultUI extends StatefulWidget {
   const ExcelResultUI({super.key});
@@ -439,328 +440,340 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(13),
-        ),
-        backgroundColor: Theme.of(context).primaryColor,
-        onPressed: () {
-          uploadCategoryProduct();
-        },
-        icon: const Icon(Icons.file_upload_outlined),
-        label: const Text("Upload"),
-      ),
+      floatingActionButton: floatingButton(context),
       backgroundColor: Colors.transparent,
-      body: Visibility(
-        visible: excelData.isNotEmpty,
-        child: ListView(
-          padding: const EdgeInsets.all(10),
+      body: body(context),
+    );
+  }
+
+  Visibility body(BuildContext context) {
+    return Visibility(
+      visible: excelData.isNotEmpty,
+      child: ListView(
+        padding: const EdgeInsets.all(10),
+        children: [
+          reportField(context),
+          const SizedBox(
+            height: 10,
+          ),
+          for (var category in excelData) categoryFields(context, category)
+        ],
+      ),
+    );
+  }
+
+  Container reportField(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Report",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          Table(
+            border: TableBorder.all(
+              color: Colors.grey.shade100,
+            ),
+            columnWidths: const {
+              0: FlexColumnWidth(1.2),
+              1: FlexColumnWidth(5),
+              2: FlexColumnWidth(1.7),
+            },
+            children: [
+              TableRow(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "S.NO",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Category Name",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Products",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              for (int i = 0; i < excelData.length; i++)
+                TableRow(
+                  decoration: BoxDecoration(
+                    color: i.isOdd ? Colors.grey.shade300 : Colors.transparent,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 3,
+                      ),
+                      child: Center(
+                        child: Text(
+                          (i + 1).toString(),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 3,
+                      ),
+                      child: Text(excelData[i].categoryname),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 3,
+                      ),
+                      child: Center(
+                        child: Text(
+                          excelData[i].product.length.toString(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              TableRow(
+                // decoration: BoxDecoration(
+                //   color: i.isOdd
+                //       ? Colors.grey.shade300
+                //       : Colors.transparent,
+                //   borderRadius: BorderRadius.circular(3),
+                // ),
+                children: [
+                  const SizedBox(),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Text(
+                      "Total",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "${totalProductCount()}",
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Container categoryFields(BuildContext context, ExcelCategoryClass category) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
               padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.2),
+              ),
+              width: double.infinity,
+              child: Row(
                 children: [
-                  const Text(
-                    "Report",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      " ${category.categoryname}",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(
-                    height: 10,
+                    width: 5,
                   ),
-                  Table(
-                    border: TableBorder.all(
-                      color: Colors.grey.shade100,
+                  Text(
+                    "Total : ${category.product.length}",
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
                     ),
-                    columnWidths: const {
-                      0: FlexColumnWidth(1.2),
-                      1: FlexColumnWidth(5),
-                      2: FlexColumnWidth(1.7),
-                    },
-                    children: [
-                      TableRow(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            child: Center(
-                              child: Text(
-                                "S.NO",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            child: Center(
-                              child: Text(
-                                "Category Name",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            child: Center(
-                              child: Text(
-                                "Products",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      for (int i = 0; i < excelData.length; i++)
-                        TableRow(
-                          decoration: BoxDecoration(
-                            color: i.isOdd
-                                ? Colors.grey.shade300
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 3,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  (i + 1).toString(),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 3,
-                              ),
-                              child: Text(excelData[i].categoryname),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 3,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  excelData[i].product.length.toString(),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      TableRow(
-                        // decoration: BoxDecoration(
-                        //   color: i.isOdd
-                        //       ? Colors.grey.shade300
-                        //       : Colors.transparent,
-                        //   borderRadius: BorderRadius.circular(3),
-                        // ),
-                        children: [
-                          const SizedBox(),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            child: Text(
-                              "Total",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            child: Center(
-                              child: Text(
-                                "${totalProductCount()}",
-                                textAlign: TextAlign.end,
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(
-              height: 10,
-            ),
-            for (var category in excelData)
+            for (int i = 0; i < category.product.length; i++)
               Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  border: i > 0
+                      ? const Border(
+                          top: BorderSide(
+                            width: 0.5,
+                            color: Color(0xffE0E0E0),
+                          ),
+                        )
+                      : null,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color:
-                              Theme.of(context).primaryColor.withOpacity(0.2),
-                        ),
-                        width: double.infinity,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                " ${category.categoryname}",
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                padding: const EdgeInsets.all(10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            category.product[i].productname,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(
-                              width: 5,
+                          ),
+                          Text(
+                            category.product[i].content,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 15,
                             ),
-                            Text(
-                              "Total : ${category.product.length}",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ),
+                          const SizedBox(
+                            height: 3,
+                          ),
+                          Text(
+                            "Qr Code - ${category.product[i].qrcode}",
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 15,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(
+                            height: 3,
+                          ),
+                          Text(
+                            "Discount Lock - ${category.product[i].discountlock == "1" ? "Yes" : "No"}",
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
                       ),
-                      for (int i = 0; i < category.product.length; i++)
-                        Container(
-                          decoration: BoxDecoration(
-                            border: i > 0
-                                ? const Border(
-                                    top: BorderSide(
-                                      width: 0.5,
-                                      color: Color(0xffE0E0E0),
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          padding: const EdgeInsets.all(10),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      category.product[i].productname,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      category.product[i].content,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 3,
-                                    ),
-                                    Text(
-                                      "Qr Code - ${category.product[i].qrcode}",
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 3,
-                                    ),
-                                    Text(
-                                      "Discount Lock - ${category.product[i].discountlock == "1" ? "Yes" : "No"}",
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                "\u{20B9}${category.product[i].price}",
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      "\u{20B9}${category.product[i].price}",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                  ],
                 ),
-              )
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  FloatingActionButton floatingButton(BuildContext context) {
+    return FloatingActionButton.extended(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(13),
+      ),
+      backgroundColor: Theme.of(context).primaryColor,
+      onPressed: () {
+        uploadCategoryProduct();
+      },
+      icon: const Icon(Icons.file_upload_outlined),
+      label: const Text("Upload"),
     );
   }
 }

@@ -54,8 +54,8 @@ class InvoiceModel {
     mapping["phone_number"] = phoneNumber;
     mapping["transport_name"] = transportName;
     mapping["transport_number"] = transportNumber;
-    mapping["created_date"] = createdDate?.toIso8601String();
-    mapping["bill_date"] = biilDate?.toIso8601String();
+    mapping["created_date"] = createdDate;
+    mapping["bill_date"] = biilDate;
     mapping["delete_at"] = false;
     mapping["total_amount"] = totalBillAmount;
     mapping["price"] = price?.toMap();

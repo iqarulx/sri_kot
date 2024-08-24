@@ -1,4 +1,5 @@
-import 'register.dart';
+import 'package:sri_kot/provider/localdb.dart';
+import 'package:sri_kot/view/admin/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../services/firebase/firebase_auth_provider.dart';
@@ -58,10 +59,12 @@ class _AdminState extends State<Admin> {
       if (credential != null) {
         Navigator.pop(context);
         snackBarCustom(context, true, 'Logged as Admin');
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Register()),
-        );
+        await LocalDbProvider().superAdminLogin().then((value) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        });
       } else {
         Navigator.pop(context);
         snackBarCustom(context, false, 'Something went wrong. Try again');

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:sri_kot/gen/assets.gen.dart';
 import '../../../model/model.dart';
 import '../../../utils/varibales.dart';
 import '../../../services/firebase/firestorageprovider.dart';
@@ -170,13 +171,21 @@ class _StaffDetailsState extends State<StaffDetails> {
       model.profileImg = downloadLink;
       await FireStoreProvider()
           .updateProfileStaff(staffData: model, docID: crtStaffData!.docID!)
-          .then((value) {
-        setState(() {
-          crtStaffData!.profileImg = downloadLink;
-        });
+          .then((value) async {
+        await FireStorageProvider()
+            .saveLocal(
+          fileData: profileImage,
+          id: crtStaffData!.docID!,
+          folder: "staff",
+        )
+            .then((value) {
+          setState(() {
+            crtStaffData!.profileImg = downloadLink;
+          });
 
-        Navigator.pop(context);
-        snackBarCustom(context, true, "Successfully Update Staff");
+          Navigator.pop(context);
+          snackBarCustom(context, true, "Successfully Update Staff");
+        });
       });
     } catch (e) {
       Navigator.pop(context);
@@ -297,15 +306,27 @@ class _StaffDetailsState extends State<StaffDetails> {
                                   shape: BoxShape.circle,
                                   image: profileImage != null
                                       ? DecorationImage(
-                                          image: FileImage(profileImage!),
+                                          image: profileImage!.existsSync()
+                                              ? FileImage(profileImage!)
+                                              : AssetImage(
+                                                  Assets.images.noImage.path,
+                                                ),
                                           fit: BoxFit.cover,
                                         )
                                       : crtStaffData!.profileImg == null
                                           ? null
                                           : DecorationImage(
-                                              image: NetworkImage(
-                                                crtStaffData!.profileImg!,
-                                              ),
+                                              image: File(crtStaffData!
+                                                          .profileImg!)
+                                                      .existsSync()
+                                                  ? FileImage(
+                                                      File(crtStaffData!
+                                                          .profileImg!),
+                                                    )
+                                                  : AssetImage(
+                                                      Assets
+                                                          .images.noImage.path,
+                                                    ),
                                               fit: BoxFit.cover,
                                             ),
                                 ),

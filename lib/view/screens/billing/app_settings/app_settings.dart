@@ -1,12 +1,16 @@
-import 'package:file_service/file_service.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
 import 'package:sri_kot/services/firebase/firestore_provider.dart';
-import 'package:sri_kot/utils/utlities.dart';
 import '../../../../provider/localdb.dart';
 
 import '../../homelanding.dart';
+import 'backup.dart';
+import 'package:http/http.dart' as http;
 
 class AppSettings extends StatefulWidget {
   const AppSettings({super.key});
@@ -33,47 +37,94 @@ class _AppSettingsState extends State<AppSettings> {
   }
 
   syncNow() async {
-    try {
-      print("Siii");
-      // snackBarCustom(context, true, "File sync started");
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
-      var result = await FireStoreProvider().getFiles(cid: cid);
-      // await FileService.clearDirectory();
+    await showModalBottomSheet(
+        backgroundColor: Colors.white,
+        useSafeArea: true,
+        shape: RoundedRectangleBorder(
+          side: BorderSide.none,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        isScrollControlled: true,
+        context: context,
+        builder: (builder) {
+          return const Backup();
+        }).then((value) {
+      if (value != null) {
+        syncNowData();
+      }
+    });
+  }
 
-      if (result.isNotEmpty) {
-        print("Hiii");
+  Future<void> syncNowData() async {
+    final cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+    final result = await FireStoreProvider().getFiles(cid: cid);
 
-        for (var item in result) {
-          var url = item["url"] ?? '';
-          var typeString = item["type"] ?? 'none';
-          var id = item["id"];
+    // Get the application documents directory
+    final directory = await getApplicationDocumentsDirectory();
 
-          Type type;
-          switch (typeString) {
-            case "user":
-              type = Type.user;
-              break;
-            case "company":
-              type = Type.company;
-              break;
-            case "staff":
-              type = Type.staff;
-              break;
-            case "product":
-              type = Type.product;
-              break;
-            default:
-              type = Type.none;
-          }
-          print("$url $type $id");
+    // Paths for each file type
+    final paths = <String, List<Map<String, String>>>{};
 
-          // await FileService.syncFiles(fileUrl: url, type: type, id: id);
+    // Step 1: Clear files in the directory
+    final folder = Directory(directory.path);
+    if (await folder.exists()) {
+      final files = folder.listSync(recursive: true);
+      for (var file in files) {
+        if (file is File) {
+          await file.delete();
         }
       }
-      snackBarCustom(context, true, "File Sync Completed");
-    } catch (e) {
-      print('Error in syncNow: $e');
     }
+
+    // Helper function to create a folder if it doesn't exist
+    Future<void> createFolder(String folderName) async {
+      final path = Directory('${directory.path}/$folderName');
+      if (!await path.exists()) {
+        await path.create();
+      }
+    }
+
+    // Step 2: Create folders and download files
+    for (var type in result.keys) {
+      final folderName = type;
+      await createFolder(folderName);
+
+      paths[type] = [];
+
+      for (var file in result[type]!) {
+        final id = file['id']!;
+        final url = file['url'];
+        final filePath = url != null && url.isNotEmpty
+            ? '${directory.path}/$folderName/$id'
+            : '';
+
+        if (url != null && url.isNotEmpty) {
+          // Download the file
+          final response = await http.get(Uri.parse(url));
+          if (response.statusCode == 200) {
+            final file = File(filePath);
+            await file.writeAsBytes(response.bodyBytes);
+
+            // Save path info
+            paths[type]!.add({'id': id, 'path': filePath});
+          } else {
+            print('Failed to download file from $url');
+            // Save path info with empty path
+            paths[type]!.add({'id': id, 'path': ''});
+          }
+        } else {
+          // URL is empty or null, save only the ID with empty path
+          paths[type]!.add({'id': id, 'path': ''});
+        }
+      }
+    }
+
+    // Step 3: Save the JSON file
+    final jsonFile = File('${directory.path}/file_paths.json');
+    final jsonString = jsonEncode(paths);
+    await jsonFile.writeAsString(jsonString);
+
+    print('Sync completed and JSON file saved.');
   }
 
   @override

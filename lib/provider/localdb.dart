@@ -52,9 +52,21 @@ class LocalDbProvider {
     return true;
   }
 
-  Future<bool> checklogin() async {
+  Future<bool> superAdminLogin() async {
     var db = await _connect();
-    return db.getBool('login') ?? false;
+    db.setBool('super_login', true);
+    return true;
+  }
+
+  Future<List> checklogin() async {
+    var db = await _connect();
+    var result = db.getBool('login') ?? false;
+    if (result) {
+      return [result, 0];
+    } else {
+      result = db.getBool('super_login') ?? false;
+      return [result, 1];
+    }
   }
 
   Future<bool> changeBilling(int value) async {

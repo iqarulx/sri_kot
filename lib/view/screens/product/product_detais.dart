@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sri_kot/provider/file_provider.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../gen/assets.gen.dart';
 import '../../../model/model.dart';
 import '../../ui/commonwidget.dart';
 import '../../../utils/validation.dart';
@@ -12,6 +13,7 @@ import '../../../services/firebase/firestore_provider.dart';
 import '../../../provider/imagepickerprovider.dart';
 import '../../../provider/localdb.dart';
 import '../../../utils/utlities.dart';
+import 'package:path/path.dart' as path;
 
 class ProductDetails extends StatefulWidget {
   const ProductDetails({
@@ -29,6 +31,386 @@ class ProductDetails extends StatefulWidget {
 }
 
 class _ProductDetailsState extends State<ProductDetails> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xffEEEEEE),
+      appBar: appbar(),
+      body: body(context),
+      bottomNavigationBar: bottomAppbar(context),
+    );
+  }
+
+  Padding bottomAppbar(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: BottomAppBar(
+        height: 65,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: outlinButton(
+                  context,
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  btnName: "Cancel",
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                flex: 4,
+                child: fillButton(
+                  context,
+                  onTap: () {
+                    if (widget.edit) {
+                      updateProduct();
+                    } else {
+                      checkValidation();
+                    }
+                  },
+                  btnName: "Submit",
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  ListView body(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(10),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Form(
+            key: addProductKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                imageOption(context),
+                const SizedBox(
+                  height: 10,
+                ),
+                categoryOption(),
+                const SizedBox(
+                  height: 10,
+                ),
+                productNameOption(),
+                productCodeOption(),
+                qrCodeOption(),
+                videoUrlOption(),
+                discountLockOption(context),
+                // DropDownForm(
+                //   onChange: (value) {
+                //     setState(() {
+                //       discountLock = value;
+                //     });
+                //   },
+                //   labelName: "Discount Lock",
+                //   value: discountLock,
+                //   listItems: const [
+                //     DropdownMenuItem(
+                //       value: "true",
+                //       child: Text("Yes"),
+                //     ),
+                //     DropdownMenuItem(
+                //       value: "false",
+                //       child: Text("No"),
+                //     ),
+                //   ],
+                // ),
+                const SizedBox(
+                  height: 10,
+                ),
+
+                // DropDownForm(
+                //   onChange: (value) {
+                //     setState(() {
+                //       active = value;
+                //     });
+                //   },
+                //   labelName: "Active",
+                //   value: active,
+                //   listItems: const [
+                //     DropdownMenuItem(
+                //       value: "true",
+                //       child: Text("Yes"),
+                //     ),
+                //     DropdownMenuItem(
+                //       value: "false",
+                //       child: Text("No"),
+                //     ),
+                //   ],
+                // ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row discountLockOption(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "Discount Lock",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              CupertinoSwitch(
+                value: discountLock,
+                onChanged: (onChanged) {
+                  setState(() {
+                    discountLock = onChanged;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "Active",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              CupertinoSwitch(
+                value: active,
+                onChanged: (onChanged) {
+                  setState(() {
+                    active = onChanged;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  InputForm videoUrlOption() {
+    return InputForm(
+      controller: videoUrl,
+      formName: "Video Url",
+      lableName: "Video Url",
+      validation: (input) {
+        return FormValidation().commonValidation(
+          input: input,
+          isMandorty: false,
+          formName: 'Video Url',
+          isOnlyCharter: false,
+        );
+      },
+    );
+  }
+
+  Row qrCodeOption() {
+    return Row(
+      children: [
+        Expanded(
+          child: InputForm(
+            controller: qrCode,
+            formName: "QR Code",
+            lableName: "QR Code",
+            validation: (input) {
+              return FormValidation().commonValidation(
+                input: input,
+                isMandorty: false,
+                formName: 'QR Code',
+                isOnlyCharter: false,
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: InputForm(
+            controller: price,
+            formName: "Price",
+            lableName: "Price",
+            keyboardType: TextInputType.number,
+            validation: (input) {
+              return FormValidation().commonValidation(
+                input: input,
+                isMandorty: true,
+                formName: 'Price',
+                isOnlyCharter: false,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row productCodeOption() {
+    return Row(
+      children: [
+        Expanded(
+          child: InputForm(
+            controller: productCode,
+            formName: "Product Code",
+            lableName: "Product Code",
+            validation: (input) {
+              return FormValidation().commonValidation(
+                input: input,
+                isMandorty: true,
+                formName: 'Product Code',
+                isOnlyCharter: false,
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: InputForm(
+            controller: productContent,
+            formName: "Product Content",
+            lableName: "Product Content",
+            validation: (input) {
+              return FormValidation().commonValidation(
+                input: input,
+                isMandorty: true,
+                formName: 'Product Content',
+                isOnlyCharter: false,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  InputForm productNameOption() {
+    return InputForm(
+      controller: productName,
+      formName: "Product Name",
+      lableName: "Product Name",
+      validation: (input) {
+        return FormValidation().commonValidation(
+          input: input,
+          isMandorty: true,
+          formName: 'Product Name',
+          isOnlyCharter: false,
+        );
+      },
+    );
+  }
+
+  DropDownForm categoryOption() {
+    return DropDownForm(
+      onChange: (v) {
+        setState(() {
+          categoryID = v;
+        });
+      },
+      labelName: "Category",
+      value: categoryID,
+      listItems: categoryList,
+      formName: 'Category',
+    );
+  }
+
+  Center imageOption(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        onTap: () async {
+          var imageResult = await FilePickerProvider().showFileDialog(context);
+          if (imageResult != null) {
+            setState(() {
+              productImage = imageResult;
+            });
+          }
+        },
+        child: Container(
+          height: 120,
+          width: 120,
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  shape: BoxShape.circle,
+                  image: productImage != null
+                      ? DecorationImage(
+                          image: FileImage(productImage!),
+                          fit: BoxFit.cover,
+                        )
+                      : DecorationImage(
+                          image:
+                              imageUrl != null && File(imageUrl!).existsSync()
+                                  ? FileImage(File(imageUrl!))
+                                  : AssetImage(Assets.images.noImage.path),
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(width: 2, color: Colors.white),
+                    color: Colors.yellow.shade800,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  child: const Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  AppBar appbar() {
+    return AppBar(
+      title: Text(widget.title),
+      actions: [
+        widget.edit
+            ? IconButton(
+                onPressed: () {
+                  deleteProduct();
+                },
+                icon: const Icon(Icons.delete),
+              )
+            : const SizedBox(),
+      ],
+    );
+  }
+
   TextEditingController categoryName = TextEditingController();
   TextEditingController productName = TextEditingController();
   TextEditingController productCode = TextEditingController();
@@ -70,8 +452,9 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   var addProductKey = GlobalKey<FormState>();
 
-  inifunc() {
+  inifunc() async {
     if (widget.edit) {
+      var directory = await getApplicationDocumentsDirectory();
       setState(() {
         categoryID = widget.productData!.categoryid ?? "";
         categoryName.text = widget.productData!.categoryName ?? "";
@@ -83,7 +466,13 @@ class _ProductDetailsState extends State<ProductDetails> {
             ? ""
             : widget.productData!.price.toString();
         videoUrl.text = widget.productData!.videoUrl ?? "";
-        imageUrl = widget.productData!.productImg ?? "";
+        // imageUrl = widget.productData!.productImg ?? "";
+
+        imageUrl = path.join(
+          directory.path,
+          'product',
+          widget.productData!.productId,
+        );
         discountLock = widget.productData!.discountLock ?? false;
         active = widget.productData!.active ?? false;
       });
@@ -136,7 +525,6 @@ class _ProductDetailsState extends State<ProductDetails> {
             productData.videoUrl = videoUrl.text;
             productData.name =
                 productName.text.replaceAll(' ', '').trim().toLowerCase();
-            log(productData.updateMap().toString());
             await FireStoreProvider()
                 .updateProduct(
                     docid: widget.productData!.productId!, product: productData)
@@ -148,16 +536,26 @@ class _ProductDetailsState extends State<ProductDetails> {
                   filePath: 'products',
                 );
 
-                await saveFileToLocal(productImage!, Type.product, "123344555");
+                print(downloadLink);
+
                 await FireStoreProvider()
                     .updateProductPic(
                   docId: widget.productData!.productId!,
                   imageLink: downloadLink.toString(),
                 )
-                    .then((value) {
-                  Navigator.pop(context);
-                  Navigator.pop(context, true);
-                  snackBarCustom(context, true, "Product Update Successfully");
+                    .then((value) async {
+                  await FireStorageProvider()
+                      .saveLocal(
+                    fileData: productImage!,
+                    id: widget.productData!.productId!,
+                    folder: 'product',
+                  )
+                      .then((value) {
+                    Navigator.pop(context);
+                    Navigator.pop(context, true);
+                    snackBarCustom(
+                        context, true, "Product Update Successfully");
+                  });
                 });
               } else {
                 Navigator.pop(context);
@@ -257,349 +655,5 @@ class _ProductDetailsState extends State<ProductDetails> {
     super.initState();
     getCategory();
     inifunc();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: [
-          widget.edit
-              ? IconButton(
-                  onPressed: () {
-                    deleteProduct();
-                  },
-                  icon: const Icon(Icons.delete),
-                )
-              : const SizedBox(),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(10),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Form(
-              key: addProductKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: GestureDetector(
-                      onTap: () async {
-                        var imageResult =
-                            await FilePickerProvider().showFileDialog(context);
-                        if (imageResult != null) {
-                          setState(() {
-                            productImage = imageResult;
-                          });
-                        }
-                      },
-                      child: Container(
-                        height: 120,
-                        width: 120,
-                        decoration: const BoxDecoration(
-                          color: Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                shape: BoxShape.circle,
-                                image: productImage != null
-                                    ? DecorationImage(
-                                        image: FileImage(productImage!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : imageUrl != null && imageUrl!.isNotEmpty
-                                        ? DecorationImage(
-                                            image: NetworkImage(imageUrl!),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null,
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(width: 2, color: Colors.white),
-                                  color: Colors.yellow.shade800,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: const EdgeInsets.all(5),
-                                child: const Icon(
-                                  Icons.edit,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  DropDownForm(
-                    onChange: (v) {
-                      setState(() {
-                        categoryID = v;
-                        log(categoryID.toString());
-                      });
-                    },
-                    labelName: "Category",
-                    value: categoryID,
-                    listItems: categoryList,
-                    formName: 'Category',
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  InputForm(
-                    controller: productName,
-                    formName: "Product Name",
-                    lableName: "Product Name",
-                    validation: (input) {
-                      return FormValidation().commonValidation(
-                        input: input,
-                        isMandorty: true,
-                        formName: 'Product Name',
-                        isOnlyCharter: false,
-                      );
-                    },
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InputForm(
-                          controller: productCode,
-                          formName: "Product Code",
-                          lableName: "Product Code",
-                          validation: (input) {
-                            return FormValidation().commonValidation(
-                              input: input,
-                              isMandorty: true,
-                              formName: 'Product Code',
-                              isOnlyCharter: false,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: InputForm(
-                          controller: productContent,
-                          formName: "Product Content",
-                          lableName: "Product Content",
-                          validation: (input) {
-                            return FormValidation().commonValidation(
-                              input: input,
-                              isMandorty: true,
-                              formName: 'Product Content',
-                              isOnlyCharter: false,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InputForm(
-                          controller: qrCode,
-                          formName: "QR Code",
-                          lableName: "QR Code",
-                          validation: (input) {
-                            return FormValidation().commonValidation(
-                              input: input,
-                              isMandorty: false,
-                              formName: 'QR Code',
-                              isOnlyCharter: false,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: InputForm(
-                          controller: price,
-                          formName: "Price",
-                          lableName: "Price",
-                          keyboardType: TextInputType.number,
-                          validation: (input) {
-                            return FormValidation().commonValidation(
-                              input: input,
-                              isMandorty: true,
-                              formName: 'Price',
-                              isOnlyCharter: false,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  InputForm(
-                    controller: videoUrl,
-                    formName: "Video Url",
-                    lableName: "Video Url",
-                    validation: (input) {
-                      return FormValidation().commonValidation(
-                        input: input,
-                        isMandorty: false,
-                        formName: 'Video Url',
-                        isOnlyCharter: false,
-                      );
-                    },
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Discount Lock",
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            CupertinoSwitch(
-                              value: discountLock,
-                              onChanged: (onChanged) {
-                                setState(() {
-                                  discountLock = onChanged;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Active",
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            CupertinoSwitch(
-                              value: active,
-                              onChanged: (onChanged) {
-                                setState(() {
-                                  active = onChanged;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // DropDownForm(
-                  //   onChange: (value) {
-                  //     setState(() {
-                  //       discountLock = value;
-                  //     });
-                  //   },
-                  //   labelName: "Discount Lock",
-                  //   value: discountLock,
-                  //   listItems: const [
-                  //     DropdownMenuItem(
-                  //       value: "true",
-                  //       child: Text("Yes"),
-                  //     ),
-                  //     DropdownMenuItem(
-                  //       value: "false",
-                  //       child: Text("No"),
-                  //     ),
-                  //   ],
-                  // ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-
-                  // DropDownForm(
-                  //   onChange: (value) {
-                  //     setState(() {
-                  //       active = value;
-                  //     });
-                  //   },
-                  //   labelName: "Active",
-                  //   value: active,
-                  //   listItems: const [
-                  //     DropdownMenuItem(
-                  //       value: "true",
-                  //       child: Text("Yes"),
-                  //     ),
-                  //     DropdownMenuItem(
-                  //       value: "false",
-                  //       child: Text("No"),
-                  //     ),
-                  //   ],
-                  // ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: BottomAppBar(
-          height: 65,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: outlinButton(
-                    context,
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    btnName: "Cancel",
-                  ),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Expanded(
-                  flex: 4,
-                  child: fillButton(
-                    context,
-                    onTap: () {
-                      if (widget.edit) {
-                        updateProduct();
-                      } else {
-                        checkValidation();
-                      }
-                    },
-                    btnName: "Submit",
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

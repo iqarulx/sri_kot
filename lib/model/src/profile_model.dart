@@ -3,6 +3,7 @@ part 'profile_model.g.dart';
 
 @JsonSerializable()
 class ProfileModel {
+  String? docId;
   String? username;
   String? companyLogo;
   String? companyName;
@@ -20,6 +21,7 @@ class ProfileModel {
   String? companyUniqueID;
 
   ProfileModel({
+    this.docId,
     this.username,
     this.companyLogo,
     this.companyName,

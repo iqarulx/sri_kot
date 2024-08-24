@@ -16,65 +16,6 @@ class UploadExcelUI extends StatefulWidget {
 }
 
 class _UploadExcelUIState extends State<UploadExcelUI> {
-  uploadExcel() async {
-    loading(context);
-    try {
-      await FilePickerProvider()
-          .openGalary(fileType: FileProviderType.excel)
-          .then((value) async {
-        if (value != null) {
-          await ExcelReaderProvider()
-              .readExcelData(file: value)
-              .then((excelResult) {
-            if (excelResult != null) {
-              Navigator.pop(context);
-              setState(() {
-                excelData.clear();
-                excelData.addAll(excelResult);
-                uploadExcelController.animateTo(
-                  1,
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.linear,
-                );
-              });
-            } else {
-              Navigator.pop(context);
-            }
-          }).catchError((onError) {});
-        } else {
-          Navigator.pop(context);
-        }
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, "e.toString()");
-    }
-  }
-
-  downloadTemplate() async {
-    loading(context);
-    try {
-      await DownloadFilesOnline(
-        urlLink:
-            "https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16",
-        fileName: 'Product Templete',
-        fileext: 'xlsx',
-      ).startDownload().then((value) {
-        Navigator.pop(context);
-        if (value != null) {
-          downloadFileSnackBarCustom(context,
-              isSuccess: true, msg: 'Successfully Download File', path: value);
-          // snackBarCustom(context, true, "");
-        } else {
-          snackBarCustom(context, false, "Something went Worng");
-        }
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -305,5 +246,64 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
         ),
       ],
     );
+  }
+
+  uploadExcel() async {
+    loading(context);
+    try {
+      await FilePickerProvider()
+          .openGalary(fileType: FileProviderType.excel)
+          .then((value) async {
+        if (value != null) {
+          await ExcelReaderProvider()
+              .readExcelData(file: value)
+              .then((excelResult) {
+            if (excelResult != null) {
+              Navigator.pop(context);
+              setState(() {
+                excelData.clear();
+                excelData.addAll(excelResult);
+                uploadExcelController.animateTo(
+                  1,
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.linear,
+                );
+              });
+            } else {
+              Navigator.pop(context);
+            }
+          }).catchError((onError) {});
+        } else {
+          Navigator.pop(context);
+        }
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, "e.toString()");
+    }
+  }
+
+  downloadTemplate() async {
+    loading(context);
+    try {
+      await DownloadFilesOnline(
+        urlLink:
+            "https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16",
+        fileName: 'Product Templete',
+        fileext: 'xlsx',
+      ).startDownload().then((value) {
+        Navigator.pop(context);
+        if (value != null) {
+          downloadFileSnackBarCustom(context,
+              isSuccess: true, msg: 'Successfully Download File', path: value);
+          // snackBarCustom(context, true, "");
+        } else {
+          snackBarCustom(context, false, "Something went Worng");
+        }
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
   }
 }

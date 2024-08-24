@@ -48,6 +48,7 @@ class StaffDataModel {
     if (deviceModel != null) {
       mapping["device"] = deviceModel!.toMap();
     }
+    mapping["deleted_at"] = deleteAt;
     return mapping;
   }
 

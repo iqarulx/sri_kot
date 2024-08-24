@@ -1,9 +1,12 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sri_kot/gen/assets.gen.dart';
 import '../../../model/model.dart';
 import '../../../services/firebase/firestore_provider.dart';
 import 'search_product.dart';
@@ -15,6 +18,7 @@ import '../../../provider/page_provider.dart';
 import '../homelanding.dart';
 import 'add_custom_product.dart';
 import 'cart_drawer.dart';
+import 'package:path/path.dart' as path;
 
 BilingPageProvider billPageProvider = BilingPageProvider();
 
@@ -77,7 +81,15 @@ class _BillingOneState extends State<BillingOne>
             productInfo.qrCode = product["qr_code"];
             productInfo.videoUrl = product["video_url"];
             productInfo.productName = product["product_name"];
-            productInfo.productImg = product["product_img"];
+
+            var directory = await getApplicationDocumentsDirectory();
+            productInfo.productImg = path.join(
+              directory.path,
+              'product',
+              product.id,
+            );
+
+            // productInfo.productImg = product["product_img"];
             productInfo.price = double.parse(product["price"].toString());
             productInfo.productId = product.id;
             productInfo.qty = 0;
@@ -916,10 +928,18 @@ class _BillingOneState extends State<BillingOne>
                                                               .productImg !=
                                                           null
                                                       ? DecorationImage(
-                                                          image: NetworkImage(
-                                                            tmpProductDetails
-                                                                .productImg!,
-                                                          ),
+                                                          image: File(tmpProductDetails
+                                                                      .productImg!)
+                                                                  .existsSync()
+                                                              ? FileImage(
+                                                                  File(tmpProductDetails
+                                                                      .productImg!),
+                                                                )
+                                                              : AssetImage(
+                                                                  Assets
+                                                                      .images
+                                                                      .noImage
+                                                                      .path),
                                                           fit: BoxFit.cover,
                                                         )
                                                       : null,
@@ -1613,9 +1633,11 @@ class _QRAlertProductState extends State<QRAlertProduct> {
                 borderRadius: BorderRadius.circular(5),
                 image: tmpProductDetails.productImg != null
                     ? DecorationImage(
-                        image: NetworkImage(
-                          tmpProductDetails.productImg!,
-                        ),
+                        image: File(tmpProductDetails.productImg!).existsSync()
+                            ? FileImage(
+                                File(tmpProductDetails.productImg!),
+                              )
+                            : AssetImage(Assets.images.noImage.path),
                         fit: BoxFit.cover,
                       )
                     : null,

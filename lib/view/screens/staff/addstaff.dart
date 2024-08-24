@@ -104,6 +104,7 @@ class _AddStaffState extends State<AddStaff> {
                 fileName: DateTime.now().millisecondsSinceEpoch.toString(),
                 filePath: 'staff',
               );
+
               model.profileImg = downloadLink;
 
               DeviceModel deviceData = DeviceModel();
@@ -114,6 +115,7 @@ class _AddStaffState extends State<AddStaff> {
               deviceData.deviceType = null;
 
               model.deviceModel = deviceData;
+              model.deleteAt = false;
 
               await FireStoreProvider()
                   .checkStaffAlreadyExiest(loginID: userid.text)
@@ -122,29 +124,40 @@ class _AddStaffState extends State<AddStaff> {
                   await FireStoreProvider()
                       .registerStaff(staffData: model)
                       .then((value) {
-                    Navigator.pop(context);
-                    if (value.id.isNotEmpty) {
-                      setState(() {
-                        profileImage = null;
-                        userid.clear();
-                        fullName.clear();
-                        password.clear();
-                        phoneNo.clear();
-                        product = false;
-                        category = false;
-                        customer = false;
-                        orders = false;
-                        estimate = false;
-                        billofSupply = false;
-                      });
-                      Navigator.pop(context, true);
-                      snackBarCustom(
-                          context, true, "Successfully Created New Staff");
-                    } else {
+                    FireStorageProvider()
+                        .saveLocal(
+                      fileData: profileImage!,
+                      id: value.id.toString(),
+                      folder: "staff",
+                    )
+                        .then((data) {
                       Navigator.pop(context);
-                      snackBarCustom(
-                          context, false, "Failed to Create New Staff");
-                    }
+
+                      if (data) {
+                        if (value.id.isNotEmpty) {
+                          setState(() {
+                            profileImage = null;
+                            userid.clear();
+                            fullName.clear();
+                            password.clear();
+                            phoneNo.clear();
+                            product = false;
+                            category = false;
+                            customer = false;
+                            orders = false;
+                            estimate = false;
+                            billofSupply = false;
+                          });
+                          Navigator.pop(context, true);
+                          snackBarCustom(
+                              context, true, "Successfully Created New Staff");
+                        } else {
+                          Navigator.pop(context);
+                          snackBarCustom(
+                              context, false, "Failed to Create New Staff");
+                        }
+                      }
+                    });
                   });
                 } else {
                   Navigator.pop(context);

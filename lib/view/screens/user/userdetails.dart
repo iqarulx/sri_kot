@@ -1,7 +1,11 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:sri_kot/gen/assets.gen.dart';
 import '../../../model/model.dart';
+import '../../../provider/imagepickerprovider.dart';
+import '../../../services/firebase/firestorageprovider.dart';
 import '../../../services/firebase/firestore_provider.dart';
 import 'userlisting.dart';
 import '../../ui/commonwidget.dart';
@@ -35,16 +39,40 @@ class _UserDetailsState extends State<UserDetails> {
         userData.phoneNo = adminphoneno.text;
         userData.adminLoginId = "${adminuserid.text}@$unqiueId";
         userData.password = adminpassword.text;
-        await FireStoreProvider()
-            .updateUser(docID: docid.toString(), userData: userData)
-            .then((value) {
-          Navigator.pop(context);
-          if (value != null) {
-            snackBarCustom(context, true, "Successfully User Data Updated");
-          } else {
-            snackBarCustom(
-                context, false, "Something Went wrong Please try again");
-          }
+
+        await FireStorageProvider()
+            .uploadImage(
+          fileData: File(adminProfileImage!),
+          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+          filePath: 'user',
+        )
+            .then((value) async {
+          userData.imageUrl = value;
+          await FireStoreProvider()
+              .updateUser(docID: docid.toString(), userData: userData)
+              .then((value) async {
+            if (value != null) {
+              await FireStorageProvider()
+                  .saveLocal(
+                fileData: File(adminProfileImage!),
+                id: docid.toString(),
+                folder: "user",
+              )
+                  .then((value) {
+                Navigator.pop(context);
+                snackBarCustom(context, true, "Successfully User Data Updated");
+              }).catchError((onError) {
+                snackBarCustom(
+                    context, false, "Something Went wrong Please try again");
+              });
+            } else {
+              snackBarCustom(
+                  context, false, "Something Went wrong Please try again");
+            }
+          });
+        }).catchError((onError) {
+          snackBarCustom(
+              context, false, "Something Went wrong Please try again");
         });
       } else {
         Navigator.pop(context);
@@ -98,7 +126,6 @@ class _UserDetailsState extends State<UserDetails> {
   @override
   void initState() {
     super.initState();
-
     docid = adminDocId;
     uid = adminuid;
     log(adminuserid.text.split('@').toString());
@@ -161,48 +188,64 @@ class _UserDetailsState extends State<UserDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: SizedBox(
-                        height: 90,
-                        width: 90,
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: 90,
-                              width: 90,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                shape: BoxShape.circle,
-                                image: adminProfileImage == null
-                                    ? null
-                                    : DecorationImage(
-                                        image: NetworkImage(
-                                          adminProfileImage!,
-                                        ),
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                padding: const EdgeInsets.all(5),
+                    GestureDetector(
+                      onTap: () async {
+                        var imageResult =
+                            await FilePickerProvider().showFileDialog(context);
+                        if (imageResult != null) {
+                          setState(() {
+                            adminProfileImage = imageResult.path;
+                          });
+                        }
+                      },
+                      child: Center(
+                        child: SizedBox(
+                          height: 90,
+                          width: 90,
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: 90,
+                                width: 90,
                                 decoration: BoxDecoration(
-                                  color: Colors.yellow.shade800,
+                                  color: Colors.grey.shade300,
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                    width: 2,
+                                  image: adminProfileImage == null
+                                      ? null
+                                      : DecorationImage(
+                                          image: File(adminProfileImage!)
+                                                  .existsSync()
+                                              ? FileImage(
+                                                  File(adminProfileImage!),
+                                                )
+                                              : AssetImage(
+                                                  Assets.images.noImage.path,
+                                                ),
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.yellow.shade800,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      width: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit,
                                     color: Colors.white,
+                                    size: 15,
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.edit,
-                                  color: Colors.white,
-                                  size: 15,
-                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

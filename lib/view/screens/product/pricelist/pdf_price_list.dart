@@ -19,10 +19,136 @@ class PdfPriceListView extends StatefulWidget {
 }
 
 class _PdfPriceListViewState extends State<PdfPriceListView> {
-  Uint8List? data;
-  List<CategoryDataModel> categoryList = [];
-  List<ProductDataModel> productDataList = [];
-  List<PricelistCategoryDataModel> priceList = [];
+  @override
+  void initState() {
+    super.initState();
+    priceListHanler = getCurrentPriceList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: appbar(),
+        backgroundColor: const Color(0xffEEEEEE),
+        body: body());
+  }
+
+  FutureBuilder<dynamic> body() {
+    return FutureBuilder(
+      future: priceListHanler,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (data != null) {
+            return SfPdfViewer.memory(
+              data!,
+            );
+          } else {
+            return const SizedBox();
+          }
+        } else if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasError) {
+          return errorDisplay(snapshot);
+        } else {
+          return futureLoading(context);
+        }
+      },
+    );
+  }
+
+  Center errorDisplay(AsyncSnapshot<dynamic> snapshot) {
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Center(
+              child: Text(
+                "Failed",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 15,
+            ),
+            Text(
+              snapshot.error.toString() == "null"
+                  ? "Something went Wrong"
+                  : snapshot.error.toString(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+              ),
+            ),
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    priceListHanler = getCurrentPriceList();
+                  });
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text(
+                  "Refresh",
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  AppBar appbar() {
+    return AppBar(
+      title: const Text("Price List"),
+      actions: [
+        TextButton.icon(
+          style: TextButton.styleFrom(
+            iconColor: Colors.white,
+          ),
+          onPressed: () {
+            sharePDF();
+          },
+          icon: const Icon(
+            Icons.share,
+          ),
+          label: const Text(
+            "Share",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        IconButton(
+          onPressed: () {
+            downloadPriceList();
+          },
+          icon: const Icon(
+            Icons.file_download_outlined,
+          ),
+        ),
+        IconButton(
+          onPressed: () {
+            // getpriceListPdf();
+            printPriceList();
+          },
+          icon: const Icon(
+            Icons.print,
+          ),
+        ),
+      ],
+    );
+  }
 
   getpriceListPdf({required String cid}) async {
     await FireStoreProvider()
@@ -225,124 +351,8 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
   }
 
   late Future priceListHanler;
-
-  @override
-  void initState() {
-    super.initState();
-
-    priceListHanler = getCurrentPriceList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Price List"),
-          actions: [
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                iconColor: Colors.white,
-              ),
-              onPressed: () {
-                sharePDF();
-              },
-              icon: const Icon(
-                Icons.share,
-              ),
-              label: const Text(
-                "Share",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                downloadPriceList();
-              },
-              icon: const Icon(
-                Icons.file_download_outlined,
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                // getpriceListPdf();
-                printPriceList();
-              },
-              icon: const Icon(
-                Icons.print,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xffEEEEEE),
-        body: FutureBuilder(
-          future: priceListHanler,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (data != null) {
-                return SfPdfViewer.memory(
-                  data!,
-                );
-              } else {
-                return const SizedBox();
-              }
-            } else if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasError) {
-              return Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  margin: const EdgeInsets.all(20),
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Center(
-                        child: Text(
-                          "Failed",
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 15,
-                      ),
-                      Text(
-                        snapshot.error.toString() == "null"
-                            ? "Something went Wrong"
-                            : snapshot.error.toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Center(
-                        child: TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              priceListHanler = getCurrentPriceList();
-                            });
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text(
-                            "Refresh",
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            } else {
-              return futureLoading(context);
-            }
-          },
-        ));
-  }
+  Uint8List? data;
+  List<CategoryDataModel> categoryList = [];
+  List<ProductDataModel> productDataList = [];
+  List<PricelistCategoryDataModel> priceList = [];
 }

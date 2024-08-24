@@ -1,8 +1,10 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import '../../../gen/assets.gen.dart';
 import '../../../model/model.dart';
 import '../../../services/firebase/firestore_provider.dart';
 import '../../../provider/page_provider.dart';
@@ -763,15 +765,21 @@ class _BillingTwoState extends State<BillingTwo> {
                                     decoration: BoxDecoration(
                                       color: Colors.grey.shade300,
                                       borderRadius: BorderRadius.circular(5),
-                                      image: tmpProductDetails.productImg !=
-                                              null
-                                          ? DecorationImage(
-                                              image: NetworkImage(
-                                                tmpProductDetails.productImg!,
-                                              ),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
+                                      image:
+                                          tmpProductDetails.productImg != null
+                                              ? DecorationImage(
+                                                  image: File(tmpProductDetails
+                                                              .productImg!)
+                                                          .existsSync()
+                                                      ? FileImage(
+                                                          File(tmpProductDetails
+                                                              .productImg!),
+                                                        )
+                                                      : AssetImage(Assets
+                                                          .images.noImage.path),
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
                                     ),
                                   ),
                                 ),

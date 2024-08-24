@@ -1,7 +1,9 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
 import 'package:sri_kot/model/model.dart';
 import '/services/firebase/firestore_provider.dart';
@@ -10,6 +12,7 @@ import '../../ui/commonwidget.dart';
 import '/provider/localdb.dart';
 import '/utils/varibales.dart';
 import '../homelanding.dart';
+import 'package:path/path.dart' as path;
 
 PageController userListingcontroller = PageController();
 
@@ -41,7 +44,15 @@ class _UserListingState extends State<UserListing> {
             model.phoneNo = element["phone_no"].toString();
             model.adminLoginId = element["user_login_id"].toString();
             model.password = element["password"].toString();
-            model.imageUrl = element["image_url"];
+            // model.imageUrl = element["image_url"];
+
+            var directory = await getApplicationDocumentsDirectory();
+            model.imageUrl = path.join(
+              directory.path,
+              'user',
+              element.id,
+            );
+
             model.docid = element.id;
             model.uid = element["uid"].toString();
             setState(() {
@@ -162,16 +173,18 @@ class _UserListingState extends State<UserListing> {
                                         decoration: BoxDecoration(
                                           color: Colors.grey.shade300,
                                           shape: BoxShape.circle,
-                                          image: userListData[index].imageUrl ==
-                                                  null
-                                              ? null
-                                              : DecorationImage(
-                                                  image: NetworkImage(
-                                                    userListData[index]
-                                                        .imageUrl!,
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                ),
+                                          image: DecorationImage(
+                                            image: File(userListData[index]
+                                                        .imageUrl!)
+                                                    .existsSync()
+                                                ? FileImage(
+                                                    File(userListData[index]
+                                                        .imageUrl!),
+                                                  )
+                                                : AssetImage(
+                                                    Assets.images.noImage.path),
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
                                       ),
                                       title: Text(
