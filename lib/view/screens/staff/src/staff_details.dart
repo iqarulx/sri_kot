@@ -18,206 +18,6 @@ class StaffDetails extends StatefulWidget {
 }
 
 class _StaffDetailsState extends State<StaffDetails> {
-  TextEditingController fullName = TextEditingController();
-  TextEditingController phoneNO = TextEditingController();
-  TextEditingController userID = TextEditingController();
-  TextEditingController password = TextEditingController();
-  String? companyID;
-
-  var staffKey = GlobalKey<FormState>();
-
-  bool product = false;
-  bool category = false;
-  bool customer = false;
-  bool orders = false;
-  bool estimate = false;
-  bool billofsupply = false;
-  File? profileImage;
-
-  String? permissionError;
-  initFn() {
-    setState(() {
-      fullName.text = crtStaffData!.userName ?? "";
-      phoneNO.text = crtStaffData!.phoneNo ?? "";
-      List<String> data = crtStaffData!.userid!.split('@');
-      companyID = data[1];
-      adminuserid.text = data[0];
-      userID.text = data[0];
-      password.text = crtStaffData!.password ?? "";
-      product = crtStaffData!.permission!.product!;
-      category = crtStaffData!.permission!.category!;
-      customer = crtStaffData!.permission!.customer!;
-      orders = crtStaffData!.permission!.orders!;
-      estimate = crtStaffData!.permission!.estimate!;
-      billofsupply = crtStaffData!.permission!.billofsupply!;
-    });
-  }
-
-  accessAlertBox() async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AddPermission(
-          product: product,
-          category: category,
-          customer: customer,
-          orders: orders,
-          estimate: estimate,
-          billofsupply: billofsupply,
-        );
-      },
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          product = value["product"];
-          category = value["category"];
-          customer = value["customer"];
-          orders = value["orders"];
-          estimate = value["estimate"];
-          billofsupply = value["billofsupply"];
-        });
-      }
-    });
-  }
-
-  updateStaff() async {
-    loading(context);
-    FocusManager.instance.primaryFocus!.unfocus();
-    try {
-      if (staffKey.currentState!.validate()) {
-        if (!product && !category && !customer && !orders && !estimate) {
-          Navigator.pop(context);
-          setState(() {
-            permissionError = "Permission is Must";
-          });
-          snackBarCustom(context, false, "Permission is Must");
-        } else {
-          await LocalDbProvider()
-              .fetchInfo(type: LocalData.companyid)
-              .then((cid) async {
-            if (cid != null) {
-              StaffDataModel model = StaffDataModel();
-              model.userName = fullName.text;
-              model.phoneNo = phoneNO.text;
-              model.userid = "${userID.text}@$companyID";
-              model.password = password.text;
-              StaffPermissionModel permissionModel = StaffPermissionModel();
-              permissionModel.product = product;
-              permissionModel.category = category;
-              permissionModel.customer = customer;
-              permissionModel.orders = orders;
-              permissionModel.estimate = estimate;
-              permissionModel.billofsupply = billofsupply;
-
-              model.permission = permissionModel;
-              await FireStoreProvider()
-                  .checkStaffAlreadyExiest(loginID: model.userid!)
-                  .then((staffCheck) async {
-                if (staffCheck != null) {
-                  if (staffCheck.docs.isEmpty) {
-                    await FireStoreProvider()
-                        .updateStaff(
-                            staffData: model, docID: crtStaffData!.docID!)
-                        .then((value) {
-                      Navigator.pop(context);
-                      snackBarCustom(
-                          context, true, "Successfully Update Staff");
-                    });
-                  } else if (staffCheck.docs.isNotEmpty &&
-                      staffCheck.docs.first.id == crtStaffData!.docID) {
-                    await FireStoreProvider()
-                        .updateStaff(
-                            staffData: model, docID: crtStaffData!.docID!)
-                        .then((value) {
-                      Navigator.pop(context);
-                      snackBarCustom(
-                          context, true, "Successfully Update Staff");
-                    });
-                  } else {
-                    Navigator.pop(context);
-                    snackBarCustom(
-                        context, false, "Staff Login ID Already Exists");
-                  }
-                } else {
-                  Navigator.pop(context);
-                }
-              });
-            } else {
-              Navigator.pop(context);
-              snackBarCustom(context, false, "Company Details Not Fetch");
-            }
-          });
-        }
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  updateStaffImage(File profileImage) async {
-    loading(context);
-    try {
-      var downloadLink = await FireStorageProvider().uploadImage(
-        fileData: profileImage,
-        fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-        filePath: 'staff',
-      );
-      StaffDataModel model = StaffDataModel();
-      model.profileImg = downloadLink;
-      await FireStoreProvider()
-          .updateProfileStaff(staffData: model, docID: crtStaffData!.docID!)
-          .then((value) async {
-        await FireStorageProvider()
-            .saveLocal(
-          fileData: profileImage,
-          id: crtStaffData!.docID!,
-          folder: "staff",
-        )
-            .then((value) {
-          setState(() {
-            crtStaffData!.profileImg = downloadLink;
-          });
-
-          Navigator.pop(context);
-          snackBarCustom(context, true, "Successfully Update Staff");
-        });
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  deleteStaff() async {
-    try {
-      loading(context);
-      await FireStoreProvider()
-          .deleteStaff(docID: crtStaffData!.docID!)
-          .then((value) {
-        Navigator.pop(context);
-        setState(() {
-          staffListingcontroller.animateToPage(
-            0,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeIn,
-          );
-          staffListingPageProvider.toggletab(true);
-        });
-        snackBarCustom(context, true, "Successfully Deleted");
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    initFn();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -673,4 +473,202 @@ class _StaffDetailsState extends State<StaffDetails> {
       ),
     );
   }
+
+  initFn() {
+    setState(() {
+      fullName.text = crtStaffData!.userName ?? "";
+      phoneNO.text = crtStaffData!.phoneNo ?? "";
+      List<String> data = crtStaffData!.userid!.split('@');
+      companyID = data[1];
+      adminuserid.text = data[0];
+      userID.text = data[0];
+      password.text = crtStaffData!.password ?? "";
+      product = crtStaffData!.permission!.product!;
+      category = crtStaffData!.permission!.category!;
+      customer = crtStaffData!.permission!.customer!;
+      orders = crtStaffData!.permission!.orders!;
+      estimate = crtStaffData!.permission!.estimate!;
+      billofsupply = crtStaffData!.permission!.billofsupply!;
+    });
+  }
+
+  accessAlertBox() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AddPermission(
+          product: product,
+          category: category,
+          customer: customer,
+          orders: orders,
+          estimate: estimate,
+          billofsupply: billofsupply,
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          product = value["product"];
+          category = value["category"];
+          customer = value["customer"];
+          orders = value["orders"];
+          estimate = value["estimate"];
+          billofsupply = value["billofsupply"];
+        });
+      }
+    });
+  }
+
+  updateStaff() async {
+    loading(context);
+    FocusManager.instance.primaryFocus!.unfocus();
+    try {
+      if (staffKey.currentState!.validate()) {
+        if (!product && !category && !customer && !orders && !estimate) {
+          Navigator.pop(context);
+          setState(() {
+            permissionError = "Permission is Must";
+          });
+          snackBarCustom(context, false, "Permission is Must");
+        } else {
+          await LocalDbProvider()
+              .fetchInfo(type: LocalData.companyid)
+              .then((cid) async {
+            if (cid != null) {
+              StaffDataModel model = StaffDataModel();
+              model.userName = fullName.text;
+              model.phoneNo = phoneNO.text;
+              model.userid = "${userID.text}@$companyID";
+              model.password = password.text;
+              StaffPermissionModel permissionModel = StaffPermissionModel();
+              permissionModel.product = product;
+              permissionModel.category = category;
+              permissionModel.customer = customer;
+              permissionModel.orders = orders;
+              permissionModel.estimate = estimate;
+              permissionModel.billofsupply = billofsupply;
+
+              model.permission = permissionModel;
+              await FireStoreProvider()
+                  .checkStaffAlreadyExiest(loginID: model.userid!)
+                  .then((staffCheck) async {
+                if (staffCheck != null) {
+                  if (staffCheck.docs.isEmpty) {
+                    await FireStoreProvider()
+                        .updateStaff(
+                            staffData: model, docID: crtStaffData!.docID!)
+                        .then((value) {
+                      Navigator.pop(context);
+                      snackBarCustom(
+                          context, true, "Successfully Update Staff");
+                    });
+                  } else if (staffCheck.docs.isNotEmpty &&
+                      staffCheck.docs.first.id == crtStaffData!.docID) {
+                    await FireStoreProvider()
+                        .updateStaff(
+                            staffData: model, docID: crtStaffData!.docID!)
+                        .then((value) {
+                      Navigator.pop(context);
+                      snackBarCustom(
+                          context, true, "Successfully Update Staff");
+                    });
+                  } else {
+                    Navigator.pop(context);
+                    snackBarCustom(
+                        context, false, "Staff Login ID Already Exists");
+                  }
+                } else {
+                  Navigator.pop(context);
+                }
+              });
+            } else {
+              Navigator.pop(context);
+              snackBarCustom(context, false, "Company Details Not Fetch");
+            }
+          });
+        }
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  updateStaffImage(File profileImage) async {
+    loading(context);
+    try {
+      var downloadLink = await FireStorageProvider().uploadImage(
+        fileData: profileImage,
+        fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+        filePath: 'staff',
+      );
+      StaffDataModel model = StaffDataModel();
+      model.profileImg = downloadLink;
+      await FireStoreProvider()
+          .updateProfileStaff(staffData: model, docID: crtStaffData!.docID!)
+          .then((value) async {
+        await FireStorageProvider()
+            .saveLocal(
+          fileData: profileImage,
+          id: crtStaffData!.docID!,
+          folder: "staff",
+        )
+            .then((value) {
+          setState(() {
+            crtStaffData!.profileImg = downloadLink;
+          });
+
+          Navigator.pop(context);
+          snackBarCustom(context, true, "Successfully Update Staff");
+        });
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  deleteStaff() async {
+    try {
+      loading(context);
+      await FireStoreProvider()
+          .deleteStaff(docID: crtStaffData!.docID!)
+          .then((value) {
+        Navigator.pop(context);
+        setState(() {
+          staffListingcontroller.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeIn,
+          );
+          staffListingPageProvider.toggletab(true);
+        });
+        snackBarCustom(context, true, "Successfully Deleted");
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initFn();
+  }
+
+  TextEditingController fullName = TextEditingController();
+  TextEditingController phoneNO = TextEditingController();
+  TextEditingController userID = TextEditingController();
+  TextEditingController password = TextEditingController();
+  String? companyID;
+  var staffKey = GlobalKey<FormState>();
+  bool product = false;
+  bool category = false;
+  bool customer = false;
+  bool orders = false;
+  bool estimate = false;
+  bool billofsupply = false;
+  File? profileImage;
+  String? permissionError;
 }

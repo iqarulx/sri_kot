@@ -1,11 +1,10 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../../constants/enum.dart';
+import '/constants/enum.dart';
 import '/model/model.dart';
-import '../../provider/src/logger.dart';
-import '../../utils/src/utilities.dart';
+import '/provider/src/logger.dart';
+import '/utils/src/utilities.dart';
 
 final _instances = FirebaseFirestore.instance;
 
@@ -912,21 +911,6 @@ class FireStoreProvider {
     }
   }
 
-  Future _insertEnquryProduct({
-    required List<CartDataModel> productList,
-    required String docID,
-  }) async {
-    try {
-      for (var product in productList) {
-        await _enquiry.doc(docID).collection('products').add(
-              product.toMap(),
-            );
-      }
-    } catch (e) {
-      throw e.toString();
-    }
-  }
-
   Future<AggregateQuerySnapshot?> _getLastId({required String cid}) async {
     AggregateQuerySnapshot? resultData;
     try {
@@ -1022,7 +1006,7 @@ class FireStoreProvider {
     }
   }
 
-  Future<DocumentReference?> createNewOrder({
+  Future<DocumentReference?> createnewEnquiry({
     required List<CartDataModel> productList,
     CustomerDataModel? customerInfo,
     required BillingCalCulationModel calCulation,
@@ -1041,7 +1025,7 @@ class FireStoreProvider {
       };
       resultDocument = await _enquiry.add(data);
       if (resultDocument.id.isNotEmpty) {
-        await _insertEnquryProduct(
+        await _insertEnquiryProduct(
           productList: productList,
           docID: resultDocument.id,
         );
@@ -1050,6 +1034,21 @@ class FireStoreProvider {
       throw e.toString();
     }
     return resultDocument;
+  }
+
+  Future _insertEnquiryProduct({
+    required List<CartDataModel> productList,
+    required String docID,
+  }) async {
+    try {
+      for (var product in productList) {
+        await _enquiry.doc(docID).collection('products').add(
+              product.toMap(),
+            );
+      }
+    } catch (e) {
+      throw e.toString();
+    }
   }
 
   Future<QuerySnapshot?> getEnquiry({required String cid}) async {

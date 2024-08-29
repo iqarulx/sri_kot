@@ -620,11 +620,9 @@ class _BillingTwoState extends State<BillingTwo> {
         elevation: 0,
         leading: widget.isEdit == null || widget.isEdit == false
             ? IconButton(
-                splashRadius: 20,
-                onPressed: () {
-                  homeKey.currentState!.openDrawer();
-                },
-                icon: const Icon(Icons.menu),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
               )
             : null,
         title: const Text("Billing"),

@@ -12,7 +12,20 @@
           "package_name": "com.srisoftwarez.sri_kot"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "565962941142-dtaah0ssqufru4p4t2n0loao6hcd2r5f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.srisoftwarez.sri_kot",
+            "certificate_hash": "0bba845824adca6f7dd79c2d19d827b3c6637773"
+          }
+        },
+        {
+          "client_id": "565962941142-r5oaouibhnmag39rr2bo9h4t456eo4rt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB3fDYP_rqEd00w2g5KYFi2PvqKlu_C7i8"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "565962941142-r5oaouibhnmag39rr2bo9h4t456eo4rt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "565962941142-f0p2sldc374ujvr5g9vrdjj3bunbi495.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.srisoftwarez.sriKot"
+              }
+            }
+          ]
         }
       }
     }

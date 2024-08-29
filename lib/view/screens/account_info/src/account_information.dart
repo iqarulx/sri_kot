@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '/view/screens/screens.dart';
 
 class AccountInformation extends StatefulWidget {
   const AccountInformation({super.key});
@@ -14,11 +13,9 @@ class _AccountInformationState extends State<AccountInformation> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Account Information"),
       ),

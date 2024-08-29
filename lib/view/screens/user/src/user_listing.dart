@@ -1,10 +1,8 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-
 import '/constants/enum.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
@@ -23,74 +21,32 @@ class UserListing extends StatefulWidget {
 }
 
 class _UserListingState extends State<UserListing> {
-  List<UserAdminModel> userListData = [];
-  late Future userlistingHandler;
-  Future getUserInfo() async {
-    try {
-      FireStoreProvider provider = FireStoreProvider();
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
-      if (cid != null) {
-        final result = await provider.userListing(cid: cid);
-        if (result!.docs.isNotEmpty) {
-          setState(() {
-            userListData.clear();
-          });
-          for (var element in result.docs) {
-            var model = UserAdminModel();
-            model.adminName = element["admin_name"].toString();
-            model.phoneNo = element["phone_no"].toString();
-            model.adminLoginId = element["user_login_id"].toString();
-            model.password = element["password"].toString();
-            // model.imageUrl = element["image_url"];
-
-            var directory = await getApplicationDocumentsDirectory();
-            model.imageUrl = path.join(
-              directory.path,
-              'user',
-              element.id,
-            );
-
-            model.docid = element.id;
-            model.uid = element["uid"].toString();
-            setState(() {
-              userListData.add(model);
-            });
-          }
-          return userListData;
-        }
-      }
-      return null;
-    } catch (e) {
-      throw e.toString();
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    userlistingHandler = getUserInfo();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Users"),
         actions: [
           IconButton(
             onPressed: () async {
-              await openModelBottomSheat(context).then((result) {
-                if (result != null && result == true) {
-                  setState(() {
-                    userlistingHandler = getUserInfo();
+              await LocalService.checkCount(type: ProfileType.admin)
+                  .then((value) async {
+                if (value) {
+                  await openModelBottomSheat(context).then((result) {
+                    if (result != null && result == true) {
+                      setState(() {
+                        userlistingHandler = getUserInfo();
+                      });
+                    }
                   });
+                } else {
+                  snackBarCustom(context, false, "Reached max user count");
                 }
               });
             },
@@ -340,4 +296,53 @@ class _UserListingState extends State<UserListing> {
       ),
     );
   }
+
+  Future getUserInfo() async {
+    try {
+      FireStoreProvider provider = FireStoreProvider();
+      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      if (cid != null) {
+        final result = await provider.userListing(cid: cid);
+        if (result!.docs.isNotEmpty) {
+          setState(() {
+            userListData.clear();
+          });
+          for (var element in result.docs) {
+            var model = UserAdminModel();
+            model.adminName = element["admin_name"].toString();
+            model.phoneNo = element["phone_no"].toString();
+            model.adminLoginId = element["user_login_id"].toString();
+            model.password = element["password"].toString();
+            // model.imageUrl = element["image_url"];
+
+            var directory = await getApplicationDocumentsDirectory();
+            model.imageUrl = path.join(
+              directory.path,
+              'user',
+              element.id,
+            );
+
+            model.docid = element.id;
+            model.uid = element["uid"].toString();
+            setState(() {
+              userListData.add(model);
+            });
+          }
+          return userListData;
+        }
+      }
+      return null;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    userlistingHandler = getUserInfo();
+  }
+
+  List<UserAdminModel> userListData = [];
+  late Future userlistingHandler;
 }

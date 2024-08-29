@@ -5,16 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-
+import '../../../in_app_purchase/subscription_page.dart';
 import '/gen/assets.gen.dart';
-import '/provider/provider.dart';
 import '/services/services.dart';
 import '/view/auth/src/auth.dart';
 import '/view/screens/screens.dart';
 import '/view/ui/ui.dart';
 import '/constants/enum.dart';
-
-SideBarEvent sidebar = SideBarEvent();
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -104,15 +101,8 @@ class _SideBarState extends State<SideBar> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    sidebar.addListener(changeEvent);
-  }
-
-  @override
   void initState() {
     super.initState();
-    sidebar.addListener(changeEvent);
     getinfo();
   }
 
@@ -216,12 +206,12 @@ class _SideBarState extends State<SideBar> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     menuTitle(data: "General"),
-                    menuView(
-                      context,
-                      icon: Icons.category,
-                      lable: "Dashboard",
-                      index: 0,
-                    ),
+                    // menuView(
+                    //   context,
+                    //   icon: Icons.category,
+                    //   lable: "Dashboard",
+                    //   index: 0,
+                    // ),
                     isAdmin != null && isAdmin == true
                         ? menuView(
                             context,
@@ -255,7 +245,6 @@ class _SideBarState extends State<SideBar> {
                             index: 4,
                             leadingIcon: Icons.add,
                             leadingFun: () {
-                              sidebar.toggletab(4);
                               Navigator.pop(context);
                               Navigator.push(
                                 context,
@@ -279,7 +268,7 @@ class _SideBarState extends State<SideBar> {
                             context,
                             icon: Icons.sell,
                             lable: "Category",
-                            index: 6,
+                            index: 5,
                           )
                         : const SizedBox(),
                     prProduct != null && prProduct == true
@@ -287,12 +276,9 @@ class _SideBarState extends State<SideBar> {
                             context,
                             icon: Icons.style,
                             lable: "Product",
-                            index: 5,
+                            index: 6,
                             leadingIcon: Icons.add,
                             leadingFun: () {
-                              setState(() {
-                                sidebar.toggletab(5);
-                              });
                               Navigator.pop(context);
                               Navigator.push(
                                 context,
@@ -311,7 +297,7 @@ class _SideBarState extends State<SideBar> {
                             context,
                             icon: Icons.percent,
                             lable: "Discount",
-                            index: 14,
+                            index: 7,
                           )
                         : const SizedBox(),
                     // multimenuuiDesign(
@@ -343,7 +329,7 @@ class _SideBarState extends State<SideBar> {
                             context,
                             icon: Icons.calculate,
                             lable: "Quick Billing",
-                            index: bilingTab == 1 ? 7 : 8,
+                            index: 8,
                           )
                         : const SizedBox(),
                     prOrder != null && prOrder == true
@@ -367,7 +353,7 @@ class _SideBarState extends State<SideBar> {
                             context,
                             icon: Icons.article,
                             lable: "Bill of Supply",
-                            index: 13,
+                            index: 11,
                           )
                         : const SizedBox(),
 
@@ -393,7 +379,14 @@ class _SideBarState extends State<SideBar> {
                             index: 12,
                           )
                         : const SizedBox(),
-
+                    isAdmin != null && isAdmin == true
+                        ? menuView(
+                            context,
+                            icon: Icons.people,
+                            lable: "Plans",
+                            index: 13,
+                          )
+                        : const SizedBox(),
                     // isAdmin != null && isAdmin == true
                     //     ? Column(
                     //         children: [
@@ -584,188 +577,6 @@ class _SideBarState extends State<SideBar> {
     );
   }
 
-  // getcrtTabindex<int>(List<SideMultiMenuList> listData) {
-  //   return listData.indexWhere((element) => element.index == crttab);
-  // }
-
-  // selectMenu(int index) async {
-  //   if (crtpage == 7 || crtpage == 10) {
-  //     if (crtpage == 7 && cartdata.isNotEmpty) {
-  //       var data = await confirmationAlertbox(
-  //         context,
-  //         "Waring",
-  //         "Do you Confirm to exit this page and clear the Cart?",
-  //       );
-
-  //       if (data != null && data == true) {
-  //         setState(() {
-  //           crtpage = index;
-  //           action.toggletab(index);
-  //           Navigator.pop(context);
-  //         });
-  //       }
-  //     } else if (crtpage == 10 && getcountcart() > 0) {
-  //       var data = await confirmationAlertbox(
-  //         context,
-  //         "Waring",
-  //         "Do you Confirm to exit this page and clear the Cart?",
-  //       );
-
-  //       if (data != null && data == true) {
-  //         setState(() {
-  //           crttab = index;
-  //           action.toggletab(index);
-  //           Navigator.pop(context);
-  //         });
-  //       }
-  //     } else {
-  //       setState(() {
-  //         isopen = true;
-  //         crtpage = index;
-  //         action.toggletab(index);
-  //         Navigator.pop(context);
-  //       });
-  //     }
-  //   } else {
-  //     setState(() {
-  //       crtpage = index;
-  //       action.toggletab(index);
-  //       Navigator.pop(context);
-  //     });
-  //   }
-  // }
-
-  // multimenuuiDesign({
-  //   required String title,
-  //   required IconData icon,
-  //   required List<SideMultiMenuList> listData,
-  // }) {
-  //   return ClipRRect(
-  //     borderRadius: BorderRadius.circular(5),
-  //     child: ExpansionPanelList(
-  //       expandedHeaderPadding: const EdgeInsets.all(0),
-  //       elevation: 0,
-  //       expansionCallback: (panelIndex, isExpanded) {
-  //         setState(() {
-  //           switch (panelIndex) {
-  //             case 0:
-  //               isopen = isExpanded ? false : true;
-  //               break;
-  //             default:
-  //           }
-  //         });
-  //       },
-  //       children: [
-  //         ExpansionPanel(
-  //           backgroundColor: Colors.transparent,
-  //           canTapOnHeader: true,
-  //           isExpanded: isopen,
-  //           headerBuilder: (context, isExpanded) {
-  //             return Padding(
-  //               padding: const EdgeInsets.only(left: 10),
-  //               child: Row(
-  //                 children: [
-  //                   SizedBox(
-  //                     height: 30,
-  //                     width: 30,
-  //                     child: Icon(
-  //                       icon,
-  //                       size: 19,
-  //                       color: getcrtTabindex(listData) > -1
-  //                           ? Theme.of(context).primaryColor
-  //                           : const Color(0xff1E232C),
-  //                     ),
-  //                   ),
-  //                   const SizedBox(
-  //                     width: 10,
-  //                   ),
-  //                   Expanded(
-  //                     child: Text(
-  //                       title,
-  //                       style: TextStyle(
-  //                         color: getcrtTabindex(listData) > -1
-  //                             ? Theme.of(context).primaryColor
-  //                             : const Color(0xff1E232C),
-  //                         fontSize: 15,
-  //                         fontWeight: FontWeight.w500,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             );
-  //           },
-  //           body: SizedBox(
-  //             child: Column(
-  //               children: [
-  //                 for (var tabs in listData)
-  //                   InkWell(
-  //                     onTap: () {
-  //                       // selectMenu(tabs.index);
-
-  //                       setState(() {
-  //                         crttab = tabs.index;
-  //                       });
-  //                     },
-  //                     borderRadius: BorderRadius.circular(8),
-  //                     hoverColor: crttab == tabs.index
-  //                         ? Colors.transparent
-  //                         : Colors.grey.shade200,
-  //                     child: Container(
-  //                       margin: const EdgeInsets.only(
-  //                         top: 5,
-  //                         left: 10,
-  //                         right: 10,
-  //                       ),
-  //                       padding: const EdgeInsets.all(10),
-  //                       decoration: BoxDecoration(
-  //                         // color:crtpage == index ? const Color(0xfffee6e9) : Colors.transparent,
-  //                         color: crttab == tabs.index
-  //                             ? Theme.of(context).primaryColor.withOpacity(0.15)
-  //                             : Colors.transparent,
-  //                         borderRadius: BorderRadius.circular(8),
-  //                       ),
-  //                       child: Row(
-  //                         children: [
-  //                           SizedBox(
-  //                             height: 25,
-  //                             width: 25,
-  //                             child: Icon(
-  //                               tabs.icon,
-  //                               size: 19,
-  //                               color: crttab == tabs.index
-  //                                   ? Theme.of(context).primaryColor
-  //                                   : const Color(0xff1E232C),
-  //                             ),
-  //                           ),
-  //                           const SizedBox(
-  //                             width: 10,
-  //                           ),
-  //                           Expanded(
-  //                             child: Text(
-  //                               tabs.title,
-  //                               style: TextStyle(
-  //                                 color: crttab == tabs.index
-  //                                     ? Theme.of(context).primaryColor
-  //                                     : const Color(0xff1E232C),
-  //                                 fontSize: 15,
-  //                                 fontWeight: FontWeight.w500,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                   ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget menuView(
     context, {
     required IconData icon,
@@ -774,22 +585,62 @@ class _SideBarState extends State<SideBar> {
     IconData? leadingIcon,
     Function()? leadingFun,
   }) {
+    Widget route = const UserHome();
+
+    switch (index) {
+      case 0:
+        route = const UserHome();
+      case 1:
+        route = const UserListing();
+      case 2:
+        route = const CompanyListing();
+      case 3:
+        route = const StaffListing();
+      case 4:
+        route = const CustomerListing();
+      case 5:
+        route = const CategoryListing();
+      case 6:
+        route = const ProductListing();
+      case 7:
+        route = const CategoryDiscountView();
+      case 8:
+        bilingTab == 1
+            ? route = const BillingOne()
+            : route = const BillingTwo();
+      case 9:
+        route = const EnquiryListing();
+      case 10:
+        route = const EstimateListing();
+      case 11:
+        route = const InvoiceListing();
+      case 12:
+        route = const AppSettings();
+      case 13:
+        route = const SubscriptionPage();
+      default:
+        route = const UserHome();
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
         onTap: () {
-          setState(() {
-            sidebar.toggletab(index);
-            homeKey.currentState!.closeDrawer();
-          });
+          // setState(() {
+          //   homeKey.currentState!.closeDrawer();
+          // });
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => route,
+            ),
+          );
         },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
-            color: sidebar.crttab == index
-                ? Theme.of(context).primaryColor.withOpacity(0.15)
-                : Colors.transparent,
+            // color: Theme.of(context).primaryColor.withOpacity(0.15),
           ),
           child: Row(
             children: [
@@ -799,9 +650,7 @@ class _SideBarState extends State<SideBar> {
                 child: Center(
                   child: Icon(
                     icon,
-                    color: sidebar.crttab == index
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade800,
+                    color: Theme.of(context).primaryColor,
                     size: 18,
                   ),
                 ),
@@ -812,9 +661,7 @@ class _SideBarState extends State<SideBar> {
               Text(
                 lable,
                 style: TextStyle(
-                  color: sidebar.crttab == index
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade800,
+                  color: Theme.of(context).primaryColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -838,3 +685,190 @@ class _SideBarState extends State<SideBar> {
     );
   }
 }
+
+
+
+/*
+  getcrtTabindex<int>(List<SideMultiMenuList> listData) {
+    return listData.indexWhere((element) => element.index == crttab);
+  }
+
+  selectMenu(int index) async {
+    if (crtpage == 7 || crtpage == 10) {
+      if (crtpage == 7 && cartdata.isNotEmpty) {
+        var data = await confirmationAlertbox(
+          context,
+          "Waring",
+          "Do you Confirm to exit this page and clear the Cart?",
+        );
+
+        if (data != null && data == true) {
+          setState(() {
+            crtpage = index;
+            action.toggletab(index);
+            Navigator.pop(context);
+          });
+        }
+      } else if (crtpage == 10 && getcountcart() > 0) {
+        var data = await confirmationAlertbox(
+          context,
+          "Waring",
+          "Do you Confirm to exit this page and clear the Cart?",
+        );
+
+        if (data != null && data == true) {
+          setState(() {
+            crttab = index;
+            action.toggletab(index);
+            Navigator.pop(context);
+          });
+        }
+      } else {
+        setState(() {
+          isopen = true;
+          crtpage = index;
+          action.toggletab(index);
+          Navigator.pop(context);
+        });
+      }
+    } else {
+      setState(() {
+        crtpage = index;
+        action.toggletab(index);
+        Navigator.pop(context);
+      });
+    }
+  }
+
+  multimenuuiDesign({
+    required String title,
+    required IconData icon,
+    required List<SideMultiMenuList> listData,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(5),
+      child: ExpansionPanelList(
+        expandedHeaderPadding: const EdgeInsets.all(0),
+        elevation: 0,
+        expansionCallback: (panelIndex, isExpanded) {
+          setState(() {
+            switch (panelIndex) {
+              case 0:
+                isopen = isExpanded ? false : true;
+                break;
+              default:
+            }
+          });
+        },
+        children: [
+          ExpansionPanel(
+            backgroundColor: Colors.transparent,
+            canTapOnHeader: true,
+            isExpanded: isopen,
+            headerBuilder: (context, isExpanded) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      height: 30,
+                      width: 30,
+                      child: Icon(
+                        icon,
+                        size: 19,
+                        color: getcrtTabindex(listData) > -1
+                            ? Theme.of(context).primaryColor
+                            : const Color(0xff1E232C),
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: getcrtTabindex(listData) > -1
+                              ? Theme.of(context).primaryColor
+                              : const Color(0xff1E232C),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            body: SizedBox(
+              child: Column(
+                children: [
+                  for (var tabs in listData)
+                    InkWell(
+                      onTap: () {
+                        // selectMenu(tabs.index);
+
+                        setState(() {
+                          crttab = tabs.index;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      hoverColor: crttab == tabs.index
+                          ? Colors.transparent
+                          : Colors.grey.shade200,
+                      child: Container(
+                        margin: const EdgeInsets.only(
+                          top: 5,
+                          left: 10,
+                          right: 10,
+                        ),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          // color:crtpage == index ? const Color(0xfffee6e9) : Colors.transparent,
+                          color: crttab == tabs.index
+                              ? Theme.of(context).primaryColor.withOpacity(0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              height: 25,
+                              width: 25,
+                              child: Icon(
+                                tabs.icon,
+                                size: 19,
+                                color: crttab == tabs.index
+                                    ? Theme.of(context).primaryColor
+                                    : const Color(0xff1E232C),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            Expanded(
+                              child: Text(
+                                tabs.title,
+                                style: TextStyle(
+                                  color: crttab == tabs.index
+                                      ? Theme.of(context).primaryColor
+                                      : const Color(0xff1E232C),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+*/

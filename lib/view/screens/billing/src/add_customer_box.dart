@@ -15,116 +15,6 @@ class AddCustomerBox extends StatefulWidget {
 }
 
 class _AddCustomerBoxState extends State<AddCustomerBox> {
-  TextEditingController customerName = TextEditingController();
-  TextEditingController mobileNo = TextEditingController();
-  TextEditingController email = TextEditingController();
-  TextEditingController address = TextEditingController();
-
-  var addCustomerKey = GlobalKey<FormState>();
-
-  String? city;
-  String? state;
-  List<DropdownMenuItem<String>> stateMenuList = [];
-  List<DropdownMenuItem<String>> cityMenuList = [];
-
-  getState() {
-    setState(() {
-      stateMenuList.clear();
-    });
-    for (var element in stateMapList.keys) {
-      setState(() {
-        stateMenuList.add(
-          DropdownMenuItem(
-            value: element,
-            child: Text(
-              element.toString(),
-            ),
-          ),
-        );
-      });
-    }
-  }
-
-  getcity() {
-    if (state != null && state!.isNotEmpty) {
-      setState(() {
-        cityMenuList.clear();
-      });
-      for (var element in stateMapList[state]!) {
-        setState(() {
-          cityMenuList.add(
-            DropdownMenuItem(
-              value: element,
-              child: Text(
-                element.toString(),
-              ),
-            ),
-          );
-        });
-      }
-    }
-  }
-
-  checkValidation() async {
-    loading(context);
-    FocusManager.instance.primaryFocus!.unfocus();
-    try {
-      if (addCustomerKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
-          if (cid != null) {
-            var customerData = CustomerDataModel();
-            customerData.companyID = cid;
-            customerData.address = address.text;
-            customerData.city = city;
-            customerData.customerName = customerName.text;
-            customerData.email = email.text;
-            customerData.mobileNo = mobileNo.text;
-
-            await FireStoreProvider()
-                .registerCustomer(customerData: customerData)
-                .then((value) {
-              Navigator.pop(context);
-              if (value.id.isNotEmpty) {
-                CustomerDataModel cusdata = CustomerDataModel();
-                cusdata.companyID = cid;
-                cusdata.address = address.text;
-                cusdata.city = city;
-                cusdata.customerName = customerName.text;
-                cusdata.email = email.text;
-                cusdata.mobileNo = mobileNo.text;
-                Navigator.pop(context, cusdata);
-
-                snackBarCustom(
-                  context,
-                  true,
-                  "Successfully Created New Customer",
-                );
-              } else {
-                snackBarCustom(context, false, "Failed to Create New Customer");
-              }
-            });
-          } else {
-            Navigator.pop(context);
-            snackBarCustom(context, false, "Company Details Not Fetch");
-          }
-        });
-      } else {
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -320,4 +210,112 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
       ),
     );
   }
+
+  getState() {
+    setState(() {
+      stateMenuList.clear();
+    });
+    for (var element in stateMapList.keys) {
+      setState(() {
+        stateMenuList.add(
+          DropdownMenuItem(
+            value: element,
+            child: Text(
+              element.toString(),
+            ),
+          ),
+        );
+      });
+    }
+  }
+
+  getcity() {
+    if (state != null && state!.isNotEmpty) {
+      setState(() {
+        cityMenuList.clear();
+      });
+      for (var element in stateMapList[state]!) {
+        setState(() {
+          cityMenuList.add(
+            DropdownMenuItem(
+              value: element,
+              child: Text(
+                element.toString(),
+              ),
+            ),
+          );
+        });
+      }
+    }
+  }
+
+  checkValidation() async {
+    loading(context);
+    FocusManager.instance.primaryFocus!.unfocus();
+    try {
+      if (addCustomerKey.currentState!.validate()) {
+        await LocalDbProvider()
+            .fetchInfo(type: LocalData.companyid)
+            .then((cid) async {
+          if (cid != null) {
+            var customerData = CustomerDataModel();
+            customerData.companyID = cid;
+            customerData.address = address.text;
+            customerData.city = city;
+            customerData.customerName = customerName.text;
+            customerData.email = email.text;
+            customerData.mobileNo = mobileNo.text;
+
+            await FireStoreProvider()
+                .registerCustomer(customerData: customerData)
+                .then((value) {
+              Navigator.pop(context);
+              if (value.id.isNotEmpty) {
+                CustomerDataModel cusdata = CustomerDataModel();
+                cusdata.companyID = cid;
+                cusdata.address = address.text;
+                cusdata.city = city;
+                cusdata.customerName = customerName.text;
+                cusdata.email = email.text;
+                cusdata.mobileNo = mobileNo.text;
+                Navigator.pop(context, cusdata);
+
+                snackBarCustom(
+                  context,
+                  true,
+                  "Successfully Created New Customer",
+                );
+              } else {
+                snackBarCustom(context, false, "Failed to Create New Customer");
+              }
+            });
+          } else {
+            Navigator.pop(context);
+            snackBarCustom(context, false, "Company Details Not Fetch");
+          }
+        });
+      } else {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getState();
+  }
+
+  TextEditingController customerName = TextEditingController();
+  TextEditingController mobileNo = TextEditingController();
+  TextEditingController email = TextEditingController();
+  TextEditingController address = TextEditingController();
+  var addCustomerKey = GlobalKey<FormState>();
+  String? city;
+  String? state;
+  List<DropdownMenuItem<String>> stateMenuList = [];
+  List<DropdownMenuItem<String>> cityMenuList = [];
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sri_kot/model/model.dart';
@@ -30,674 +31,6 @@ class CartDrawer extends StatefulWidget {
 }
 
 class _CartDrawerState extends State<CartDrawer> {
-  String subTotal() {
-    String result = "0.00";
-    double tmpSubTotal = 0.00;
-    for (var element in cartDataList) {
-      tmpSubTotal += element.price! * element.qty!;
-    }
-    result = tmpSubTotal.toStringAsFixed(2);
-    return result;
-  }
-
-  String discount() {
-    String result = "0.00";
-    double tmpDiscount = 0.00;
-    for (var element in cartDataList) {
-      if (element.discountLock == false && element.discount != null) {
-        double total = element.price! * element.qty!;
-        tmpDiscount += (total * (element.discount!.toDouble() / 100));
-      }
-    }
-
-    // if (tmpSubTotal > discountInput) {
-    //   if (discountSys == "%") {
-    //     tmpDiscount = (tmpSubTotal * (discountInput / 100));
-    //   } else {
-    //     tmpDiscount = discountInput;
-    //   }
-    // }
-
-    if (tmpDiscount.isNaN) {
-      tmpDiscount = 0.00;
-    }
-
-    result = tmpDiscount.toStringAsFixed(2);
-
-    return result;
-  }
-
-  String extraDiscount() {
-    String result = "0.00";
-    double subTotalValue = double.parse(subTotal());
-    double discountValue = double.parse(discount());
-    double tmpExtraDiscount = 0.00;
-
-    if (extraDiscountSys == "%") {
-      double tmpsubtotal = (subTotalValue - discountValue);
-      tmpExtraDiscount = tmpsubtotal * (extraDiscountInput / 100);
-    } else {
-      tmpExtraDiscount = extraDiscountInput;
-    }
-
-    if (tmpExtraDiscount.isNaN) {
-      tmpExtraDiscount = 0.00;
-    }
-    result = tmpExtraDiscount.toStringAsFixed(2);
-    return result;
-  }
-
-  String packingChareges() {
-    String result = "0.00";
-    double subTotalValue = double.parse(subTotal());
-    double discountValue = double.parse(discount());
-    double extradiscountValue = double.parse(extraDiscount());
-    double tmppackingcharge = 0.00;
-
-    if (packingChargeSys == "%") {
-      double tmpsubtotal = (subTotalValue + discountValue + extradiscountValue);
-      tmppackingcharge = tmpsubtotal * (packingChargeInput / 100);
-    } else {
-      tmppackingcharge = packingChargeInput;
-    }
-
-    if (tmppackingcharge.isNaN) {
-      tmppackingcharge = 0.00;
-    }
-    result = tmppackingcharge.toStringAsFixed(2);
-    return result;
-  }
-
-  String cartTotal() {
-    String result = "0.00";
-    double subTotalValue = double.parse(subTotal());
-    double discountValue = double.parse(discount());
-    double extradiscountValue = double.parse(extraDiscount());
-    double packingChargeValue = double.parse(packingChareges());
-    double tmptotal = 0.00;
-    tmptotal = ((subTotalValue - discountValue) - extradiscountValue) +
-        packingChargeValue;
-    if (tmptotal.isNaN) {
-      tmptotal = 0.00;
-    }
-    result = tmptotal.toStringAsFixed(2);
-    return result;
-  }
-
-  Future<Map<String, int>> findBillingIndexs(int cartIndex) async {
-    int findBillingCategoryIndex = billingProductList.indexWhere(
-      (element) {
-        return element.category!.tmpcatid == cartDataList[cartIndex].categoryId;
-      },
-    );
-    if (findBillingCategoryIndex != -1) {
-      // Find Product Index
-      int findBillingProductIndex =
-          billingProductList[findBillingCategoryIndex].products!.indexWhere(
-        (element) {
-          return element.productId == cartDataList[cartIndex].productId;
-        },
-      );
-
-      if (findBillingProductIndex != -1) {
-        var result = {
-          "categoryIndex": findBillingCategoryIndex,
-          "productIndex": findBillingProductIndex,
-        };
-        return result;
-      }
-    }
-    return {
-      "categoryIndex": -1,
-      "productIndex": -1,
-    };
-  }
-
-  addQty(int cartIndex) async {
-    int findBillingCategoryIndex = -1;
-    int findBillingProductIndex = -1;
-
-    await findBillingIndexs(cartIndex).then((value) {
-      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
-      findBillingProductIndex = value["productIndex"] ?? -1;
-    });
-    if (findBillingProductIndex != -1 && findBillingCategoryIndex != -1) {
-      // ini product variable
-      var product = billingProductList[findBillingCategoryIndex]
-          .products![findBillingProductIndex];
-      setState(() {
-        // add product qrt
-        product.qty = product.qty! + 1;
-        product.qtyForm!.text = product.qty.toString();
-
-        // Cart Page Qty Change
-        cartDataList[cartIndex].qty = cartDataList[cartIndex].qty! + 1;
-        cartDataList[cartIndex].qtyForm!.text =
-            cartDataList[cartIndex].qty.toString();
-
-        // billing Page Refrace
-        if (widget.pageType == 1) {
-          billPageProvider.toggletab(true);
-        } else {
-          billPageProvider2.toggletab(true);
-        }
-      });
-    }
-  }
-
-  lessQty(int cartIndex) async {
-    int findBillingCategoryIndex = -1;
-    int findBillingProductIndex = -1;
-
-    await findBillingIndexs(cartIndex).then((value) async {
-      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
-      findBillingProductIndex = value["productIndex"] ?? -1;
-
-      if (findBillingProductIndex != -1) {
-        // ini product variable
-        var product = billingProductList[findBillingCategoryIndex]
-            .products![findBillingProductIndex];
-
-        if (cartDataList[cartIndex].qty == 1) {
-          await confirmationDialog(
-            context,
-            title: "Warning",
-            message: "Do you want to delete this product?",
-          ).then(
-            (value) {
-              setState(() {
-                if (value != null && value == true) {
-                  // less product qrt
-                  product.qty = product.qty! - 1;
-                  product.qtyForm!.text = product.qty.toString();
-
-                  // Remove From Cart
-                  cartDataList.removeAt(cartIndex);
-                  // billing Page Refrace
-                  if (widget.pageType == 1) {
-                    billPageProvider.toggletab(true);
-                  } else {
-                    billPageProvider2.toggletab(true);
-                  }
-                }
-              });
-            },
-          );
-        } else {
-          setState(() {
-            // less product qrt
-            product.qty = product.qty! - 1;
-            product.qtyForm!.text = product.qty.toString();
-
-            //qty Page Change
-            cartDataList[cartIndex].qty = cartDataList[cartIndex].qty! - 1;
-            cartDataList[cartIndex].qtyForm!.text =
-                cartDataList[cartIndex].qty.toString();
-
-            // billing Page Refrace
-            if (widget.pageType == 1) {
-              billPageProvider.toggletab(true);
-            } else {
-              billPageProvider2.toggletab(true);
-            }
-          });
-        }
-      }
-    });
-  }
-
-  formQtyChange(int cartIndex, String? value) async {
-    int findBillingCategoryIndex = -1;
-    int findBillingProductIndex = -1;
-
-    await findBillingIndexs(cartIndex).then((value) {
-      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
-      findBillingProductIndex = value["productIndex"] ?? -1;
-    });
-    if (findBillingProductIndex != -1 && findBillingCategoryIndex != -1) {
-      // ini product variable
-      var product = billingProductList[findBillingCategoryIndex]
-          .products![findBillingProductIndex];
-      if (value != null && value != "0" && value.isNotEmpty) {
-        setState(() {
-          // less product qrt
-          product.qty = int.parse(value);
-          product.qtyForm!.text = product.qty.toString();
-
-          //qty Page Change
-          cartDataList[cartIndex].qty = int.parse(value);
-
-          // billing Page Refrace
-          if (widget.pageType == 1) {
-            billPageProvider.toggletab(true);
-          } else {
-            billPageProvider2.toggletab(true);
-          }
-        });
-      } else {
-        setState(() {
-          // less product qrt
-          product.qty = 1;
-          product.qtyForm!.text = product.qty.toString();
-
-          //qty Page Change
-          cartDataList[cartIndex].qty = 1;
-          cartDataList[cartIndex].qtyForm!.text =
-              cartDataList[cartIndex].qty.toString();
-          FocusManager.instance.primaryFocus!.unfocus();
-          // billing Page Refrace
-          if (widget.pageType == 1) {
-            billPageProvider.toggletab(true);
-          } else {
-            billPageProvider2.toggletab(true);
-          }
-        });
-      }
-    }
-  }
-
-  deleteProduct(int cartIndex) async {
-    int findBillingCategoryIndex = -1;
-    int findBillingProductIndex = -1;
-
-    await findBillingIndexs(cartIndex).then((value) async {
-      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
-      findBillingProductIndex = value["productIndex"] ?? -1;
-
-      if (findBillingCategoryIndex != -1 && findBillingProductIndex != -1) {
-        var product = billingProductList[findBillingCategoryIndex]
-            .products![findBillingProductIndex];
-        await confirmationDialog(
-          context,
-          title: "Warning",
-          message: "Do you want to delete this product?",
-        ).then(
-          (value) {
-            setState(() {
-              if (value != null && value == true) {
-                // less product qrt
-                product.qty = 0;
-                product.qtyForm!.text = product.qty.toString();
-
-                // Remove From Cart
-                cartDataList.removeAt(cartIndex);
-                // billing Page Refrace
-                if (widget.pageType == 1) {
-                  billPageProvider.toggletab(true);
-                } else {
-                  billPageProvider2.toggletab(true);
-                }
-              }
-            });
-          },
-        );
-      }
-    });
-  }
-
-  String discountCart() {
-    String result = "0.00";
-    double tmpSubTotal = 0.00;
-    for (var element in cartDataList) {
-      tmpSubTotal += element.price! * element.qty!;
-    }
-    result = tmpSubTotal.toStringAsFixed(2);
-    return result;
-  }
-
-  convertEstimate({required String cid}) async {
-    var calcul = BillingCalCulationModel();
-    calcul.discount = discountInput;
-    calcul.discountValue = double.parse(discount());
-    calcul.discountsys = discountSys;
-    calcul.extraDiscount = extraDiscountInput;
-    calcul.extraDiscountValue = double.parse(extraDiscount());
-    calcul.extraDiscountsys = extraDiscountSys;
-    calcul.package = packingChargeInput;
-    calcul.packageValue = double.parse(packingChareges());
-    calcul.packagesys = packingChargeSys;
-    calcul.subTotal = double.parse(subTotal());
-    calcul.total = double.parse(cartTotal());
-
-    var cloud = FireStoreProvider();
-    await cloud
-        .createNewEstimate(
-      calCulation: calcul,
-      cid: cid,
-      productList: cartDataList,
-      customerInfo: customerInfo,
-    )
-        .then((estimateData) async {
-      if (estimateData != null && estimateData.id.isNotEmpty) {
-        await cloud
-            .updateEstimateId(
-          cid: cid,
-          docID: estimateData.id,
-        )
-            .then((resultFinal) async {
-          if (resultFinal != null) {
-            Navigator.pop(context);
-            snackBarCustom(context, true, "SuccessFully Place the Order");
-            setState(() {
-              cartDataList.clear();
-              sidebar.toggletab(9);
-            });
-          }
-        });
-      } else {
-        Navigator.pop(context);
-        snackBarCustom(
-          context,
-          false,
-          "Something went Wrong Please try again",
-        );
-      }
-    });
-  }
-
-  orderApi() async {
-    await orderDialog(
-      context,
-      title: "Alert",
-      message: "Do you want convert to Estimate",
-    ).then((value) async {
-      if (value != null) {
-        if (value == true && customerInfo == null) {
-          snackBarCustom(context, false, "Customer is Must");
-        } else {
-          try {
-            loading(context);
-
-            await LocalDbProvider()
-                .fetchInfo(type: LocalData.companyid)
-                .then((cid) async {
-              if (cid != null) {
-                if (value == true) {
-                  convertEstimate(cid: cid);
-                } else {
-                  var calcul = BillingCalCulationModel();
-                  calcul.discount = discountInput;
-                  calcul.discountValue = double.parse(discount());
-                  calcul.discountsys = discountSys;
-                  calcul.extraDiscount = extraDiscountInput;
-                  calcul.extraDiscountValue = double.parse(extraDiscount());
-                  calcul.extraDiscountsys = extraDiscountSys;
-                  calcul.package = packingChargeInput;
-                  calcul.packageValue = double.parse(packingChareges());
-                  calcul.packagesys = packingChargeSys;
-                  calcul.subTotal = double.parse(subTotal());
-                  calcul.total = double.parse(cartTotal());
-
-                  var cloud = FireStoreProvider();
-                  await cloud
-                      .createNewOrder(
-                    calCulation: calcul,
-                    cid: cid,
-                    productList: cartDataList,
-                    customerInfo: customerInfo,
-                  )
-                      .then((enquryData) async {
-                    if (enquryData != null && enquryData.id.isNotEmpty) {
-                      await cloud
-                          .updateEnquiryId(cid: cid, docID: enquryData.id)
-                          .then((resultFinal) {
-                        if (resultFinal != null) {
-                          // Successfuly Order Placed
-                          Navigator.pop(context);
-                          snackBarCustom(
-                              context, true, "SuccessFully Place the Order");
-                          setState(() {
-                            cartDataList.clear();
-                            sidebar.toggletab(9);
-                          });
-                        }
-                      });
-                    } else {
-                      Navigator.pop(context);
-                      snackBarCustom(
-                        context,
-                        false,
-                        "Something went Wrong Please try again",
-                      );
-                    }
-                  });
-                }
-              } else {
-                Navigator.pop(context);
-                snackBarCustom(
-                  context,
-                  false,
-                  "Something went Wrong Please try again",
-                );
-              }
-            });
-          } catch (e) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, e.toString());
-          }
-        }
-      }
-    });
-
-    // Navigator.pop(context);
-    // Navigator.push(
-    //   context,
-    //   CupertinoPageRoute(
-    //     builder: (context) => OrderSummary(
-    //       total: cartTotal(),
-    //       subtotal: subTotal(),
-    //       discountsys: discountSys,
-    //       discountInput: discountInput.toString(),
-    //       discountValue: discount(),
-    //       extraDicountsys: extraDiscountSys,
-    //       extraDiscountInput: extraDiscountInput.toString(),
-    //       extraDiscountValue: extraDiscount(),
-    //       packingChargesys: packingChargeSys,
-    //       packingChargeInput: packingChargeInput.toString(),
-    //       packingChargeValue: packingChareges(),
-    //     ),
-    //   ),
-    // );
-  }
-
-  customerAlert() async {
-    await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) {
-        return const CustomerSearch();
-      },
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          customerInfo = value;
-        });
-      }
-    });
-  }
-
-  customerAddAlert() async {
-    await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) {
-        return const AddCustomerBox();
-      },
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          customerInfo = value;
-        });
-      }
-    });
-  }
-
-  updateEnquiryApi() async {
-    try {
-      loading(context);
-
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          var calcul = BillingCalCulationModel();
-          calcul.discount = discountInput;
-          calcul.discountValue = double.parse(discount());
-          calcul.discountsys = discountSys;
-          calcul.extraDiscount = extraDiscountInput;
-          calcul.extraDiscountValue = double.parse(extraDiscount());
-          calcul.extraDiscountsys = extraDiscountSys;
-          calcul.package = packingChargeInput;
-          calcul.packageValue = double.parse(packingChareges());
-          calcul.packagesys = packingChargeSys;
-          calcul.subTotal = double.parse(subTotal());
-          calcul.total = double.parse(cartTotal());
-
-          var cloud = FireStoreProvider();
-          await cloud
-              .updateEnquiryDetails(
-            docID: widget.enquiryDocId!,
-            calCulation: calcul,
-            productList: cartDataList,
-            customerInfo: customerInfo,
-          )
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context, true);
-            snackBarCustom(context, true, "SuccessFully Update the Order");
-          });
-        } else {
-          Navigator.pop(context);
-          snackBarCustom(
-            context,
-            false,
-            "Something went Wrong Please try again",
-          );
-        }
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  updateEstimateApi() async {
-    try {
-      loading(context);
-
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          var calcul = BillingCalCulationModel();
-          calcul.discount = discountInput;
-          calcul.discountValue = double.parse(discount());
-          calcul.discountsys = discountSys;
-          calcul.extraDiscount = extraDiscountInput;
-          calcul.extraDiscountValue = double.parse(extraDiscount());
-          calcul.extraDiscountsys = extraDiscountSys;
-          calcul.package = packingChargeInput;
-          calcul.packageValue = double.parse(packingChareges());
-          calcul.packagesys = packingChargeSys;
-          calcul.subTotal = double.parse(subTotal());
-          calcul.total = double.parse(cartTotal());
-
-          var cloud = FireStoreProvider();
-
-          await cloud
-              .updateEstimateDetails(
-            docID: widget.estimateDocId!,
-            calCulation: calcul,
-            productList: cartDataList,
-            customerInfo: customerInfo,
-          )
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context, true);
-            snackBarCustom(context, true, "SuccessFully Update the Estimate");
-          });
-        } else {
-          Navigator.pop(context);
-          snackBarCustom(
-            context,
-            false,
-            "Something went Wrong Please try again",
-          );
-        }
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  // String eachProductTotal(int index) {
-  //   String result = "0.00";
-  //   double? price = cartDataList[index].price;
-  //   int? qnt = cartDataList[index].qty;
-  //   double tmpTotal = price! * qnt!;
-  //   result = tmpTotal.toStringAsFixed(2);
-  //   return result;
-  // }
-  String eachProductTotal(int index) {
-    String result = "0.00";
-    double? price = cartDataList[index].price;
-    int? qnt = cartDataList[index].qty;
-    double tmpTotal = cartDataList[index].discount != null
-        ? (price! - (price * (cartDataList[index].discount! / 100))) * qnt!
-        : price! * qnt!;
-    result = tmpTotal.toStringAsFixed(2);
-    return result;
-  }
-
-  String cartItemCount() {
-    String result = "0";
-    int count = 0;
-    for (var element in cartDataList) {
-      count += element.qty!;
-    }
-    result = count.toString();
-    return result;
-  }
-
-  clearCart() {
-    setState(() {
-      cartDataList.clear();
-    });
-    for (var element in billingProductList) {
-      Iterable<ProductDataModel> cartTemp =
-          element.products!.where((element) => element.qty! > 0);
-      for (var product in cartTemp) {
-        setState(() {
-          product.qty = 0;
-          product.qtyForm!.clear();
-        });
-      }
-    }
-    setState(() {
-      if (widget.pageType == 1) {
-        billPageProvider.toggletab(true);
-      } else {
-        billPageProvider2.toggletab(true);
-      }
-    });
-  }
-
-  String findMrpPriceCal({required double price}) {
-    String result = "0.00";
-    double tmpProduct = 0.00;
-
-    if (discountSys == "%") {
-      tmpProduct = price / discountInput;
-    }
-    result = tmpProduct.toStringAsFixed(2);
-    return result;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -1509,5 +842,708 @@ class _CartDrawerState extends State<CartDrawer> {
         ],
       ),
     );
+  }
+
+  String subTotal() {
+    String result = "0.00";
+    double tmpSubTotal = 0.00;
+    for (var element in cartDataList) {
+      tmpSubTotal += element.price! * element.qty!;
+    }
+    result = tmpSubTotal.toStringAsFixed(2);
+    return result;
+  }
+
+  String discount() {
+    String result = "0.00";
+    double tmpDiscount = 0.00;
+    for (var element in cartDataList) {
+      if (element.discountLock == false && element.discount != null) {
+        double total = element.price! * element.qty!;
+        tmpDiscount += (total * (element.discount!.toDouble() / 100));
+      }
+    }
+
+    // if (tmpSubTotal > discountInput) {
+    //   if (discountSys == "%") {
+    //     tmpDiscount = (tmpSubTotal * (discountInput / 100));
+    //   } else {
+    //     tmpDiscount = discountInput;
+    //   }
+    // }
+
+    if (tmpDiscount.isNaN) {
+      tmpDiscount = 0.00;
+    }
+
+    result = tmpDiscount.toStringAsFixed(2);
+
+    return result;
+  }
+
+  String extraDiscount() {
+    String result = "0.00";
+    double subTotalValue = double.parse(subTotal());
+    double discountValue = double.parse(discount());
+    double tmpExtraDiscount = 0.00;
+
+    if (extraDiscountSys == "%") {
+      double tmpsubtotal = (subTotalValue - discountValue);
+      tmpExtraDiscount = tmpsubtotal * (extraDiscountInput / 100);
+    } else {
+      tmpExtraDiscount = extraDiscountInput;
+    }
+
+    if (tmpExtraDiscount.isNaN) {
+      tmpExtraDiscount = 0.00;
+    }
+    result = tmpExtraDiscount.toStringAsFixed(2);
+    return result;
+  }
+
+  String packingChareges() {
+    String result = "0.00";
+    double subTotalValue = double.parse(subTotal());
+    double discountValue = double.parse(discount());
+    double extradiscountValue = double.parse(extraDiscount());
+    double tmppackingcharge = 0.00;
+
+    if (packingChargeSys == "%") {
+      double tmpsubtotal = (subTotalValue + discountValue + extradiscountValue);
+      tmppackingcharge = tmpsubtotal * (packingChargeInput / 100);
+    } else {
+      tmppackingcharge = packingChargeInput;
+    }
+
+    if (tmppackingcharge.isNaN) {
+      tmppackingcharge = 0.00;
+    }
+    result = tmppackingcharge.toStringAsFixed(2);
+    return result;
+  }
+
+  String cartTotal() {
+    String result = "0.00";
+    double subTotalValue = double.parse(subTotal());
+    double discountValue = double.parse(discount());
+    double extradiscountValue = double.parse(extraDiscount());
+    double packingChargeValue = double.parse(packingChareges());
+    double tmptotal = 0.00;
+    tmptotal = ((subTotalValue - discountValue) - extradiscountValue) +
+        packingChargeValue;
+    if (tmptotal.isNaN) {
+      tmptotal = 0.00;
+    }
+    result = tmptotal.toStringAsFixed(2);
+    return result;
+  }
+
+  Future<Map<String, int>> findBillingIndexs(int cartIndex) async {
+    int findBillingCategoryIndex = billingProductList.indexWhere(
+      (element) {
+        return element.category!.tmpcatid == cartDataList[cartIndex].categoryId;
+      },
+    );
+    if (findBillingCategoryIndex != -1) {
+      // Find Product Index
+      int findBillingProductIndex =
+          billingProductList[findBillingCategoryIndex].products!.indexWhere(
+        (element) {
+          return element.productId == cartDataList[cartIndex].productId;
+        },
+      );
+
+      if (findBillingProductIndex != -1) {
+        var result = {
+          "categoryIndex": findBillingCategoryIndex,
+          "productIndex": findBillingProductIndex,
+        };
+        return result;
+      }
+    }
+    return {
+      "categoryIndex": -1,
+      "productIndex": -1,
+    };
+  }
+
+  addQty(int cartIndex) async {
+    int findBillingCategoryIndex = -1;
+    int findBillingProductIndex = -1;
+
+    await findBillingIndexs(cartIndex).then((value) {
+      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
+      findBillingProductIndex = value["productIndex"] ?? -1;
+    });
+    if (findBillingProductIndex != -1 && findBillingCategoryIndex != -1) {
+      // ini product variable
+      var product = billingProductList[findBillingCategoryIndex]
+          .products![findBillingProductIndex];
+      setState(() {
+        // add product qrt
+        product.qty = product.qty! + 1;
+        product.qtyForm!.text = product.qty.toString();
+
+        // Cart Page Qty Change
+        cartDataList[cartIndex].qty = cartDataList[cartIndex].qty! + 1;
+        cartDataList[cartIndex].qtyForm!.text =
+            cartDataList[cartIndex].qty.toString();
+
+        // billing Page Refrace
+        if (widget.pageType == 1) {
+          billPageProvider.toggletab(true);
+        } else {
+          billPageProvider2.toggletab(true);
+        }
+      });
+    }
+  }
+
+  lessQty(int cartIndex) async {
+    int findBillingCategoryIndex = -1;
+    int findBillingProductIndex = -1;
+
+    await findBillingIndexs(cartIndex).then((value) async {
+      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
+      findBillingProductIndex = value["productIndex"] ?? -1;
+
+      if (findBillingProductIndex != -1) {
+        // ini product variable
+        var product = billingProductList[findBillingCategoryIndex]
+            .products![findBillingProductIndex];
+
+        if (cartDataList[cartIndex].qty == 1) {
+          await confirmationDialog(
+            context,
+            title: "Warning",
+            message: "Do you want to delete this product?",
+          ).then(
+            (value) {
+              setState(() {
+                if (value != null && value == true) {
+                  // less product qrt
+                  product.qty = product.qty! - 1;
+                  product.qtyForm!.text = product.qty.toString();
+
+                  // Remove From Cart
+                  cartDataList.removeAt(cartIndex);
+                  // billing Page Refrace
+                  if (widget.pageType == 1) {
+                    billPageProvider.toggletab(true);
+                  } else {
+                    billPageProvider2.toggletab(true);
+                  }
+                }
+              });
+            },
+          );
+        } else {
+          setState(() {
+            // less product qrt
+            product.qty = product.qty! - 1;
+            product.qtyForm!.text = product.qty.toString();
+
+            //qty Page Change
+            cartDataList[cartIndex].qty = cartDataList[cartIndex].qty! - 1;
+            cartDataList[cartIndex].qtyForm!.text =
+                cartDataList[cartIndex].qty.toString();
+
+            // billing Page Refrace
+            if (widget.pageType == 1) {
+              billPageProvider.toggletab(true);
+            } else {
+              billPageProvider2.toggletab(true);
+            }
+          });
+        }
+      }
+    });
+  }
+
+  formQtyChange(int cartIndex, String? value) async {
+    int findBillingCategoryIndex = -1;
+    int findBillingProductIndex = -1;
+
+    await findBillingIndexs(cartIndex).then((value) {
+      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
+      findBillingProductIndex = value["productIndex"] ?? -1;
+    });
+    if (findBillingProductIndex != -1 && findBillingCategoryIndex != -1) {
+      // ini product variable
+      var product = billingProductList[findBillingCategoryIndex]
+          .products![findBillingProductIndex];
+      if (value != null && value != "0" && value.isNotEmpty) {
+        setState(() {
+          // less product qrt
+          product.qty = int.parse(value);
+          product.qtyForm!.text = product.qty.toString();
+
+          //qty Page Change
+          cartDataList[cartIndex].qty = int.parse(value);
+
+          // billing Page Refrace
+          if (widget.pageType == 1) {
+            billPageProvider.toggletab(true);
+          } else {
+            billPageProvider2.toggletab(true);
+          }
+        });
+      } else {
+        setState(() {
+          // less product qrt
+          product.qty = 1;
+          product.qtyForm!.text = product.qty.toString();
+
+          //qty Page Change
+          cartDataList[cartIndex].qty = 1;
+          cartDataList[cartIndex].qtyForm!.text =
+              cartDataList[cartIndex].qty.toString();
+          FocusManager.instance.primaryFocus!.unfocus();
+          // billing Page Refrace
+          if (widget.pageType == 1) {
+            billPageProvider.toggletab(true);
+          } else {
+            billPageProvider2.toggletab(true);
+          }
+        });
+      }
+    }
+  }
+
+  deleteProduct(int cartIndex) async {
+    int findBillingCategoryIndex = -1;
+    int findBillingProductIndex = -1;
+
+    await findBillingIndexs(cartIndex).then((value) async {
+      findBillingCategoryIndex = value["categoryIndex"] ?? -1;
+      findBillingProductIndex = value["productIndex"] ?? -1;
+
+      if (findBillingCategoryIndex != -1 && findBillingProductIndex != -1) {
+        var product = billingProductList[findBillingCategoryIndex]
+            .products![findBillingProductIndex];
+        await confirmationDialog(
+          context,
+          title: "Warning",
+          message: "Do you want to delete this product?",
+        ).then(
+          (value) {
+            setState(() {
+              if (value != null && value == true) {
+                // less product qrt
+                product.qty = 0;
+                product.qtyForm!.text = product.qty.toString();
+
+                // Remove From Cart
+                cartDataList.removeAt(cartIndex);
+                // billing Page Refrace
+                if (widget.pageType == 1) {
+                  billPageProvider.toggletab(true);
+                } else {
+                  billPageProvider2.toggletab(true);
+                }
+              }
+            });
+          },
+        );
+      }
+    });
+  }
+
+  String discountCart() {
+    String result = "0.00";
+    double tmpSubTotal = 0.00;
+    for (var element in cartDataList) {
+      tmpSubTotal += element.price! * element.qty!;
+    }
+    result = tmpSubTotal.toStringAsFixed(2);
+    return result;
+  }
+
+  convertEstimate({required String cid}) async {
+    var calcul = BillingCalCulationModel();
+    calcul.discount = discountInput;
+    calcul.discountValue = double.parse(discount());
+    calcul.discountsys = discountSys;
+    calcul.extraDiscount = extraDiscountInput;
+    calcul.extraDiscountValue = double.parse(extraDiscount());
+    calcul.extraDiscountsys = extraDiscountSys;
+    calcul.package = packingChargeInput;
+    calcul.packageValue = double.parse(packingChareges());
+    calcul.packagesys = packingChargeSys;
+    calcul.subTotal = double.parse(subTotal());
+    calcul.total = double.parse(cartTotal());
+
+    var cloud = FireStoreProvider();
+    await LocalService.newEstimate(
+      productList: cartDataList,
+      calCulation: calcul,
+      cid: cid,
+      customerInfo: customerInfo,
+    ).then((value) {
+      Navigator.pop(context);
+      snackBarCustom(context, true, "SuccessFully Place the Order");
+      setState(() {
+        cartDataList.clear();
+      });
+    });
+
+    // await cloud
+    //     .createNewEstimate(
+    //   calCulation: calcul,
+    //   cid: cid,
+    //   productList: cartDataList,
+    //   customerInfo: customerInfo,
+    // )
+    //     .then((estimateData) async {
+    //   if (estimateData != null && estimateData.id.isNotEmpty) {
+    //     await cloud
+    //         .updateEstimateId(
+    //       cid: cid,
+    //       docID: estimateData.id,
+    //     )
+    //         .then((resultFinal) async {
+    //       if (resultFinal != null) {
+    //         Navigator.pop(context);
+    //         snackBarCustom(context, true, "SuccessFully Place the Order");
+    //         setState(() {
+    //           cartDataList.clear();
+    //         });
+    //       }
+    //     });
+    //   } else {
+    //     Navigator.pop(context);
+    //     snackBarCustom(
+    //       context,
+    //       false,
+    //       "Something went Wrong Please try again",
+    //     );
+    //   }
+    // });
+  }
+
+  orderApi() async {
+    await orderDialog(
+      context,
+      title: "Alert",
+      message: "Do you want convert to Estimate",
+    ).then((value) async {
+      if (value != null) {
+        if (value == true && customerInfo == null) {
+          snackBarCustom(context, false, "Customer is Must");
+        } else {
+          try {
+            loading(context);
+
+            await LocalDbProvider()
+                .fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                if (value == true) {
+                  convertEstimate(cid: cid);
+                } else {
+                  var calcul = BillingCalCulationModel();
+                  calcul.discount = discountInput;
+                  calcul.discountValue = double.parse(discount());
+                  calcul.discountsys = discountSys;
+                  calcul.extraDiscount = extraDiscountInput;
+                  calcul.extraDiscountValue = double.parse(extraDiscount());
+                  calcul.extraDiscountsys = extraDiscountSys;
+                  calcul.package = packingChargeInput;
+                  calcul.packageValue = double.parse(packingChareges());
+                  calcul.packagesys = packingChargeSys;
+                  calcul.subTotal = double.parse(subTotal());
+                  calcul.total = double.parse(cartTotal());
+
+                  await LocalService.newEnquiry(
+                          calCulation: calcul,
+                          cid: cid,
+                          productList: cartDataList,
+                          customerInfo: customerInfo)
+                      .then((value) {
+                    Navigator.pop(context);
+                    snackBarCustom(context, true, "Successfully order placed");
+                    setState(() {
+                      cartDataList.clear();
+                    });
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => const EnquiryListing(),
+                      ),
+                    );
+                  });
+                  // await cloud
+                  //     .createnewEnquiry(
+                  //   calCulation: calcul,
+                  //   cid: cid,
+                  //   productList: cartDataList,
+                  //   customerInfo: customerInfo,
+                  // )
+                  //     .then((enquryData) async {
+                  //   if (enquryData != null && enquryData.id.isNotEmpty) {
+                  //     await cloud
+                  //         .updateEnquiryId(cid: cid, docID: enquryData.id)
+                  //         .then((resultFinal) {
+                  //       if (resultFinal != null) {
+                  //         // Successfuly Order Placed
+                  //         Navigator.pop(context);
+                  //         snackBarCustom(
+                  //             context, true, "Successfully order placed");
+                  //         setState(() {
+                  //           cartDataList.clear();
+                  //         });
+
+                  //         Navigator.push(
+                  //           context,
+                  //           CupertinoPageRoute(
+                  //             builder: (context) => const EnquiryListing(),
+                  //           ),
+                  //         );
+                  //       }
+                  //     });
+                  //   } else {
+                  //     Navigator.pop(context);
+                  //     snackBarCustom(
+                  //       context,
+                  //       false,
+                  //       "Something went Wrong Please try again",
+                  //     );
+                  //   }
+                  // });
+                }
+              } else {
+                Navigator.pop(context);
+                snackBarCustom(
+                  context,
+                  false,
+                  "Something went Wrong Please try again",
+                );
+              }
+            });
+          } catch (e) {
+            Navigator.pop(context);
+            snackBarCustom(context, false, e.toString());
+          }
+        }
+      }
+    });
+
+    // Navigator.pop(context);
+    // Navigator.push(
+    //   context,
+    //   CupertinoPageRoute(
+    //     builder: (context) => OrderSummary(
+    //       total: cartTotal(),
+    //       subtotal: subTotal(),
+    //       discountsys: discountSys,
+    //       discountInput: discountInput.toString(),
+    //       discountValue: discount(),
+    //       extraDicountsys: extraDiscountSys,
+    //       extraDiscountInput: extraDiscountInput.toString(),
+    //       extraDiscountValue: extraDiscount(),
+    //       packingChargesys: packingChargeSys,
+    //       packingChargeInput: packingChargeInput.toString(),
+    //       packingChargeValue: packingChareges(),
+    //     ),
+    //   ),
+    // );
+  }
+
+  customerAlert() async {
+    await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return const CustomerSearch();
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          customerInfo = value;
+        });
+      }
+    });
+  }
+
+  customerAddAlert() async {
+    await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return const AddCustomerBox();
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          customerInfo = value;
+        });
+      }
+    });
+  }
+
+  updateEnquiryApi() async {
+    try {
+      loading(context);
+
+      await LocalDbProvider()
+          .fetchInfo(type: LocalData.companyid)
+          .then((cid) async {
+        if (cid != null) {
+          var calcul = BillingCalCulationModel();
+          calcul.discount = discountInput;
+          calcul.discountValue = double.parse(discount());
+          calcul.discountsys = discountSys;
+          calcul.extraDiscount = extraDiscountInput;
+          calcul.extraDiscountValue = double.parse(extraDiscount());
+          calcul.extraDiscountsys = extraDiscountSys;
+          calcul.package = packingChargeInput;
+          calcul.packageValue = double.parse(packingChareges());
+          calcul.packagesys = packingChargeSys;
+          calcul.subTotal = double.parse(subTotal());
+          calcul.total = double.parse(cartTotal());
+
+          var cloud = FireStoreProvider();
+          await cloud
+              .updateEnquiryDetails(
+            docID: widget.enquiryDocId!,
+            calCulation: calcul,
+            productList: cartDataList,
+            customerInfo: customerInfo,
+          )
+              .then((value) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context, true);
+            snackBarCustom(context, true, "SuccessFully Update the Order");
+          });
+        } else {
+          Navigator.pop(context);
+          snackBarCustom(
+            context,
+            false,
+            "Something went Wrong Please try again",
+          );
+        }
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  updateEstimateApi() async {
+    try {
+      loading(context);
+
+      await LocalDbProvider()
+          .fetchInfo(type: LocalData.companyid)
+          .then((cid) async {
+        if (cid != null) {
+          var calcul = BillingCalCulationModel();
+          calcul.discount = discountInput;
+          calcul.discountValue = double.parse(discount());
+          calcul.discountsys = discountSys;
+          calcul.extraDiscount = extraDiscountInput;
+          calcul.extraDiscountValue = double.parse(extraDiscount());
+          calcul.extraDiscountsys = extraDiscountSys;
+          calcul.package = packingChargeInput;
+          calcul.packageValue = double.parse(packingChareges());
+          calcul.packagesys = packingChargeSys;
+          calcul.subTotal = double.parse(subTotal());
+          calcul.total = double.parse(cartTotal());
+
+          var cloud = FireStoreProvider();
+
+          await cloud
+              .updateEstimateDetails(
+            docID: widget.estimateDocId!,
+            calCulation: calcul,
+            productList: cartDataList,
+            customerInfo: customerInfo,
+          )
+              .then((value) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context, true);
+            snackBarCustom(context, true, "SuccessFully Update the Estimate");
+          });
+        } else {
+          Navigator.pop(context);
+          snackBarCustom(
+            context,
+            false,
+            "Something went Wrong Please try again",
+          );
+        }
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  // String eachProductTotal(int index) {
+  //   String result = "0.00";
+  //   double? price = cartDataList[index].price;
+  //   int? qnt = cartDataList[index].qty;
+  //   double tmpTotal = price! * qnt!;
+  //   result = tmpTotal.toStringAsFixed(2);
+  //   return result;
+  // }
+  String eachProductTotal(int index) {
+    String result = "0.00";
+    double? price = cartDataList[index].price;
+    int? qnt = cartDataList[index].qty;
+    double tmpTotal = cartDataList[index].discount != null
+        ? (price! - (price * (cartDataList[index].discount! / 100))) * qnt!
+        : price! * qnt!;
+    result = tmpTotal.toStringAsFixed(2);
+    return result;
+  }
+
+  String cartItemCount() {
+    String result = "0";
+    int count = 0;
+    for (var element in cartDataList) {
+      count += element.qty!;
+    }
+    result = count.toString();
+    return result;
+  }
+
+  clearCart() {
+    setState(() {
+      cartDataList.clear();
+    });
+    for (var element in billingProductList) {
+      Iterable<ProductDataModel> cartTemp =
+          element.products!.where((element) => element.qty! > 0);
+      for (var product in cartTemp) {
+        setState(() {
+          product.qty = 0;
+          product.qtyForm!.clear();
+        });
+      }
+    }
+    setState(() {
+      if (widget.pageType == 1) {
+        billPageProvider.toggletab(true);
+      } else {
+        billPageProvider2.toggletab(true);
+      }
+    });
+  }
+
+  String findMrpPriceCal({required double price}) {
+    String result = "0.00";
+    double tmpProduct = 0.00;
+
+    if (discountSys == "%") {
+      tmpProduct = price / discountInput;
+    }
+    result = tmpProduct.toStringAsFixed(2);
+    return result;
   }
 }

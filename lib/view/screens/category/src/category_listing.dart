@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import '../../../../gen/assets.gen.dart';
 import '/constants/enum.dart';
 import '/model/model.dart';
 import '/services/services.dart';
@@ -244,11 +246,9 @@ class _CategoryListingState extends State<CategoryListing> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Category"),
         actions: [
@@ -309,146 +309,220 @@ class _CategoryListingState extends State<CategoryListing> {
                             categoryHandler = getCategoryInfo();
                           });
                         },
-                        child: ReorderableListView.builder(
-                          buildDefaultDragHandles: false,
-                          onReorder: (oldIndex, newIndex) {
-                            setState(() {
-                              if (searchForm.text.isEmpty) {
-                                final index = newIndex > oldIndex
-                                    ? newIndex - 1
-                                    : newIndex;
-                                var cargory = categoryList.removeAt(oldIndex);
-                                categoryList.insert(
-                                  index,
-                                  cargory,
-                                );
-                                rearrangecatvalid(
-                                  newIndex: index + 1,
-                                  categoryid: categoryList[index].tmpcatid!,
-                                );
-                              }
-                            });
-                          },
-                          itemCount: categoryList.length,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              key: ValueKey(index),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  CupertinoPageRoute(
-                                    builder: (context) =>
-                                        ProductListingCategory(
-                                      categoryID: categoryList[index].tmpcatid!,
-                                      categoryName:
-                                          categoryList[index].categoryName!,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                  horizontal: 10,
-                                ),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  border: index > 0
-                                      ? const Border(
-                                          top: BorderSide(
-                                            width: 0.5,
-                                            color: Color(0xffE0E0E0),
+                        child: categoryList.isNotEmpty
+                            ? ReorderableListView.builder(
+                                buildDefaultDragHandles: false,
+                                onReorder: (oldIndex, newIndex) {
+                                  setState(() {
+                                    if (searchForm.text.isEmpty) {
+                                      final index = newIndex > oldIndex
+                                          ? newIndex - 1
+                                          : newIndex;
+                                      var cargory =
+                                          categoryList.removeAt(oldIndex);
+                                      categoryList.insert(
+                                        index,
+                                        cargory,
+                                      );
+                                      rearrangecatvalid(
+                                        newIndex: index + 1,
+                                        categoryid:
+                                            categoryList[index].tmpcatid!,
+                                      );
+                                    }
+                                  });
+                                },
+                                itemCount: categoryList.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    key: ValueKey(index),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        CupertinoPageRoute(
+                                          builder: (context) =>
+                                              ProductListingCategory(
+                                            categoryID:
+                                                categoryList[index].tmpcatid!,
+                                            categoryName: categoryList[index]
+                                                .categoryName!,
                                           ),
-                                        )
-                                      : null,
-                                ),
-                                child: Row(
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 15,
+                                        horizontal: 10,
+                                      ),
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        border: index > 0
+                                            ? const Border(
+                                                top: BorderSide(
+                                                  width: 0.5,
+                                                  color: Color(0xffE0E0E0),
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          ReorderableDragStartListener(
+                                            enabled: searchForm.text.isEmpty
+                                                ? true
+                                                : false,
+                                            index: index,
+                                            child: const Icon(
+                                              Icons.drag_handle,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              categoryList[index]
+                                                  .categoryName
+                                                  .toString(),
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () async {
+                                              await addCategoryForm(
+                                                context,
+                                                isedit: true,
+                                                categoryName:
+                                                    categoryList[index]
+                                                        .categoryName,
+                                                docID: categoryList[index]
+                                                    .tmpcatid,
+                                              ).then((value) {
+                                                if (value != null &&
+                                                    value == true) {
+                                                  setState(() {
+                                                    categoryHandler =
+                                                        getCategoryInfo();
+                                                  });
+                                                }
+                                              });
+                                              // Navigator.push(
+                                              //   context,
+                                              //   MaterialPageRoute(
+                                              //     builder: (context) =>
+                                              //         AddCategory(
+                                              //       category: CategoryClass(
+                                              //         categoryid:
+                                              //             categorylist[index]
+                                              //                 .categoryid,
+                                              //         name: categorylist[index]
+                                              //             .name,
+                                              //         productList: [],
+                                              //       ),
+                                              //     ),
+                                              //   ),
+                                              // ).then((value) {
+                                              //   setState(() {
+                                              //     getcategorydata =
+                                              //         getcategorydatafun("");
+                                              //   });
+                                              // });
+                                            },
+                                            child: Container(
+                                              color: Colors.transparent,
+                                              padding: const EdgeInsets.all(10),
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.edit,
+                                                  size: 18,
+                                                  color: Color(0xff6B6B6B),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.arrow_forward_ios,
+                                                size: 18,
+                                                color: Color(0xff6B6B6B),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.all(15.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    ReorderableDragStartListener(
-                                      enabled: searchForm.text.isEmpty
-                                          ? true
-                                          : false,
-                                      index: index,
-                                      child: const Icon(
-                                        Icons.drag_handle,
+                                    Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: AspectRatio(
+                                        aspectRatio: (1 / 0.7),
+                                        child: SvgPicture.asset(
+                                          Assets.emptyList3,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(
-                                      width: 10,
+                                      height: 15,
                                     ),
-                                    Expanded(
+                                    Text(
+                                      "No Categories",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge!
+                                          .copyWith(),
+                                    ),
+                                    const SizedBox(
+                                      height: 8,
+                                    ),
+                                    Center(
                                       child: Text(
-                                        categoryList[index]
-                                            .categoryName
-                                            .toString(),
+                                        "You have not create any category, so first you have create category using add category button below",
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall!
+                                            .copyWith(color: Colors.grey),
                                       ),
                                     ),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        await addCategoryForm(
-                                          context,
-                                          isedit: true,
-                                          categoryName:
-                                              categoryList[index].categoryName,
-                                          docID: categoryList[index].tmpcatid,
-                                        ).then((value) {
-                                          if (value != null && value == true) {
+                                    const SizedBox(
+                                      height: 15,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        TextButton.icon(
+                                          onPressed: () {
+                                            addCategoryForm(context,
+                                                isedit: false);
+                                          },
+                                          icon: const Icon(Icons.add),
+                                          label: const Text("Add Category"),
+                                        ),
+                                        TextButton.icon(
+                                          onPressed: () {
                                             setState(() {
                                               categoryHandler =
                                                   getCategoryInfo();
                                             });
-                                          }
-                                        });
-                                        // Navigator.push(
-                                        //   context,
-                                        //   MaterialPageRoute(
-                                        //     builder: (context) =>
-                                        //         AddCategory(
-                                        //       category: CategoryClass(
-                                        //         categoryid:
-                                        //             categorylist[index]
-                                        //                 .categoryid,
-                                        //         name: categorylist[index]
-                                        //             .name,
-                                        //         productList: [],
-                                        //       ),
-                                        //     ),
-                                        //   ),
-                                        // ).then((value) {
-                                        //   setState(() {
-                                        //     getcategorydata =
-                                        //         getcategorydatafun("");
-                                        //   });
-                                        // });
-                                      },
-                                      child: Container(
-                                        color: Colors.transparent,
-                                        padding: const EdgeInsets.all(10),
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.edit,
-                                            size: 18,
-                                            color: Color(0xff6B6B6B),
-                                          ),
+                                          },
+                                          icon: const Icon(Icons.refresh),
+                                          label: const Text("Refresh"),
                                         ),
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.arrow_forward_ios,
-                                          size: 18,
-                                          color: Color(0xff6B6B6B),
-                                        ),
-                                      ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                   ],

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import '/view/admin/app/app.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
-import '/view/screens/screens.dart';
 import 'registercompany.dart';
 
 class Register extends StatefulWidget {
-  const Register({super.key});
+  final Widget route;
+  const Register({super.key, required this.route});
   @override
   State<Register> createState() => _RegisterState();
 }
@@ -54,6 +55,7 @@ class _RegisterState extends State<Register> {
                       username: name.text,
                       email: email.text,
                       password: password.text,
+                      route: widget.route,
                     ),
                   ),
                 );
@@ -79,13 +81,19 @@ class _RegisterState extends State<Register> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
-        ),
+        leading: widget.route.toString() == 'Signin'
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : IconButton(
+                splashRadius: 20,
+                onPressed: () {
+                  adminHomeKey.currentState!.openDrawer();
+                },
+                icon: const Icon(Icons.menu),
+              ),
         title: const Text("Register a company"),
       ),
       body: SafeArea(

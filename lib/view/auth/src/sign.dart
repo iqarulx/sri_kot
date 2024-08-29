@@ -54,6 +54,7 @@ class _SigninState extends State<Signin> {
                 username: companyData.docs.first["user_name"].toString(),
                 email: companyData.docs.first["user_login_id"].toString(),
                 password: companyData.docs.first["password"].toString(),
+                route: const Signin(),
               ),
             ),
           );
@@ -105,7 +106,7 @@ class _SigninState extends State<Signin> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Home(),
+                  builder: (context) => const UserHome(),
                 ),
               );
             });
@@ -196,7 +197,7 @@ class _SigninState extends State<Signin> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Home(),
+                  builder: (context) => const UserHome(),
                 ),
               );
             });
@@ -291,7 +292,7 @@ class _SigninState extends State<Signin> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Home(),
+                  builder: (context) => const UserHome(),
                 ),
               );
             });
@@ -598,8 +599,9 @@ class _SigninState extends State<Signin> {
                                   Navigator.push(
                                     context,
                                     CupertinoPageRoute(
-                                      builder: (context) =>
-                                          const PlansOverview(),
+                                      builder: (context) => const Register(
+                                        route: Signin(),
+                                      ),
                                     ),
                                   );
                                 },
@@ -619,17 +621,17 @@ class _SigninState extends State<Signin> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        CupertinoIcons.star_circle_fill,
+                                        CupertinoIcons.building_2_fill,
                                         color: Theme.of(context).primaryColor,
                                       ),
                                       const SizedBox(
-                                        width: 5,
+                                        width: 10,
                                       ),
                                       Text(
-                                        "Buy Premium",
+                                        "Register Company",
                                         style: TextStyle(
                                           color: Theme.of(context).primaryColor,
-                                          fontSize: 20,
+                                          fontSize: 18,
                                           fontWeight: FontWeight.w800,
                                         ),
                                       ),

@@ -1,1 +1,22 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"sri-kot","appId":"1:565962941142:android:1f17c41c331d4464cf9f77","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"sri-kot","configurations":{"android":"1:565962941142:android:1f17c41c331d4464cf9f77","ios":"1:565962941142:ios:e25d1bf2792fdfb9cf9f77"}}}}}}
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "sri-kot",
+                    "appId": "1:565962941142:android:1f17c41c331d4464cf9f77",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "sri-kot",
+                    "configurations": {
+                        "android": "1:565962941142:android:1f17c41c331d4464cf9f77",
+                        "ios": "1:565962941142:ios:e25d1bf2792fdfb9cf9f77"
+                    }
+                }
+            }
+        }
+    }
+}

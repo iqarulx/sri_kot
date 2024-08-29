@@ -5,7 +5,6 @@ export 'category/category.dart';
 export 'category_discount/category_discount.dart';
 export 'company/company.dart';
 export 'customer/customer.dart';
-export 'dashboard/dashboard.dart';
 export 'enquiry/enquiry.dart';
 export 'estimate/estimate.dart';
 export 'help/help.dart';

@@ -419,7 +419,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                         ).then((value) {
                           if (value != null && value == true) {
                             Navigator.pop(context);
-                            sidebar.toggletab(13);
+
                             InvoiceModel model = InvoiceModel();
                             model.isEstimateConverted = true;
                             model.address =

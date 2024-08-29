@@ -1,171 +1,28 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import '/view/ui/ui.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
-import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/enum.dart';
 
-class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+var homeKey = GlobalKey<ScaffoldState>();
+
+class UserHome extends StatefulWidget {
+  const UserHome({super.key});
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<UserHome> createState() => _UserHomeState();
 }
 
-class _DashboardState extends State<Dashboard> {
-  String? customer;
-  String? enquriy;
-  String? estimate;
-  String? product;
-  bool isAdmin = false;
-
-  Future<void> getCustomerCount() async {
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        await FireStoreProvider().getCustomerCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              customer = value.count.toString();
-            });
-          } else {
-            setState(() {
-              customer = "0";
-            });
-          }
-        });
-      });
-    } catch (e) {
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  Future<void> getEnquiryCount() async {
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        await FireStoreProvider().getEnquiryCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              enquriy = value.count.toString();
-            });
-          } else {
-            setState(() {
-              enquriy = "0";
-            });
-          }
-        });
-      });
-    } catch (e) {
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  Future<void> getEstimateCount() async {
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        await FireStoreProvider().getEstimateCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              estimate = value.count.toString();
-            });
-          } else {
-            setState(() {
-              estimate = "0";
-            });
-          }
-        });
-      });
-    } catch (e) {
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  Future<void> getProductCount() async {
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        await FireStoreProvider().getProductCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              product = value.count.toString();
-            });
-          } else {
-            setState(() {
-              product = "0";
-            });
-          }
-        });
-      });
-    } catch (e) {
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  int getTabSize() {
-    int count = 2;
-    if (MediaQuery.of(context).size.width > 800) {
-      setState(() {
-        count = 6;
-      });
-    } else if (MediaQuery.of(context).size.width > 600) {
-      setState(() {
-        count = 4;
-      });
-    }
-    return count;
-  }
-
-  int bilingTab = 1;
-
-  bool prCustomer = false;
-  bool prEnquiry = false;
-  bool prEstimate = false;
-  bool prProduct = false;
-
-  getinfo() async {
-    await LocalDbProvider().fetchInfo(type: LocalData.all).then((value) {
-      if (value != null) {
-        setState(() {
-          bilingTab = value["billing"];
-          isAdmin = value["isAdmin"];
-          prCustomer = value["pr_customer"];
-          prEnquiry = value["pr_order"];
-          prEstimate = value["pr_estimate"];
-          prProduct = value["pr_product"];
-        });
-      }
-    });
-  }
-
-  @override
-  void initState() {
-    getinfo();
-    super.initState();
-    getCustomerCount();
-    getEnquiryCount();
-    getEstimateCount();
-    getProductCount();
-  }
-
+class _UserHomeState extends State<UserHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: homeKey,
       backgroundColor: Colors.white,
+      drawer: const SideBar(),
       appBar: AppBar(
-        leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
-        ),
         title: const Text("Dashboard"),
         actions: const [
           // IconButton(
@@ -198,9 +55,12 @@ class _DashboardState extends State<Dashboard> {
                         primaryColor: const Color(0xff4895ef),
                         icon: Icons.person,
                         onTap: () {
-                          setState(() {
-                            sidebar.toggletab(4);
-                          });
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const CustomerListing(),
+                            ),
+                          );
                         },
                       ),
                     if (prEnquiry)
@@ -210,9 +70,12 @@ class _DashboardState extends State<Dashboard> {
                         primaryColor: const Color(0xffB284BE),
                         icon: Icons.business_outlined,
                         onTap: () {
-                          setState(() {
-                            sidebar.toggletab(9);
-                          });
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const EnquiryListing(),
+                            ),
+                          );
                         },
                       ),
                     if (prEstimate)
@@ -222,9 +85,12 @@ class _DashboardState extends State<Dashboard> {
                         primaryColor: const Color(0xff3d348b),
                         icon: Icons.business_outlined,
                         onTap: () {
-                          setState(() {
-                            sidebar.toggletab(10);
-                          });
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const EstimateListing(),
+                            ),
+                          );
                         },
                       ),
                     if (prProduct)
@@ -234,9 +100,12 @@ class _DashboardState extends State<Dashboard> {
                         primaryColor: const Color(0xff6a994e),
                         icon: Icons.category,
                         onTap: () {
-                          setState(() {
-                            sidebar.toggletab(5);
-                          });
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const ProductListing(),
+                            ),
+                          );
                         },
                       ),
                   ],
@@ -244,7 +113,19 @@ class _DashboardState extends State<Dashboard> {
                 if (prEnquiry || prEstimate)
                   GestureDetector(
                     onTap: () {
-                      sidebar.toggletab(bilingTab == 1 ? 7 : 8);
+                      bilingTab == 1
+                          ? Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const BillingOne(),
+                              ),
+                            )
+                          : Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const BillingTwo(),
+                              ),
+                            );
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 10, top: 10),
@@ -301,7 +182,14 @@ class _DashboardState extends State<Dashboard> {
                   ),
               ],
             )
-          : const SizedBox(),
+          : Center(
+              child: Text(
+                "Only admin can view dashboard",
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
     );
   }
 
@@ -374,4 +262,142 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
+
+  Future getCustomerCount() async {
+    try {
+      await LocalDbProvider()
+          .fetchInfo(type: LocalData.companyid)
+          .then((cid) async {
+        await FireStoreProvider().getCustomerCount(cid: cid).then((value) {
+          if (value != null) {
+            setState(() {
+              customer = value.count.toString();
+            });
+          } else {
+            setState(() {
+              customer = "0";
+            });
+          }
+        });
+      });
+    } catch (e) {
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  Future getEnquiryCount() async {
+    try {
+      await LocalDbProvider()
+          .fetchInfo(type: LocalData.companyid)
+          .then((cid) async {
+        await FireStoreProvider().getEnquiryCount(cid: cid).then((value) {
+          if (value != null) {
+            setState(() {
+              enquriy = value.count.toString();
+            });
+          } else {
+            setState(() {
+              enquriy = "0";
+            });
+          }
+        });
+      });
+    } catch (e) {
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  Future getEstimateCount() async {
+    try {
+      await LocalDbProvider()
+          .fetchInfo(type: LocalData.companyid)
+          .then((cid) async {
+        await FireStoreProvider().getEstimateCount(cid: cid).then((value) {
+          if (value != null) {
+            setState(() {
+              estimate = value.count.toString();
+            });
+          } else {
+            setState(() {
+              estimate = "0";
+            });
+          }
+        });
+      });
+    } catch (e) {
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  Future getProductCount() async {
+    try {
+      await LocalDbProvider()
+          .fetchInfo(type: LocalData.companyid)
+          .then((cid) async {
+        await FireStoreProvider().getProductCount(cid: cid).then((value) {
+          if (value != null) {
+            setState(() {
+              product = value.count.toString();
+            });
+          } else {
+            setState(() {
+              product = "0";
+            });
+          }
+        });
+      });
+    } catch (e) {
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  int getTabSize() {
+    int count = 2;
+    if (MediaQuery.of(context).size.width > 800) {
+      setState(() {
+        count = 6;
+      });
+    } else if (MediaQuery.of(context).size.width > 600) {
+      setState(() {
+        count = 4;
+      });
+    }
+    return count;
+  }
+
+  getinfo() async {
+    await LocalDbProvider().fetchInfo(type: LocalData.all).then((value) {
+      if (value != null) {
+        setState(() {
+          bilingTab = value["billing"];
+          isAdmin = value["isAdmin"];
+          prCustomer = value["pr_customer"];
+          prEnquiry = value["pr_order"];
+          prEstimate = value["pr_estimate"];
+          prProduct = value["pr_product"];
+        });
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    getinfo();
+    super.initState();
+    getCustomerCount();
+    getEnquiryCount();
+    getEstimateCount();
+    getProductCount();
+  }
+
+  int bilingTab = 1;
+  bool prCustomer = false;
+  bool prEnquiry = false;
+  bool prEstimate = false;
+  bool prProduct = false;
+  String? customer;
+  String? enquriy;
+  String? estimate;
+  String? product;
+  bool isAdmin = false;
 }

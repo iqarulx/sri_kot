@@ -530,7 +530,7 @@ class _ProductDetailsState extends State<ProductDetails> {
               if (productImage != null) {
                 var downloadLink = await FireStorageProvider().uploadImage(
                   fileData: productImage!,
-                  fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+                  fileName: widget.productData!.productId!,
                   filePath: 'products',
                 );
 

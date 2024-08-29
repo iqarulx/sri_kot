@@ -436,11 +436,9 @@ class _InvoiceListingState extends State<InvoiceListing> {
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text("Bill of Supply (${invoiceList.length})"),
         actions: [

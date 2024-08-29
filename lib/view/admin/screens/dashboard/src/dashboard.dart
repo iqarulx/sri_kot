@@ -58,7 +58,7 @@ class _DashboardState extends State<Dashboard> {
         leading: IconButton(
           splashRadius: 20,
           onPressed: () {
-            homeKey.currentState!.openDrawer();
+            adminHomeKey.currentState!.openDrawer();
           },
           icon: const Icon(Icons.menu),
         ),

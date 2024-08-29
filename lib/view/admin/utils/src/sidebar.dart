@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
+import '../../admin.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
 import '/view/auth/src/auth.dart';
 import '/view/ui/ui.dart';
-import '/view/screens/screens.dart';
 
 SideBarEvent sidebar = SideBarEvent();
 
@@ -556,7 +556,7 @@ class _SideBarState extends State<SideBar> {
         onTap: () {
           setState(() {
             sidebar.toggletab(index);
-            homeKey.currentState!.closeDrawer();
+            adminHomeKey.currentState!.closeDrawer();
           });
         },
         child: Container(

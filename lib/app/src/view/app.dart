@@ -10,10 +10,6 @@ class MyApp extends StatelessWidget {
   final bool isSuperAdmin;
   const MyApp({super.key, required this.login, required this.isSuperAdmin});
 
-  //////////////////////////////////////////////
-  // This widget is the root of your application.
-  //////////////////////////////////////////////
-
   @override
   Widget build(BuildContext context) {
     return AppLifecycleObserver(
@@ -43,7 +39,7 @@ class MyApp extends StatelessWidget {
         home: login
             ? isSuperAdmin
                 ? const AdminHome()
-                : const Home()
+                : const UserHome()
             : const Auth(),
       ),
     );

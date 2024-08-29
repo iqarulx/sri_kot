@@ -9,9 +9,7 @@ import 'package:flutter/services.dart';
 import '/constants/enum.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
-import '/services/services.dart';
 import '/utils/utils.dart';
-import '/view/admin/admin.dart';
 
 class RegisterCompany extends StatefulWidget {
   final String uid;
@@ -20,15 +18,16 @@ class RegisterCompany extends StatefulWidget {
   final String username;
   final String email;
   final String password;
-  const RegisterCompany({
-    super.key,
-    required this.uid,
-    required this.docid,
-    required this.companyName,
-    required this.username,
-    required this.email,
-    required this.password,
-  });
+  final Widget route;
+  const RegisterCompany(
+      {super.key,
+      required this.uid,
+      required this.docid,
+      required this.companyName,
+      required this.username,
+      required this.email,
+      required this.password,
+      required this.route});
 
   @override
   State<RegisterCompany> createState() => _RegisterCompanyState();
@@ -51,108 +50,102 @@ class _RegisterCompanyState extends State<RegisterCompany> {
   File? profileImage;
 
   registerNewCompany() async {
-    /*
-        1. Validation Form show error
-        2. Update New Company Profile Information
-        3. Upload Company profile Image
-        4. get Download Link and Update Download Link
-    */
-
-    // 1. Check Form Validation
     if (companyKey.currentState!.validate()) {
-      // 1.1 check Profile Image is Empty
       loading(context);
-      if (profileImage != null) {
-        // 2. Update New Company Profile Information
+      // if (profileImage != null) {
+      var db = FirebaseFirestore.instance;
+      var profile = db.collection('profile');
 
-        // instance Firbase Firestore DB
-        var db = FirebaseFirestore.instance;
+      ProfileModel profileModel = ProfileModel();
+      profileModel.username = username.text;
+      profileModel.address = address.text;
+      profileModel.city = city;
+      profileModel.companyName = companyname.text;
+      profileModel.deviceLimit = 1;
+      profileModel.gstno = gst.text;
+      profileModel.contact = {
+        "mobile_no": mobileno.text,
+        "phone_no": phoneno.text,
+      };
+      profileModel.pincode = pincode.text;
+      profileModel.state = state;
+      profileModel.filled = true;
+      profileModel.password = widget.password;
 
-        // set Firestore Profile Collection
-        var profile = db.collection('profile');
-
-        // update firestore Data
-        ProfileModel profileModel = ProfileModel();
-
-        // Declear Upload Variable value
-        profileModel.username = username.text;
-        profileModel.address = address.text;
-        profileModel.city = city;
-        profileModel.companyName = companyname.text;
-        profileModel.deviceLimit = 1;
-        profileModel.gstno = gst.text;
-        profileModel.contact = {
-          "mobile_no": mobileno.text,
-          "phone_no": phoneno.text,
-        };
-        profileModel.pincode = pincode.text;
-        profileModel.state = state;
-        profileModel.filled = true;
-        profileModel.password = widget.password;
-
-        await profile
-            .where("company_unique_id", isEqualTo: companyUnquieId.text)
-            .get()
-            .then((value) {
-          if (value.docs.isEmpty) {
-            profileModel.companyUniqueID = companyUnquieId.text;
-          }
-        });
-
-        // upload Firestore Database
-        await profile.doc(widget.docid).set(
-              profileModel.newRegisterCompany(),
-              SetOptions(merge: true),
-            );
-        DeviceModel deviceData = DeviceModel();
-        deviceData.deviceId = null;
-        deviceData.modelName = null;
-        deviceData.deviceName = null;
-        deviceData.lastlogin = DateTime.now();
-        deviceData.deviceType = null;
-
-        await profile.doc(widget.docid).update({
-          "device": deviceData.toMap(),
-          "invoice_entry": false,
-          "created": DateTime.now(),
-          "free_trial": {"opened": null, "ends_in": null},
-          "max_user_count": 1,
-          "max_staff_count": 1,
-        });
-
-        // Once update Data to upload Image
-        FireStorageProvider storage = FireStorageProvider();
-        var downloadLink = await storage.uploadImage(
-          fileData: profileImage!,
-          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-          filePath: 'company',
-        );
-        if (downloadLink != null && downloadLink.isNotEmpty) {
-          await profile.doc(widget.docid).set(
-            {
-              "company_logo": downloadLink.toString(),
-            },
-            SetOptions(merge: true),
-          ).then((value) async {
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminHome(),
-              ),
-            );
-          });
-        } else {
-          // exit Loading Progroccess
-          Navigator.pop(context);
+      await profile
+          .where("company_unique_id", isEqualTo: companyUnquieId.text)
+          .get()
+          .then((value) {
+        if (value.docs.isEmpty) {
+          profileModel.companyUniqueID = companyUnquieId.text;
         }
-      } else {
-        // exit Loading Progroccess
+      });
+
+      // upload Firestore Database
+      await profile.doc(widget.docid).set(
+            profileModel.newRegisterCompany(),
+            SetOptions(merge: true),
+          );
+      DeviceModel deviceData = DeviceModel();
+      deviceData.deviceId = null;
+      deviceData.modelName = null;
+      deviceData.deviceName = null;
+      deviceData.lastlogin = DateTime.now();
+      deviceData.deviceType = null;
+
+      await profile.doc(widget.docid).update({
+        "company_logo": null,
+        "device": deviceData.toMap(),
+        "invoice_entry": false,
+        "created": DateTime.now(),
+        "free_trial": {"opened": null, "ends_in": null},
+        "max_user_count": 1,
+        "max_staff_count": 1,
+        "plan": PlanTypes.free.name
+      }).then((value) {
         Navigator.pop(context);
-        // throw error msg on company logo is must
-        snackBarCustom(context, false, "Company Profile Logo is Must");
-      }
+        Navigator.pop(context);
+        snackBarCustom(context, true, "Successfully company registred");
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => widget.route,
+          ),
+        );
+      });
+
+      // Once update Data to upload Image
+      // FireStorageProvider storage = FireStorageProvider();
+      // var downloadLink = await storage.uploadImage(
+      //   fileData: profileImage!,
+      //   fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+      //   filePath: 'company',
+      // );
+      // if (downloadLink != null && downloadLink.isNotEmpty) {
+      //   await profile.doc(widget.docid).set(
+      //     {
+      //       "company_logo": downloadLink.toString(),
+      //     },
+      //     SetOptions(merge: true),
+      //   ).then((value) async {
+      //     Navigator.pop(context);
+      //     Navigator.pop(context);
+      //     snackBarCustom(context, true, "Successfully company registred");
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => widget.route,
+      //       ),
+      //     );
+      //   });
+      // } else {
+      //   // exit Loading Progroccess
+      //   Navigator.pop(context);
+      // }
+      // } else {
+      //   Navigator.pop(context);
+      //   snackBarCustom(context, false, "Company Profile Logo is Must");
+      // }
     } else {
       // throw Error Form not Valid
       snackBarCustom(context, false, "Fill Correct Form Details");
@@ -269,65 +262,65 @@ class _RegisterCompanyState extends State<RegisterCompany> {
                         const SizedBox(
                           height: 20,
                         ),
-                        Center(
-                          child: Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () async {
-                                  var imageResult = await FilePickerProvider()
-                                      .showFileDialog(context);
-                                  if (imageResult != null) {
-                                    setState(() {
-                                      profileImage = imageResult;
-                                    });
-                                  }
-                                },
-                                child: SizedBox(
-                                  height: 80,
-                                  width: 80,
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        height: 80,
-                                        width: 80,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          shape: BoxShape.circle,
-                                          image: profileImage == null
-                                              ? null
-                                              : DecorationImage(
-                                                  image:
-                                                      FileImage(profileImage!),
-                                                  fit: BoxFit.cover,
-                                                ),
-                                        ),
-                                      ),
-                                      Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
-                                          child: const Icon(
-                                            Icons.edit,
-                                            color: Colors.white,
-                                            size: 15,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 30,
-                        ),
+                        // Center(
+                        //   child: Column(
+                        //     children: [
+                        //       GestureDetector(
+                        //         onTap: () async {
+                        //           var imageResult = await FilePickerProvider()
+                        //               .showFileDialog(context);
+                        //           if (imageResult != null) {
+                        //             setState(() {
+                        //               profileImage = imageResult;
+                        //             });
+                        //           }
+                        //         },
+                        //         child: SizedBox(
+                        //           height: 80,
+                        //           width: 80,
+                        //           child: Stack(
+                        //             children: [
+                        //               Container(
+                        //                 height: 80,
+                        //                 width: 80,
+                        //                 decoration: BoxDecoration(
+                        //                   color: Colors.grey.shade300,
+                        //                   shape: BoxShape.circle,
+                        //                   image: profileImage == null
+                        //                       ? null
+                        //                       : DecorationImage(
+                        //                           image:
+                        //                               FileImage(profileImage!),
+                        //                           fit: BoxFit.cover,
+                        //                         ),
+                        //                 ),
+                        //               ),
+                        //               Align(
+                        //                 alignment: Alignment.bottomRight,
+                        //                 child: Container(
+                        //                   padding: const EdgeInsets.all(5),
+                        //                   decoration: BoxDecoration(
+                        //                     shape: BoxShape.circle,
+                        //                     color:
+                        //                         Theme.of(context).primaryColor,
+                        //                   ),
+                        //                   child: const Icon(
+                        //                     Icons.edit,
+                        //                     color: Colors.white,
+                        //                     size: 15,
+                        //                   ),
+                        //                 ),
+                        //               ),
+                        //             ],
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
+                        // const SizedBox(
+                        //   height: 30,
+                        // ),
                         SizedBox(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

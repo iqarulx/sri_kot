@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
@@ -137,82 +138,163 @@ class _ProductListingState extends State<ProductListing> {
             productHandler = getProductInfo();
           });
         },
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              for (int index = ((crtpagelimit * crtpagenumber) - crtpagelimit);
-                  index < ((crtpagelimit * crtpagenumber));
-                  index++)
-                if (productDataList.length > index)
-                  Column(
-                    children: [
-                      ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => ProductDetails(
-                                title: 'Product Details',
-                                edit: true,
-                                productData: productDataList[index],
+        child: productDataList.isNotEmpty
+            ? SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (int index =
+                            ((crtpagelimit * crtpagenumber) - crtpagelimit);
+                        index < ((crtpagelimit * crtpagenumber));
+                        index++)
+                      if (productDataList.length > index)
+                        Column(
+                          children: [
+                            ListTile(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  CupertinoPageRoute(
+                                    builder: (context) => ProductDetails(
+                                      title: 'Product Details',
+                                      edit: true,
+                                      productData: productDataList[index],
+                                    ),
+                                  ),
+                                ).then((value) {
+                                  if (value != null && value == true) {
+                                    setState(() {
+                                      productHandler = getProductInfo();
+                                    });
+                                  }
+                                });
+                              },
+                              leading: Container(
+                                height: 45,
+                                width: 45,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: productDataList[index].productImg !=
+                                                null &&
+                                            File(productDataList[index]
+                                                    .productImg!)
+                                                .existsSync()
+                                        ? FileImage(
+                                            File(productDataList[index]
+                                                .productImg!),
+                                          )
+                                        : AssetImage(
+                                            Assets.images.noImage.path),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                productDataList[index].productName ?? "",
+                              ),
+                              subtitle: Text(
+                                  "Category - ${productDataList[index].categoryName ?? ""}"),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    productDataList[index].price.toString(),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_right_outlined,
+                                  ),
+                                ],
                               ),
                             ),
-                          ).then((value) {
-                            if (value != null && value == true) {
-                              setState(() {
-                                productHandler = getProductInfo();
-                              });
-                            }
-                          });
-                        },
-                        leading: Container(
-                          height: 45,
-                          width: 45,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: productDataList[index].productImg !=
-                                          null &&
-                                      File(productDataList[index].productImg!)
-                                          .existsSync()
-                                  ? FileImage(
-                                      File(productDataList[index].productImg!),
-                                    )
-                                  : AssetImage(Assets.images.noImage.path),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        title: Text(
-                          productDataList[index].productName ?? "",
-                        ),
-                        subtitle: Text(
-                            "Category - ${productDataList[index].categoryName ?? ""}"),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              productDataList[index].price.toString(),
-                            ),
-                            const Icon(
-                              Icons.keyboard_arrow_right_outlined,
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: Divider(
+                                height: 0,
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Divider(
-                          height: 0,
-                          color: Colors.grey.shade300,
+                  ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: AspectRatio(
+                        aspectRatio: (1 / 0.7),
+                        child: SvgPicture.asset(
+                          Assets.emptyList3,
                         ),
                       ),
-                    ],
-                  ),
-            ],
-          ),
-        ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Text(
+                      "No Products",
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(),
+                    ),
+                    const SizedBox(
+                      height: 8,
+                    ),
+                    Center(
+                      child: Text(
+                        "You have not create any product, so first you have create product using add product button below",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const ProductDetails(
+                                  title: 'Create Product',
+                                  edit: false,
+                                ),
+                              ),
+                            ).then((value) {
+                              if (value != null && value == true) {
+                                setState(() {
+                                  productHandler = getProductInfo();
+                                });
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add Product"),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              productHandler = getProductInfo();
+                            });
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text("Refresh"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -333,10 +415,8 @@ class _ProductListingState extends State<ProductListing> {
   AppBar appbar(BuildContext context) {
     return AppBar(
       leading: IconButton(
-        onPressed: () {
-          homeKey.currentState!.openDrawer();
-        },
-        icon: const Icon(Icons.menu),
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
       ),
       title: const Text("Products"),
       actions: [

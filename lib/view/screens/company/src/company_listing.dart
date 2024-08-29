@@ -9,7 +9,6 @@ import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
-import '/view/screens/screens.dart';
 import '/constants/enum.dart';
 
 class CompanyListing extends StatefulWidget {
@@ -114,7 +113,7 @@ class _CompanyListingState extends State<CompanyListing> {
                   await FireStorageProvider()
                       .uploadImage(
                     fileData: uploadCompanyPic!,
-                    fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+                    fileName: cid,
                     filePath: "company",
                   )
                       .then((downloadLink) async {
@@ -181,11 +180,9 @@ class _CompanyListingState extends State<CompanyListing> {
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Company"),
       ),

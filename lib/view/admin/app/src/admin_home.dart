@@ -8,12 +8,14 @@ class AdminHome extends StatefulWidget {
   State<AdminHome> createState() => _AdminHomeState();
 }
 
-var homeKey = GlobalKey<ScaffoldState>();
+var adminHomeKey = GlobalKey<ScaffoldState>();
 
 class _AdminHomeState extends State<AdminHome> {
   final List<Widget> pages = const [
     Dashboard(),
-    Register(),
+    Register(
+      route: AdminHome(),
+    ),
   ];
 
   @override
@@ -46,7 +48,7 @@ class _AdminHomeState extends State<AdminHome> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        key: homeKey,
+        key: adminHomeKey,
         drawer: const SideBar(),
         body: pages[sidebar.crttab],
       ),

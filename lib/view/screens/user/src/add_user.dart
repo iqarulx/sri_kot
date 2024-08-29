@@ -18,134 +18,6 @@ class AddUser extends StatefulWidget {
 }
 
 class _AddUserState extends State<AddUser> {
-  TextEditingController name = TextEditingController();
-  TextEditingController phoneNo = TextEditingController();
-  TextEditingController userId = TextEditingController();
-  TextEditingController password = TextEditingController();
-  var addUserKey = GlobalKey<FormState>();
-
-  String? imageError;
-  String? unqiueId;
-
-  checkValidation() async {
-    loading(context);
-    FocusManager.instance.primaryFocus!.unfocus();
-    try {
-      if (addUserKey.currentState!.validate()) {
-        setState(() {
-          imageError = null;
-        });
-
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
-          if (cid != null) {
-            await LocalService.checkCount(uid: cid, type: ProfileType.admin)
-                .then((value) async {
-              if (value) {
-                var userData = UserAdminModel();
-                userData.adminLoginId = "${userId.text}@$unqiueId";
-                userData.adminName = name.text;
-                userData.companyId = cid.toString();
-                userData.password = password.text;
-                userData.phoneNo = phoneNo.text;
-                userData.createdDateTime = DateTime.now();
-                String? downloadLink;
-                if (profileImage != null) {
-                  downloadLink = await FireStorageProvider().uploadImage(
-                    fileData: profileImage!,
-                    fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-                    filePath: 'users',
-                  );
-                }
-
-                userData.imageUrl = downloadLink;
-                DeviceModel deviceData = DeviceModel();
-                deviceData.deviceId = null;
-                deviceData.modelName = null;
-                deviceData.deviceName = null;
-                deviceData.lastlogin = DateTime.now();
-                deviceData.deviceType = null;
-                userData.deviceModel = deviceData;
-
-                await FireStoreProvider()
-                    .registerUserAdmin(userData: userData)
-                    .then((userValue) {
-                  Navigator.pop(context);
-                  if (userValue.id.isNotEmpty) {
-                    setState(() {
-                      profileImage = null;
-                      userId.clear();
-                      name.clear();
-                      password.clear();
-                      phoneNo.clear();
-                    });
-                    Navigator.pop(context, true);
-                    snackBarCustom(
-                        context, true, "Successfully Created New User");
-                  } else {
-                    snackBarCustom(context, false, "Failed to Create New User");
-                  }
-                });
-              } else {
-                Navigator.pop(context);
-                await showDialog(
-                  barrierDismissible: false,
-                  context: context,
-                  builder: (context) => const Modal(
-                    title: "User Limit Reached",
-                    content:
-                        "You need to buy a plan to add users! Click confirm to see plans",
-                    type: ModalType.danger,
-                  ),
-                ).then((value) async {
-                  if (value != null) {
-                    if (value) {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (context) => const Plans(),
-                        ),
-                      );
-                    }
-                  }
-                });
-              }
-            });
-          } else {
-            Navigator.pop(context);
-            snackBarCustom(context, false, "Company Details Not Fetch");
-          }
-        });
-      } else {
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, "${e.toString()} Hii");
-    }
-  }
-
-  File? profileImage;
-
-  initFun() async {
-    await LocalDbProvider()
-        .fetchInfo(
-      type: LocalData.companyUniqueId,
-    )
-        .then((value) {
-      setState(() {
-        unqiueId = value;
-      });
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    initFun();
-  }
-
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -414,5 +286,131 @@ class _AddUserState extends State<AddUser> {
         ],
       ),
     );
+  }
+
+  TextEditingController name = TextEditingController();
+  TextEditingController phoneNo = TextEditingController();
+  TextEditingController userId = TextEditingController();
+  TextEditingController password = TextEditingController();
+  var addUserKey = GlobalKey<FormState>();
+  String? imageError;
+  String? unqiueId;
+  File? profileImage;
+
+  checkValidation() async {
+    loading(context);
+    FocusManager.instance.primaryFocus!.unfocus();
+    try {
+      if (addUserKey.currentState!.validate()) {
+        setState(() {
+          imageError = null;
+        });
+
+        await LocalDbProvider()
+            .fetchInfo(type: LocalData.companyid)
+            .then((cid) async {
+          if (cid != null) {
+            await LocalService.checkCount(type: ProfileType.admin)
+                .then((value) async {
+              if (value) {
+                var userData = UserAdminModel();
+                userData.adminLoginId = "${userId.text}@$unqiueId";
+                userData.adminName = name.text;
+                userData.companyId = cid.toString();
+                userData.password = password.text;
+                userData.phoneNo = phoneNo.text;
+                userData.createdDateTime = DateTime.now();
+                String? downloadLink;
+                if (profileImage != null) {
+                  downloadLink = await FireStorageProvider().uploadImage(
+                    fileData: profileImage!,
+                    fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+                    filePath: 'users',
+                  );
+                }
+
+                userData.imageUrl = downloadLink;
+                DeviceModel deviceData = DeviceModel();
+                deviceData.deviceId = null;
+                deviceData.modelName = null;
+                deviceData.deviceName = null;
+                deviceData.lastlogin = DateTime.now();
+                deviceData.deviceType = null;
+                userData.deviceModel = deviceData;
+
+                await FireStoreProvider()
+                    .registerUserAdmin(userData: userData)
+                    .then((userValue) {
+                  Navigator.pop(context);
+                  if (userValue.id.isNotEmpty) {
+                    setState(() {
+                      profileImage = null;
+                      userId.clear();
+                      name.clear();
+                      password.clear();
+                      phoneNo.clear();
+                    });
+                    Navigator.pop(context, true);
+                    snackBarCustom(
+                        context, true, "Successfully Created New User");
+                  } else {
+                    snackBarCustom(context, false, "Failed to Create New User");
+                  }
+                });
+              } else {
+                Navigator.pop(context);
+                await showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (context) => const Modal(
+                    title: "User Limit Reached",
+                    content:
+                        "You need to buy a plan to add users! Click confirm to see plans",
+                    type: ModalType.danger,
+                  ),
+                ).then((value) async {
+                  if (value != null) {
+                    if (value) {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) => const Plans(),
+                        ),
+                      );
+                    }
+                  }
+                });
+              }
+            });
+          } else {
+            Navigator.pop(context);
+            snackBarCustom(context, false, "Company Details Not Fetch");
+          }
+        });
+      } else {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, "${e.toString()} Hii");
+    }
+  }
+
+  initFun() async {
+    await LocalDbProvider()
+        .fetchInfo(
+      type: LocalData.companyUniqueId,
+    )
+        .then((value) {
+      setState(() {
+        unqiueId = value;
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initFun();
   }
 }

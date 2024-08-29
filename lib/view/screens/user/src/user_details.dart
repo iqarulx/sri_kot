@@ -17,115 +17,6 @@ class UserDetails extends StatefulWidget {
 }
 
 class _UserDetailsState extends State<UserDetails> {
-  var formKey = GlobalKey<FormState>();
-  String? oldEmail;
-  String? oldPassword;
-  String? uid;
-  String? docid;
-  String? unqiueId;
-
-  updateUserInfo() async {
-    try {
-      loading(context);
-      if (formKey.currentState!.validate()) {
-        UserAdminModel userData = UserAdminModel();
-        userData.adminName = adminuserName.text;
-        userData.phoneNo = adminphoneno.text;
-        userData.adminLoginId = "${adminuserid.text}@$unqiueId";
-        userData.password = adminpassword.text;
-
-        await FireStorageProvider()
-            .uploadImage(
-          fileData: File(adminProfileImage!),
-          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-          filePath: 'user',
-        )
-            .then((value) async {
-          userData.imageUrl = value;
-          await FireStoreProvider()
-              .updateUser(docID: docid.toString(), userData: userData)
-              .then((value) async {
-            if (value != null) {
-              await FireStorageProvider()
-                  .saveLocal(
-                fileData: File(adminProfileImage!),
-                id: docid.toString(),
-                folder: "user",
-              )
-                  .then((value) {
-                Navigator.pop(context);
-                snackBarCustom(context, true, "Successfully User Data Updated");
-              }).catchError((onError) {
-                snackBarCustom(
-                    context, false, "Something Went wrong Please try again");
-              });
-            } else {
-              snackBarCustom(
-                  context, false, "Something Went wrong Please try again");
-            }
-          });
-        }).catchError((onError) {
-          snackBarCustom(
-              context, false, "Something Went wrong Please try again");
-        });
-      } else {
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  deleteAdmin() async {
-    try {
-      await confirmationDialog(
-        context,
-        title: "Alert",
-        message: "Do you want delete user?",
-      ).then((value) async {
-        if (value != null && value == true) {
-          loading(context);
-
-          await FireStoreProvider()
-              .deleteAdmin(docID: docid ?? "")
-              .then((firestoreResult) async {
-            if (firestoreResult != null && firestoreResult == true) {
-              Navigator.pop(context);
-              setState(() {
-                userListingcontroller.animateToPage(
-                  0,
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeIn,
-                );
-              });
-              snackBarCustom(
-                context,
-                false,
-                "Successfully Delete the user",
-              );
-            } else {
-              Navigator.pop(context);
-            }
-          });
-        }
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    docid = adminDocId;
-    uid = adminuid;
-    List<String> data = adminuserid.text.split('@');
-    unqiueId = data[1];
-    adminuserid.text = data[0];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -390,4 +281,113 @@ class _UserDetailsState extends State<UserDetails> {
       ),
     );
   }
+
+  updateUserInfo() async {
+    try {
+      loading(context);
+      if (formKey.currentState!.validate()) {
+        UserAdminModel userData = UserAdminModel();
+        userData.adminName = adminuserName.text;
+        userData.phoneNo = adminphoneno.text;
+        userData.adminLoginId = "${adminuserid.text}@$unqiueId";
+        userData.password = adminpassword.text;
+
+        await FireStorageProvider()
+            .uploadImage(
+          fileData: File(adminProfileImage!),
+          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+          filePath: 'user',
+        )
+            .then((value) async {
+          userData.imageUrl = value;
+          await FireStoreProvider()
+              .updateUser(docID: docid.toString(), userData: userData)
+              .then((value) async {
+            if (value != null) {
+              await FireStorageProvider()
+                  .saveLocal(
+                fileData: File(adminProfileImage!),
+                id: docid.toString(),
+                folder: "user",
+              )
+                  .then((value) {
+                Navigator.pop(context);
+                snackBarCustom(context, true, "Successfully User Data Updated");
+              }).catchError((onError) {
+                snackBarCustom(
+                    context, false, "Something Went wrong Please try again");
+              });
+            } else {
+              snackBarCustom(
+                  context, false, "Something Went wrong Please try again");
+            }
+          });
+        }).catchError((onError) {
+          snackBarCustom(
+              context, false, "Something Went wrong Please try again");
+        });
+      } else {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  deleteAdmin() async {
+    try {
+      await confirmationDialog(
+        context,
+        title: "Alert",
+        message: "Do you want delete user?",
+      ).then((value) async {
+        if (value != null && value == true) {
+          loading(context);
+
+          await FireStoreProvider()
+              .deleteAdmin(docID: docid ?? "")
+              .then((firestoreResult) async {
+            if (firestoreResult != null && firestoreResult == true) {
+              Navigator.pop(context);
+              setState(() {
+                userListingcontroller.animateToPage(
+                  0,
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeIn,
+                );
+              });
+              snackBarCustom(
+                context,
+                false,
+                "Successfully Delete the user",
+              );
+            } else {
+              Navigator.pop(context);
+            }
+          });
+        }
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    docid = adminDocId;
+    uid = adminuid;
+    List<String> data = adminuserid.text.split('@');
+    unqiueId = data[1];
+    adminuserid.text = data[0];
+  }
+
+  var formKey = GlobalKey<FormState>();
+  String? oldEmail;
+  String? oldPassword;
+  String? uid;
+  String? docid;
+  String? unqiueId;
 }

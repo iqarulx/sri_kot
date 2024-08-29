@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '/view/screens/screens.dart';
 
 class PlanDetails extends StatefulWidget {
   const PlanDetails({super.key});
@@ -14,11 +13,9 @@ class _PlanDetailsState extends State<PlanDetails> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Plan Details"),
       ),

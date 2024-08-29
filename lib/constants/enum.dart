@@ -42,3 +42,9 @@ enum PasswordError {
 
   const PasswordError(this.message);
 }
+
+enum PaymentType { company, staff, user }
+
+enum PlanTypes { free, premium, enterprise }
+
+enum DataTypes { local, cloud }

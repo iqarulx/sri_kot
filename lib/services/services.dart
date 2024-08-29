@@ -3,3 +3,4 @@ export 'firebase/firebase_auth_provider.dart';
 export 'firebase/firestorageprovider.dart';
 export 'firebase/firestore_provider.dart';
 export 'database/localdb.dart';
+export 'sql/sql.dart';

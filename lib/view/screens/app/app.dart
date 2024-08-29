@@ -1,1 +1,1 @@
-export 'src/home.dart';
+export 'src/app.dart';

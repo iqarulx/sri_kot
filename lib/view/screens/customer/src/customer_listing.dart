@@ -145,10 +145,9 @@ class _CustomerListingState extends State<CustomerListing> {
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {
-            homeKey.currentState!.openDrawer();
-          },
-          icon: const Icon(Icons.menu),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Customer"),
         actions: [

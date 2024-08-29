@@ -8,4 +8,9 @@ class SideBarEvent with ChangeNotifier {
     _crttab = tab;
     notifyListeners();
   }
+
+  moveIntialTab() {
+    _crttab = 0;
+    notifyListeners();
+  }
 }

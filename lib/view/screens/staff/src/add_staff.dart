@@ -18,176 +18,6 @@ class AddStaff extends StatefulWidget {
 }
 
 class _AddStaffState extends State<AddStaff> {
-  var staffKey = GlobalKey<FormState>();
-  TextEditingController fullName = TextEditingController();
-  TextEditingController phoneNo = TextEditingController();
-  TextEditingController userid = TextEditingController();
-  TextEditingController password = TextEditingController();
-
-  bool product = false;
-  bool category = false;
-  bool customer = false;
-  bool orders = false;
-  bool estimate = false;
-  bool billofSupply = false;
-
-  File? profileImage;
-
-  String? imageError;
-  String? permissionError;
-
-  accessAlertBox() async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AddPermission(
-          product: product,
-          category: category,
-          customer: customer,
-          orders: orders,
-          estimate: estimate,
-          billofsupply: billofSupply,
-        );
-      },
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          product = value["product"];
-          category = value["category"];
-          customer = value["customer"];
-          orders = value["orders"];
-          estimate = value["estimate"];
-          billofSupply = value["billofsupply"];
-        });
-      }
-    });
-  }
-
-  createStaff() async {
-    loading(context);
-    FocusManager.instance.primaryFocus!.unfocus();
-    try {
-      if (staffKey.currentState!.validate() && profileImage != null) {
-        if (!product && !category && !customer && !orders && !estimate) {
-          Navigator.pop(context);
-          setState(() {
-            permissionError = "Permission is Must";
-          });
-          snackBarCustom(context, false, "Permission is Must");
-        } else {
-          setState(() {
-            imageError = null;
-          });
-          await LocalDbProvider()
-              .fetchInfo(type: LocalData.companyid)
-              .then((cid) async {
-            if (cid != null) {
-              StaffDataModel model = StaffDataModel();
-              model.userName = fullName.text;
-              model.phoneNo = phoneNo.text;
-              model.userid = "${userid.text}@${widget.companyID}";
-              model.password = password.text;
-              model.companyID = cid;
-              StaffPermissionModel permissionModel = StaffPermissionModel();
-              permissionModel.product = product;
-              permissionModel.category = category;
-              permissionModel.customer = customer;
-              permissionModel.orders = orders;
-              permissionModel.estimate = estimate;
-              permissionModel.billofsupply = billofSupply;
-
-              model.permission = permissionModel;
-
-              var downloadLink = await FireStorageProvider().uploadImage(
-                fileData: profileImage!,
-                fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-                filePath: 'staff',
-              );
-
-              model.profileImg = downloadLink;
-
-              DeviceModel deviceData = DeviceModel();
-              deviceData.deviceId = null;
-              deviceData.modelName = null;
-              deviceData.deviceName = null;
-              deviceData.lastlogin = DateTime.now();
-              deviceData.deviceType = null;
-
-              model.deviceModel = deviceData;
-              model.deleteAt = false;
-
-              await FireStoreProvider()
-                  .checkStaffAlreadyExiest(loginID: userid.text)
-                  .then((staffCheck) async {
-                if (staffCheck != null && staffCheck.docs.isEmpty) {
-                  await FireStoreProvider()
-                      .registerStaff(staffData: model)
-                      .then((value) {
-                    FireStorageProvider()
-                        .saveLocal(
-                      fileData: profileImage!,
-                      id: value.id.toString(),
-                      folder: "staff",
-                    )
-                        .then((data) {
-                      Navigator.pop(context);
-
-                      if (data) {
-                        if (value.id.isNotEmpty) {
-                          setState(() {
-                            profileImage = null;
-                            userid.clear();
-                            fullName.clear();
-                            password.clear();
-                            phoneNo.clear();
-                            product = false;
-                            category = false;
-                            customer = false;
-                            orders = false;
-                            estimate = false;
-                            billofSupply = false;
-                          });
-                          Navigator.pop(context, true);
-                          snackBarCustom(
-                              context, true, "Successfully Created New Staff");
-                        } else {
-                          Navigator.pop(context);
-                          snackBarCustom(
-                              context, false, "Failed to Create New Staff");
-                        }
-                      }
-                    });
-                  });
-                } else {
-                  Navigator.pop(context);
-                  snackBarCustom(
-                    context,
-                    false,
-                    "Staff Login ID Already Exists",
-                  );
-                }
-              });
-            } else {
-              Navigator.pop(context);
-              snackBarCustom(context, false, "Company Details Not Fetch");
-            }
-          });
-        }
-      } else {
-        Navigator.pop(context);
-        if (profileImage == null) {
-          setState(() {
-            imageError = "Profile Image is Must";
-          });
-          snackBarCustom(context, false, "Profile Image is Must");
-        }
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -597,6 +427,173 @@ class _AddStaffState extends State<AddStaff> {
         );
       },
     );
+  }
+
+  TextEditingController fullName = TextEditingController();
+  TextEditingController phoneNo = TextEditingController();
+  TextEditingController userid = TextEditingController();
+  TextEditingController password = TextEditingController();
+  bool product = false;
+  bool category = false;
+  bool customer = false;
+  bool orders = false;
+  bool estimate = false;
+  bool billofSupply = false;
+  File? profileImage;
+  String? imageError;
+  String? permissionError;
+  var staffKey = GlobalKey<FormState>();
+
+  accessAlertBox() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AddPermission(
+          product: product,
+          category: category,
+          customer: customer,
+          orders: orders,
+          estimate: estimate,
+          billofsupply: billofSupply,
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          product = value["product"];
+          category = value["category"];
+          customer = value["customer"];
+          orders = value["orders"];
+          estimate = value["estimate"];
+          billofSupply = value["billofsupply"];
+        });
+      }
+    });
+  }
+
+  createStaff() async {
+    loading(context);
+    FocusManager.instance.primaryFocus!.unfocus();
+    try {
+      if (staffKey.currentState!.validate() && profileImage != null) {
+        if (!product && !category && !customer && !orders && !estimate) {
+          Navigator.pop(context);
+          setState(() {
+            permissionError = "Permission is Must";
+          });
+          snackBarCustom(context, false, "Permission is Must");
+        } else {
+          setState(() {
+            imageError = null;
+          });
+          await LocalDbProvider()
+              .fetchInfo(type: LocalData.companyid)
+              .then((cid) async {
+            if (cid != null) {
+              StaffDataModel model = StaffDataModel();
+              model.userName = fullName.text;
+              model.phoneNo = phoneNo.text;
+              model.userid = "${userid.text}@${widget.companyID}";
+              model.password = password.text;
+              model.companyID = cid;
+              StaffPermissionModel permissionModel = StaffPermissionModel();
+              permissionModel.product = product;
+              permissionModel.category = category;
+              permissionModel.customer = customer;
+              permissionModel.orders = orders;
+              permissionModel.estimate = estimate;
+              permissionModel.billofsupply = billofSupply;
+
+              model.permission = permissionModel;
+
+              var downloadLink = await FireStorageProvider().uploadImage(
+                fileData: profileImage!,
+                fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+                filePath: 'staff',
+              );
+
+              model.profileImg = downloadLink;
+
+              DeviceModel deviceData = DeviceModel();
+              deviceData.deviceId = null;
+              deviceData.modelName = null;
+              deviceData.deviceName = null;
+              deviceData.lastlogin = DateTime.now();
+              deviceData.deviceType = null;
+
+              model.deviceModel = deviceData;
+              model.deleteAt = false;
+
+              await FireStoreProvider()
+                  .checkStaffAlreadyExiest(loginID: userid.text)
+                  .then((staffCheck) async {
+                if (staffCheck != null && staffCheck.docs.isEmpty) {
+                  await FireStoreProvider()
+                      .registerStaff(staffData: model)
+                      .then((value) {
+                    FireStorageProvider()
+                        .saveLocal(
+                      fileData: profileImage!,
+                      id: value.id.toString(),
+                      folder: "staff",
+                    )
+                        .then((data) {
+                      Navigator.pop(context);
+
+                      if (data) {
+                        if (value.id.isNotEmpty) {
+                          setState(() {
+                            profileImage = null;
+                            userid.clear();
+                            fullName.clear();
+                            password.clear();
+                            phoneNo.clear();
+                            product = false;
+                            category = false;
+                            customer = false;
+                            orders = false;
+                            estimate = false;
+                            billofSupply = false;
+                          });
+                          Navigator.pop(context, true);
+                          snackBarCustom(
+                              context, true, "Successfully Created New Staff");
+                        } else {
+                          Navigator.pop(context);
+                          snackBarCustom(
+                              context, false, "Failed to Create New Staff");
+                        }
+                      }
+                    });
+                  });
+                } else {
+                  Navigator.pop(context);
+                  snackBarCustom(
+                    context,
+                    false,
+                    "Staff Login ID Already Exists",
+                  );
+                }
+              });
+            } else {
+              Navigator.pop(context);
+              snackBarCustom(context, false, "Company Details Not Fetch");
+            }
+          });
+        }
+      } else {
+        Navigator.pop(context);
+        if (profileImage == null) {
+          setState(() {
+            imageError = "Profile Image is Must";
+          });
+          snackBarCustom(context, false, "Profile Image is Must");
+        }
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackBarCustom(context, false, e.toString());
+    }
   }
 }
 
