@@ -9,7 +9,7 @@ import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class CustomerEstimate extends StatefulWidget {
   final String? customerID;
@@ -29,7 +29,7 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
         tmpLoading = true;
         enquiryList.clear();
       });
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         var enquiry = await FireStoreProvider()
             .getEstimateCustomer(cid: cid, customerID: widget.customerID!);
@@ -179,7 +179,62 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
       body: FutureBuilder(
         future: enquryHandler,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return futureLoading(context);
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Center(
+                      child: Text(
+                        "Failed",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Text(
+                      snapshot.error.toString() == "null"
+                          ? "Something went Wrong"
+                          : snapshot.error.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            enquryHandler = getEnquiryInfo();
+                          });
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text(
+                          "Refresh",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else {
             return Padding(
               padding: const EdgeInsets.all(10.0),
               child: Container(
@@ -312,62 +367,6 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
                 ),
               ),
             );
-          } else if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasError) {
-            return Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Failed",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      snapshot.error.toString() == "null"
-                          ? "Something went Wrong"
-                          : snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            enquryHandler = getEnquiryInfo();
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text(
-                          "Refresh",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return futureLoading(context);
           }
         },
       ),

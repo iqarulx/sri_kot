@@ -5,8 +5,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';

@@ -1,14 +1,13 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:sri_kot/utils/src/utilities.dart';
+import 'package:sri_kot/view/screens/billing/src/app_settings/deleted_items.dart';
+import '../../../../ui/ui.dart';
+import '/provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/services/services.dart';
-import '/view/screens/screens.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class AppSettings extends StatefulWidget {
   const AppSettings({super.key});
@@ -19,116 +18,89 @@ class AppSettings extends StatefulWidget {
 
 class _AppSettingsState extends State<AppSettings> {
   int crtBillingTab = 1;
+  String? lastSynced;
+
   initFn() async {
-    await LocalDbProvider().getBillingIndex().then((value) async {
+    await LocalDB.getBillingIndex().then((value) async {
       if (value != null) {
         setState(() {
           crtBillingTab = value;
         });
       } else {
-        await LocalDbProvider().changeBilling(1);
+        await LocalDB.changeBilling(1);
         setState(() {
           crtBillingTab = 1;
         });
       }
     });
-  }
 
-  syncNow() async {
-    await showModalBottomSheet(
-        backgroundColor: Colors.white,
-        useSafeArea: true,
-        shape: RoundedRectangleBorder(
-          side: BorderSide.none,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        isScrollControlled: true,
-        context: context,
-        builder: (builder) {
-          return const Backup();
-        }).then((value) {
+    await LocalDB.getLastSync().then((value) async {
       if (value != null) {
-        syncNowData();
+        lastSynced = await LocalService.parseDate(value);
       }
     });
-  }
-
-  Future<void> syncNowData() async {
-    final cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
-    final result = await FireStoreProvider().getFiles(cid: cid);
-
-    // Get the application documents directory
-    final directory = await getApplicationDocumentsDirectory();
-
-    // Paths for each file type
-    final paths = <String, List<Map<String, String>>>{};
-
-    // Step 1: Clear files in the directory
-    final folder = Directory(directory.path);
-    if (await folder.exists()) {
-      final files = folder.listSync(recursive: true);
-      for (var file in files) {
-        if (file is File) {
-          await file.delete();
-        }
-      }
-    }
-
-    // Helper function to create a folder if it doesn't exist
-    Future<void> createFolder(String folderName) async {
-      final path = Directory('${directory.path}/$folderName');
-      if (!await path.exists()) {
-        await path.create();
-      }
-    }
-
-    // Step 2: Create folders and download files
-    for (var type in result.keys) {
-      final folderName = type;
-      await createFolder(folderName);
-
-      paths[type] = [];
-
-      for (var file in result[type]!) {
-        final id = file['id']!;
-        final url = file['url'];
-        final filePath = url != null && url.isNotEmpty
-            ? '${directory.path}/$folderName/$id'
-            : '';
-
-        if (url != null && url.isNotEmpty) {
-          // Download the file
-          final response = await http.get(Uri.parse(url));
-          if (response.statusCode == 200) {
-            final file = File(filePath);
-            await file.writeAsBytes(response.bodyBytes);
-
-            // Save path info
-            paths[type]!.add({'id': id, 'path': filePath});
-          } else {
-            print('Failed to download file from $url');
-            // Save path info with empty path
-            paths[type]!.add({'id': id, 'path': ''});
-          }
-        } else {
-          // URL is empty or null, save only the ID with empty path
-          paths[type]!.add({'id': id, 'path': ''});
-        }
-      }
-    }
-
-    // Step 3: Save the JSON file
-    final jsonFile = File('${directory.path}/file_paths.json');
-    final jsonString = jsonEncode(paths);
-    await jsonFile.writeAsString(jsonString);
-
-    print('Sync completed and JSON file saved.');
   }
 
   @override
   void initState() {
     super.initState();
     initFn();
+  }
+
+  syncNow() async {
+    loading(context);
+    // Check initial connection and perform actions
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+    if (connectionProvider.isConnected) {
+      FireStoreProvider firebase = FireStoreProvider();
+      await firebase
+          .productListing(
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid))
+          .then((value) async {
+        if (value != null && value.docs.isNotEmpty) {
+          LocalService.syncProducts(
+            productData: value.docs,
+            cid: await LocalDB.fetchInfo(type: LocalData.companyid),
+          );
+        }
+      });
+
+      await firebase
+          .categoryListing(
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid))
+          .then((value) async {
+        if (value != null && value.docs.isNotEmpty) {
+          LocalService.syncCategory(
+            categoryData: value.docs,
+            cid: await LocalDB.fetchInfo(
+              type: LocalData.companyid,
+            ),
+          );
+        }
+      });
+
+      await firebase
+          .customerListing(
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid))
+          .then((value) async {
+        if (value != null && value.docs.isNotEmpty) {
+          LocalService.syncCustomer(
+            customerData: value.docs,
+            cid: await LocalDB.fetchInfo(type: LocalData.companyid),
+          );
+        }
+      });
+
+      Navigator.pop(context);
+      await LocalDB.setLastSync().then((value) {
+        snackbar(context, true, "Successfully data synced");
+        initFn();
+      });
+    } else {
+      Navigator.pop(context);
+      snackbar(context, false, "You need internet to sync your data");
+    }
   }
 
   @override
@@ -170,7 +142,7 @@ class _AppSettingsState extends State<AppSettings> {
                           onTap: () {
                             setState(() {
                               crtBillingTab = 1;
-                              LocalDbProvider().changeBilling(1);
+                              LocalDB.changeBilling(1);
                             });
                           },
                           child: Container(
@@ -226,7 +198,7 @@ class _AppSettingsState extends State<AppSettings> {
                           onTap: () {
                             setState(() {
                               crtBillingTab = 2;
-                              LocalDbProvider().changeBilling(2);
+                              LocalDB.changeBilling(2);
                             });
                           },
                           child: Container(
@@ -284,50 +256,392 @@ class _AppSettingsState extends State<AppSettings> {
                 const SizedBox(
                   height: 20,
                 ),
-                Text(
-                  "Sync Now",
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      syncNow();
-                    },
-                    child: Container(
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xff003049),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            CupertinoIcons.cloud_upload,
-                            color: Colors.white,
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          Text(
-                            "Sync Now",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                )
+                // const Divider(),
+                // const SizedBox(
+                //   height: 10,
+                // ),
+                // Padding(
+                //   padding: const EdgeInsets.all(8.0),
+                //   child: GestureDetector(
+                //     onTap: () {
+                //       syncNow();
+                //     },
+                //     child: Container(
+                //       height: 40,
+                //       decoration: BoxDecoration(
+                //         color: const Color(0xff003049),
+                //         borderRadius: BorderRadius.circular(10),
+                //       ),
+                //       child: const Row(
+                //         mainAxisAlignment: MainAxisAlignment.center,
+                //         children: [
+                //           Icon(
+                //             CupertinoIcons.cloud_upload,
+                //             color: Colors.white,
+                //           ),
+                //           SizedBox(
+                //             width: 5,
+                //           ),
+                //           Text(
+                //             "Sync Now",
+                //             style: TextStyle(
+                //               color: Colors.white,
+                //               fontWeight: FontWeight.bold,
+                //             ),
+                //           )
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(
+                //   height: 10,
+                // ),
+                // Padding(
+                //   padding: const EdgeInsets.all(8.0),
+                //   child: GestureDetector(
+                //     onTap: () async {
+                //       await FastCachedImageConfig.clearAllCachedImages();
+                //       snackBarCustom(context, true, "Cache cleared");
+                //     },
+                //     child: Container(
+                //       height: 40,
+                //       decoration: BoxDecoration(
+                //         color: const Color(0xff003049),
+                //         borderRadius: BorderRadius.circular(10),
+                //       ),
+                //       child: const Row(
+                //         mainAxisAlignment: MainAxisAlignment.center,
+                //         children: [
+                //           Icon(
+                //             CupertinoIcons.trash,
+                //             color: Colors.white,
+                //           ),
+                //           SizedBox(
+                //             width: 5,
+                //           ),
+                //           Text(
+                //             "Clear cache",
+                //             style: TextStyle(
+                //               color: Colors.white,
+                //               fontWeight: FontWeight.bold,
+                //             ),
+                //           )
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
+          const SizedBox(
+            height: 10,
+          ),
+          GestureDetector(
+            onTap: () async {
+              loading(context);
+              await LocalService.syncNow().then((value) {
+                Navigator.pop(context);
+                if (value) {
+                  snackbar(context, true, "Successfully bills are uploaded");
+                } else {
+                  snackbar(context, false, "An error occured");
+                }
+              });
+            },
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.cloud_upload,
+                          size: 30,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Upload Local Bills",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(CupertinoIcons.forward),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          GestureDetector(
+            onTap: () {
+              syncNow();
+            },
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.arrow_3_trianglepath,
+                          size: 30,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Sync Now",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text("Last Sync : ${lastSynced ?? '--:--:--'}",
+                                style: Theme.of(context).textTheme.bodySmall),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(CupertinoIcons.forward),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          GestureDetector(
+            onTap: () async {
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  return const Modal(
+                    title: "Clear Cache",
+                    content:
+                        "If you clear cache your local data will be removed! Are you sure want to clear?",
+                    type: ModalType.danger,
+                  );
+                },
+              ).then((value) async {
+                if (value != null) {
+                  if (value) {
+                    final dbHelper = DatabaseHelper();
+                    dbHelper.clearCategory();
+                    dbHelper.clearCustomer();
+                    dbHelper.clearProducts();
+                    snackbar(context, true, "Cache cleared");
+                  }
+                }
+              });
+            },
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.trash,
+                          size: 30,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Clear Cache",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(CupertinoIcons.forward),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          GestureDetector(
+            onTap: () async {
+              await showModalBottomSheet(
+                backgroundColor: Colors.white,
+                useSafeArea: true,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide.none,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                isScrollControlled: true,
+                context: context,
+                builder: (builder) {
+                  return const DeletedItems();
+                },
+              ).then((onValue) {
+                if (onValue != null) {}
+              });
+            },
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.refresh,
+                          size: 30,
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Recover Deleted Items",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(CupertinoIcons.forward),
+                ],
+              ),
+            ),
+          ),
+
+          // const SizedBox(
+          //   height: 10,
+          // ),
+          // GestureDetector(
+          //   onTap: () async {
+          //     await showModalBottomSheet(
+          //       backgroundColor: Colors.white,
+          //       useSafeArea: true,
+          //       shape: RoundedRectangleBorder(
+          //         side: BorderSide.none,
+          //         borderRadius: BorderRadius.circular(10),
+          //       ),
+          //       isScrollControlled: true,
+          //       context: context,
+          //       builder: (builder) {
+          //         return const Backup();
+          //       },
+          //     ).then((onValue) {
+          //       if (onValue != null) {}
+          //     });
+          //   },
+          //   child: Container(
+          //     height: 60,
+          //     padding: const EdgeInsets.all(10),
+          //     decoration: BoxDecoration(
+          //       color: Colors.white,
+          //       borderRadius: BorderRadius.circular(10),
+          //     ),
+          //     child: Row(
+          //       children: [
+          //         Expanded(
+          //           child: Row(
+          //             children: [
+          //               const Icon(
+          //                 CupertinoIcons.cloud_upload,
+          //                 size: 30,
+          //               ),
+          //               const SizedBox(
+          //                 width: 10,
+          //               ),
+          //               Column(
+          //                 mainAxisAlignment: MainAxisAlignment.center,
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Text(
+          //                     "Upload Backup",
+          //                     style: Theme.of(context)
+          //                         .textTheme
+          //                         .titleSmall!
+          //                         .copyWith(
+          //                           fontWeight: FontWeight.bold,
+          //                         ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ],
+          //           ),
+          //         ),
+          //         const Icon(CupertinoIcons.forward),
+          //       ],
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 
@@ -59,6 +60,33 @@ snackBarCustom(context, bool isSuccess, String msg) {
       backgroundColor: isSuccess ? Colors.green : Colors.red,
       content: Text(
         msg.toString(),
+      ),
+    ),
+  );
+}
+
+snackbar(context, bool isSuccess, String msg) {
+  return ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: isSuccess ? Colors.green : Colors.red,
+      content: Row(
+        children: [
+          Icon(
+            isSuccess
+                ? CupertinoIcons.checkmark_circle
+                : CupertinoIcons.clear_circled,
+            color: Colors.white,
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          Flexible(
+            child: Text(
+              msg.toString(),
+            ),
+          ),
+        ],
       ),
     ),
   );

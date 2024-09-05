@@ -58,7 +58,7 @@ class _AdminState extends State<Admin> {
 
       Navigator.pop(context);
       snackBarCustom(context, true, 'Logged as Admin');
-      await LocalDbProvider().superAdminLogin().then((value) {
+      await LocalDB.superAdminLogin().then((value) {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const AdminHome()),

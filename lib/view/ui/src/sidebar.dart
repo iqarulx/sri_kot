@@ -3,15 +3,15 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-import '../../../in_app_purchase/subscription_page.dart';
+import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '/provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/services/services.dart';
 import '/view/auth/src/auth.dart';
 import '/view/screens/screens.dart';
 import '/view/ui/ui.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -40,6 +40,7 @@ class _SideBarState extends State<SideBar> {
   bool? invoiceEntry;
   DateTime? endsIn;
   File? profileImg;
+  String? currentVersion;
 
   changeEvent() {
     if (mounted) {
@@ -48,7 +49,7 @@ class _SideBarState extends State<SideBar> {
   }
 
   getinfo() async {
-    await LocalDbProvider().fetchInfo(type: LocalData.all).then((value) {
+    await LocalDB.fetchInfo(type: LocalData.all).then((value) {
       if (value != null) {
         setState(() {
           name = value["user_name"];
@@ -63,41 +64,50 @@ class _SideBarState extends State<SideBar> {
         });
       }
     });
-    FireStoreProvider fireStoreProvider = FireStoreProvider();
-    var result = await fireStoreProvider.getInvoiceAvailable(
-        uid:
-            await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '');
+
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
     setState(() {
-      invoiceEntry = result;
+      currentVersion = packageInfo.version;
     });
 
-    await LocalService.updateLogin(
-        uid:
-            await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '');
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
 
-    await LocalService.checkTrialEnd(
-      uid: await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '',
-    ).then((value) {
-      if (value.isNotEmpty) {
-        var valueEndsIn = value["ends_in"];
+    if (connectionProvider.isConnected) {
+      FireStoreProvider fireStoreProvider = FireStoreProvider();
+      var result = await fireStoreProvider.getInvoiceAvailable(
+          uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '');
+      setState(() {
+        invoiceEntry = result;
+      });
 
-        if (valueEndsIn != null) {
-          if (valueEndsIn is Timestamp) {
-            setState(() {
-              endsIn = (valueEndsIn).toDate();
-            });
+      await LocalService.updateLogin(
+          uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '');
+
+      await LocalService.checkTrialEnd(
+        uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '',
+      ).then((value) {
+        if (value.isNotEmpty) {
+          var valueEndsIn = value["ends_in"];
+
+          if (valueEndsIn != null) {
+            if (valueEndsIn is Timestamp) {
+              setState(() {
+                endsIn = (valueEndsIn).toDate();
+              });
+            }
           }
         }
-      }
-    });
+      });
+    }
 
-    profileImg = File(
-      path.join(
-        (await getApplicationDocumentsDirectory()).path,
-        'company',
-        await LocalDbProvider().fetchInfo(type: LocalData.companyid),
-      ),
-    );
+    // profileImg = File(
+    //   path.join(
+    //     (await getApplicationDocumentsDirectory()).path,
+    //     'company',
+    //     await LocalDB.fetchInfo(type: LocalData.companyid),
+    //   ),
+    // );
   }
 
   @override
@@ -245,13 +255,18 @@ class _SideBarState extends State<SideBar> {
                             index: 4,
                             leadingIcon: Icons.add,
                             leadingFun: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (context) => const AddCustomer(),
-                                ),
-                              );
+                              final connectionProvider =
+                                  Provider.of<ConnectionProvider>(context,
+                                      listen: false);
+                              if (connectionProvider.isConnected) {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  CupertinoPageRoute(
+                                    builder: (context) => const AddCustomer(),
+                                  ),
+                                );
+                              }
                             },
                           )
                         : const SizedBox(),
@@ -279,16 +294,21 @@ class _SideBarState extends State<SideBar> {
                             index: 6,
                             leadingIcon: Icons.add,
                             leadingFun: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (context) => const ProductDetails(
-                                    edit: false,
-                                    title: 'Create Product',
+                              final connectionProvider =
+                                  Provider.of<ConnectionProvider>(context,
+                                      listen: false);
+                              if (connectionProvider.isConnected) {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  CupertinoPageRoute(
+                                    builder: (context) => const ProductDetails(
+                                      edit: false,
+                                      title: 'Create Product',
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              }
                             },
                           )
                         : const SizedBox(),
@@ -379,58 +399,54 @@ class _SideBarState extends State<SideBar> {
                             index: 12,
                           )
                         : const SizedBox(),
-                    isAdmin != null && isAdmin == true
-                        ? menuView(
-                            context,
-                            icon: Icons.people,
-                            lable: "Plans",
-                            index: 13,
-                          )
-                        : const SizedBox(),
                     // isAdmin != null && isAdmin == true
-                    //     ? Column(
-                    //         children: [
-                    //           Column(
-                    //             crossAxisAlignment: CrossAxisAlignment.start,
-                    //             children: [
-                    //               breakBar(),
-                    //               menuTitle(data: "Account"),
-                    //               menuView(
-                    //                 context,
-                    //                 icon: Icons.person,
-                    //                 lable: "Account Information",
-                    //                 index: 15,
-                    //               ),
-                    //               menuView(
-                    //                 context,
-                    //                 icon: Icons.credit_card,
-                    //                 lable: "Payment History",
-                    //                 index: 16,
-                    //               ),
-                    //               menuView(
-                    //                 context,
-                    //                 icon: Icons.card_giftcard,
-                    //                 lable: "Plan Details",
-                    //                 index: 17,
-                    //               ),
-                    //               menuView(
-                    //                 context,
-                    //                 icon: Icons.help,
-                    //                 lable: "Help",
-                    //                 index: 18,
-                    //               ),
-                    //               menuView(
-                    //                 context,
-                    //                 icon: Icons.support_agent,
-                    //                 lable: "Support",
-                    //                 index: 19,
-                    //               ),
-                    //               planUpgrade(context),
-                    //             ],
-                    //           ),
-                    //         ],
+                    //     ? menuView(
+                    //         context,
+                    //         icon: Icons.people,
+                    //         lable: "Plans",
+                    //         index: 13,
                     //       )
-                    //     : Container(),
+                    //     : const SizedBox(),
+                    isAdmin != null && isAdmin == true
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              breakBar(),
+                              //               menuTitle(data: "Account"),
+                              //               menuView(
+                              //                 context,
+                              //                 icon: Icons.person,
+                              //                 lable: "Account Information",
+                              //                 index: 15,
+                              //               ),
+                              //               menuView(
+                              //                 context,
+                              //                 icon: Icons.credit_card,
+                              //                 lable: "Payment History",
+                              //                 index: 16,
+                              //               ),
+                              //               menuView(
+                              //                 context,
+                              //                 icon: Icons.card_giftcard,
+                              //                 lable: "Plan Details",
+                              //                 index: 17,
+                              //               ),
+                              // menuView(
+                              //   context,
+                              //   icon: Icons.help,
+                              //   lable: "Help",
+                              //   index: 13,
+                              // ),
+                              menuView(
+                                context,
+                                icon: Icons.support_agent,
+                                lable: "Support",
+                                index: 14,
+                              ),
+                              // planUpgrade(context),
+                            ],
+                          )
+                        : Container(),
 
                     // endsIn != null
                     //     ? freeTrial(
@@ -446,7 +462,12 @@ class _SideBarState extends State<SideBar> {
                                 message: "Do you want logout this account ?")
                             .then((value) async {
                           if (value != null && value == true) {
-                            await LocalDbProvider().logout().then((result) {
+                            await LocalDB.logout().then((result) {
+                              final dbHelper = DatabaseHelper();
+                              dbHelper.clearCategory();
+                              dbHelper.clearCustomer();
+                              dbHelper.clearProducts();
+                              dbHelper.clearBillRecords();
                               if (result) {
                                 Navigator.pop(context);
                                 Navigator.pushReplacement(
@@ -617,7 +638,9 @@ class _SideBarState extends State<SideBar> {
       case 12:
         route = const AppSettings();
       case 13:
-        route = const SubscriptionPage();
+        route = const Help();
+      case 14:
+        route = const Support();
       default:
         route = const UserHome();
     }

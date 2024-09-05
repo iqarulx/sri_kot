@@ -1,7 +1,7 @@
 import 'dart:io';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -94,39 +94,36 @@ class _StaffDetailsState extends State<StaffDetails> {
                           width: 90,
                           child: Stack(
                             children: [
-                              Container(
-                                height: 90,
-                                width: 90,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  shape: BoxShape.circle,
-                                  image: profileImage != null
-                                      ? DecorationImage(
-                                          image: profileImage!.existsSync()
-                                              ? FileImage(profileImage!)
-                                              : AssetImage(
-                                                  Assets.images.noImage.path,
-                                                ),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : crtStaffData!.profileImg == null
-                                          ? null
-                                          : DecorationImage(
-                                              image: File(crtStaffData!
-                                                          .profileImg!)
-                                                      .existsSync()
-                                                  ? FileImage(
-                                                      File(crtStaffData!
-                                                          .profileImg!),
-                                                    )
-                                                  : AssetImage(
-                                                      Assets
-                                                          .images.noImage.path,
-                                                    ),
-                                              fit: BoxFit.cover,
-                                            ),
-                                ),
-                              ),
+                              profileImage == null
+                                  ? ClipRRect(
+                                      clipBehavior: Clip.hardEdge,
+                                      borderRadius: BorderRadius.circular(50.0),
+                                      child: CachedNetworkImage(
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                        imageUrl: crtStaffData!.profileImg ??
+                                            Strings.profileImg,
+                                        fit: BoxFit.cover,
+                                        height: 120,
+                                        width: 120,
+                                      ))
+                                  : Container(
+                                      height: 90,
+                                      width: 90,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          shape: BoxShape.circle,
+                                          image: DecorationImage(
+                                            image: profileImage!.existsSync()
+                                                ? FileImage(profileImage!)
+                                                : AssetImage(
+                                                    Assets.images.noImage.path,
+                                                  ),
+                                            fit: BoxFit.cover,
+                                          )),
+                                    ),
                               Align(
                                 alignment: Alignment.bottomRight,
                                 child: Container(
@@ -531,9 +528,7 @@ class _StaffDetailsState extends State<StaffDetails> {
           });
           snackBarCustom(context, false, "Permission is Must");
         } else {
-          await LocalDbProvider()
-              .fetchInfo(type: LocalData.companyid)
-              .then((cid) async {
+          await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
             if (cid != null) {
               StaffDataModel model = StaffDataModel();
               model.userName = fullName.text;
@@ -594,11 +589,11 @@ class _StaffDetailsState extends State<StaffDetails> {
     }
   }
 
-  updateStaffImage(File profileImage) async {
+  updateStaffImage(File image) async {
     loading(context);
     try {
       var downloadLink = await FireStorageProvider().uploadImage(
-        fileData: profileImage,
+        fileData: image,
         fileName: DateTime.now().millisecondsSinceEpoch.toString(),
         filePath: 'staff',
       );
@@ -607,20 +602,21 @@ class _StaffDetailsState extends State<StaffDetails> {
       await FireStoreProvider()
           .updateProfileStaff(staffData: model, docID: crtStaffData!.docID!)
           .then((value) async {
-        await FireStorageProvider()
-            .saveLocal(
-          fileData: profileImage,
-          id: crtStaffData!.docID!,
-          folder: "staff",
-        )
-            .then((value) {
-          setState(() {
-            crtStaffData!.profileImg = downloadLink;
-          });
-
-          Navigator.pop(context);
-          snackBarCustom(context, true, "Successfully Update Staff");
+        // await FireStorageProvider()
+        //     .saveLocal(
+        //   fileData: profileImage,
+        //   id: crtStaffData!.docID!,
+        //   folder: "staff",
+        // )
+        // .then((value) {
+        setState(() {
+          crtStaffData!.profileImg = downloadLink;
+          profileImage = null;
         });
+
+        Navigator.pop(context);
+        snackBarCustom(context, true, "Successfully Update Staff");
+        // });
       });
     } catch (e) {
       Navigator.pop(context);

@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -11,7 +12,7 @@ import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class EstimateListing extends StatefulWidget {
   const EstimateListing({super.key});
@@ -24,13 +25,21 @@ class _EstimateListingState extends State<EstimateListing> {
   List<EstimateDataModel> enquiryList = [];
   List<EstimateDataModel> tmpEnquiryList = [];
   TextEditingController searchForm = TextEditingController();
+
+  @override
+  void dispose() {
+    enquiryList.clear();
+    tmpEnquiryList.clear();
+    super.dispose();
+  }
+
   Future getEstimateInfo() async {
     try {
       setState(() {
         enquiryList.clear();
         tmpEnquiryList.clear();
       });
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         var enquiry = await FireStoreProvider().getEstimate(cid: cid);
         if (enquiry != null && enquiry.docs.isNotEmpty) {
@@ -100,7 +109,7 @@ class _EstimateListingState extends State<EstimateListing> {
                   createddate: DateTime.parse(
                     enquiryData["created_date"].toDate().toString(),
                   ),
-                  enquiryid: null,
+                  enquiryid: enquiryData["estimate_id"],
                   estimateid: enquiryData["estimate_id"],
                   price: calcula,
                   customer: customer,
@@ -115,51 +124,93 @@ class _EstimateListingState extends State<EstimateListing> {
           tmpEnquiryList.addAll(enquiryList);
         });
 
-        var localEnquiry = await DatabaseHelper().getEstimate();
-        for (var data in localEnquiry) {
-          var calcula = BillingCalCulationModel();
-          var price = jsonDecode(data['price']) as Map<String, dynamic>;
-          calcula.discount = price["discount"];
-          calcula.discountValue = price["discount_value"];
-          calcula.discountsys = price["discount_sys"];
-          calcula.extraDiscount = price["extra_discount"];
-          calcula.extraDiscountValue = price["extra_discount_value"];
-          calcula.extraDiscountsys = price["extra_discount_sys"];
-          calcula.package = price["package"];
-          calcula.packageValue = price["package_value"];
-          calcula.packagesys = price["package_sys"];
-          calcula.subTotal = price["sub_total"];
-          calcula.total = price["total"];
+        return enquiry;
+      }
+    } catch (e) {
+      snackBarCustom(context, false, e.toString());
+      return null;
+    }
+  }
 
-          CustomerDataModel? customer = CustomerDataModel();
-          if (data["customer"] != null) {
-            var customerData =
-                jsonDecode(data['customer']) as Map<String, dynamic>;
-            customer.address = customerData["address"] ?? "";
-            customer.state = customerData["state"] ?? "";
-            customer.city = customerData["city"] ?? "";
-            customer.customerName = customerData["customer_name"] ?? "";
-            customer.email = customerData["email"] ?? "";
-            customer.mobileNo = customerData["mobile_no"] ?? "";
-          }
+  Future getOfflineEstimateInfo() async {
+    try {
+      setState(() {
+        enquiryList.clear();
+        tmpEnquiryList.clear();
+      });
+      var localEnquiry = await DatabaseHelper().getEstimate();
+      for (var data in localEnquiry) {
+        var calcula = BillingCalCulationModel();
+        var price = jsonDecode(data['price']) as Map<String, dynamic>;
+        calcula.discount = price["discount"];
+        calcula.discountValue = price["discount_value"];
+        calcula.discountsys = price["discount_sys"];
+        calcula.extraDiscount = price["extra_discount"];
+        calcula.extraDiscountValue = price["extra_discount_value"];
+        calcula.extraDiscountsys = price["extra_discount_sys"];
+        calcula.package = price["package"];
+        calcula.packageValue = price["package_value"];
+        calcula.packagesys = price["package_sys"];
+        calcula.subTotal = price["sub_total"];
+        calcula.total = price["total"];
 
-          enquiryList.add(
-            EstimateDataModel(
-              docID: null,
-              createddate: DateTime.parse(
-                data['created_date'],
-              ),
-              enquiryid: null,
-              estimateid: null,
-              price: calcula,
-              customer: customer,
-              products: [],
-              dataType: DataTypes.local,
-            ),
-          );
+        CustomerDataModel? customer = CustomerDataModel();
+        if (data["customer"] != null) {
+          var customerData =
+              jsonDecode(data['customer']) as Map<String, dynamic>;
+          customer.address = customerData["address"] ?? "";
+          customer.state = customerData["state"] ?? "";
+          customer.city = customerData["city"] ?? "";
+          customer.customerName = customerData["customer_name"] ?? "";
+          customer.email = customerData["email"] ?? "";
+          customer.mobileNo = customerData["mobile_no"] ?? "";
         }
 
-        return enquiry;
+        List<ProductDataModel> tmpProducts = [];
+
+        setState(() {
+          tmpProducts.clear();
+        });
+
+        if (data["products"] != null) {
+          var productData = jsonDecode(data['products']) as List<dynamic>;
+          for (var product in productData) {
+            var productDataModel = ProductDataModel();
+            productDataModel.categoryid = product["category_id"];
+            productDataModel.categoryName = product["category_name"];
+            productDataModel.price = product["price"];
+            productDataModel.productId = product["product_id"];
+            productDataModel.productName = product["product_name"];
+            productDataModel.qty = product["qty"];
+            productDataModel.productCode = product["product_code"] ?? "";
+            productDataModel.discountLock = product["discount_lock"];
+            productDataModel.docid = product["product_id"];
+            productDataModel.name = product["name"];
+            productDataModel.productContent = product["product_content"];
+            productDataModel.productImg = product["product_img"];
+            productDataModel.qrCode = product["qr_code"];
+            productDataModel.videoUrl = product["video_url"];
+            setState(() {
+              tmpProducts.add(productDataModel);
+            });
+          }
+        }
+
+        enquiryList.add(
+          EstimateDataModel(
+            docID: null,
+            createddate: DateTime.parse(
+              data['created_date'],
+            ),
+            enquiryid: null,
+            estimateid: null,
+            price: calcula,
+            customer: customer,
+            products: tmpProducts,
+            dataType: DataTypes.local,
+            referenceId: data["reference_id"],
+          ),
+        );
       }
     } catch (e) {
       snackBarCustom(context, false, e.toString());
@@ -264,12 +315,32 @@ class _EstimateListingState extends State<EstimateListing> {
     }
   }
 
-  late Future estimateHandler;
+  Future? estimateHandler;
 
   @override
   void initState() {
     super.initState();
-    estimateHandler = getEstimateInfo();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        estimateHandler = getEstimateInfo();
+      } else {
+        estimateHandler = getOfflineEstimateInfo();
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      connectionProvider.addListener(() {
+        if (connectionProvider.isConnected) {
+          estimateHandler = getEstimateInfo();
+        } else {
+          estimateHandler = getOfflineEstimateInfo();
+        }
+      });
+    });
   }
 
   @override
@@ -278,7 +349,234 @@ class _EstimateListingState extends State<EstimateListing> {
       backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
       floatingActionButton: floatingButton(context),
-      body: body(),
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return FutureBuilder(
+            future: estimateHandler,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return futureLoading(context);
+              } else if (snapshot.hasError) {
+                return errorDisplay(snapshot);
+              } else {
+                return enquiryList.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Container(
+                          height: double.infinity,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.only(
+                                  top: 10,
+                                  right: 10,
+                                  left: 10,
+                                  bottom: 5,
+                                ),
+                                child: InputForm(
+                                  controller: searchForm,
+                                  formName: "Search Estimate",
+                                  prefixIcon: Icons.search,
+                                  onChanged: (value) {
+                                    searchEnquiryFun(value);
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                child: RefreshIndicator(
+                                  onRefresh: () async {
+                                    if (connectionProvider.isConnected) {
+                                      setState(() {
+                                        estimateHandler = getEstimateInfo();
+                                      });
+                                    } else {
+                                      setState(() {
+                                        estimateHandler =
+                                            getOfflineEstimateInfo();
+                                      });
+                                    }
+                                  },
+                                  child: ListView.builder(
+                                    itemCount: enquiryList.length,
+                                    itemBuilder: (context, index) {
+                                      return GestureDetector(
+                                        onTap: () {
+                                          // if (enquiryList[index].dataType ==
+                                          //     DataTypes.cloud) {
+                                          setState(() {
+                                            Navigator.push(
+                                              context,
+                                              CupertinoPageRoute(
+                                                builder: (context) =>
+                                                    EstimateDetails(
+                                                  estimateData:
+                                                      enquiryList[index],
+                                                ),
+                                              ),
+                                            ).then((value) {
+                                              if (value != null &&
+                                                  value == true) {
+                                                if (connectionProvider
+                                                    .isConnected) {
+                                                  setState(() {
+                                                    estimateHandler =
+                                                        getEstimateInfo();
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    estimateHandler =
+                                                        getOfflineEstimateInfo();
+                                                  });
+                                                }
+                                              }
+                                            });
+                                          });
+                                          // } else {
+                                          //   snackBarCustom(context, false,
+                                          //       "Please upload the data to view details");
+                                          // }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: index > 0
+                                                ? const Border(
+                                                    top: BorderSide(
+                                                      width: 0.5,
+                                                      color: Color(0xffE0E0E0),
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                height: 40,
+                                                width: 40,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade300,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    "${enquiryList.length - index}",
+                                                    style: const TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                width: 10,
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    RichText(
+                                                      text: TextSpan(
+                                                        children: [
+                                                          const TextSpan(
+                                                            text:
+                                                                "ESTIMATE ID - ",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: connectionProvider
+                                                                    .isConnected
+                                                                ? enquiryList[
+                                                                        index]
+                                                                    .enquiryid
+                                                                : enquiryList[
+                                                                            index]
+                                                                        .referenceId ??
+                                                                    "",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color: enquiryList[
+                                                                              index]
+                                                                          .estimateid ==
+                                                                      null
+                                                                  ? Colors.red
+                                                                  : Colors
+                                                                      .black,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 3,
+                                                    ),
+                                                    Text(
+                                                      "CUSTOMER - ${enquiryList[index].customer != null && enquiryList[index].customer!.customerName != null ? enquiryList[index].customer!.customerName : ""}",
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      "DATE - ${DateFormat('dd-MM-yyyy hh:mm a').format(enquiryList[index].createddate!)}",
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Center(
+                                                child: Text(
+                                                  "Rs.${enquiryList[index].price!.total}",
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.all(10),
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.arrow_forward_ios,
+                                                    size: 18,
+                                                    color: Color(0xff6B6B6B),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      )
+                    : noData(context);
+              }
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -300,22 +598,6 @@ class _EstimateListingState extends State<EstimateListing> {
           Text("Filter"),
         ],
       ),
-    );
-  }
-
-  FutureBuilder<dynamic> body() {
-    return FutureBuilder(
-      future: estimateHandler,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return enquiryList.isNotEmpty ? screenView() : noData(context);
-        } else if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasError) {
-          return errorDisplay(snapshot);
-        } else {
-          return futureLoading(context);
-        }
-      },
     );
   }
 
@@ -443,181 +725,6 @@ class _EstimateListingState extends State<EstimateListing> {
     );
   }
 
-  Padding screenView() {
-    return Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: Container(
-        height: double.infinity,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.only(
-                top: 10,
-                right: 10,
-                left: 10,
-                bottom: 5,
-              ),
-              child: InputForm(
-                controller: searchForm,
-                formName: "Search Estimate",
-                prefixIcon: Icons.search,
-                onChanged: (value) {
-                  searchEnquiryFun(value);
-                },
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  setState(() {
-                    estimateHandler = getEstimateInfo();
-                  });
-                },
-                child: ListView.builder(
-                  itemCount: enquiryList.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        if (enquiryList[index].dataType == DataTypes.cloud) {
-                          setState(() {
-                            Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                builder: (context) => EstimateDetails(
-                                  estimateData: enquiryList[index],
-                                ),
-                              ),
-                            ).then((value) {
-                              if (value != null && value == true) {
-                                setState(() {
-                                  estimateHandler = getEstimateInfo();
-                                });
-                              }
-                            });
-                          });
-                        } else {
-                          snackBarCustom(context, false,
-                              "Please upload the data to view details");
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: index > 0
-                              ? const Border(
-                                  top: BorderSide(
-                                    width: 0.5,
-                                    color: Color(0xffE0E0E0),
-                                  ),
-                                )
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              height: 40,
-                              width: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "${enquiryList.length - index}",
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            Expanded(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        const TextSpan(
-                                          text: "ESTIMATE ID - ",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: enquiryList[index].estimateid ??
-                                              "Local",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                enquiryList[index].estimateid ==
-                                                        null
-                                                    ? Colors.red
-                                                    : Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 3,
-                                  ),
-                                  Text(
-                                    "CUSTOMER - ${enquiryList[index].customer != null && enquiryList[index].customer!.customerName != null ? enquiryList[index].customer!.customerName : ""}",
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  Text(
-                                    "DATE - ${DateFormat('dd-MM-yyyy hh:mm a').format(enquiryList[index].createddate!)}",
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Center(
-                              child: Text(
-                                "Rs.${enquiryList[index].price!.total}",
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 18,
-                                  color: Color(0xff6B6B6B),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
   AppBar appbar(BuildContext context) {
     return AppBar(
       leading: IconButton(
@@ -626,17 +733,6 @@ class _EstimateListingState extends State<EstimateListing> {
       ),
       title: const Text("Estimate"),
       actions: [
-        IconButton(
-          tooltip: "Sync Now",
-          onPressed: () async {
-            await LocalService.syncNow().then((value) {
-              setState(() {
-                estimateHandler = getEstimateInfo();
-              });
-            });
-          },
-          icon: const Icon(CupertinoIcons.cloud_upload),
-        ),
         IconButton(
           tooltip: "Download Excel File",
           onPressed: () {

@@ -6,7 +6,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class PrintViewEstimate extends StatefulWidget {
   final EstimateDataModel estimateData;

@@ -42,11 +42,17 @@ class EnquiryExcel {
       if (isEstimate) {
         sheet
             .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: (i + 1)))
-            .value = TextCellValue(enquiryData[i].estimateid!);
+            .value = TextCellValue(enquiryData[i]
+                .estimateid ??
+            enquiryData[i].referenceId ??
+            '');
       } else {
         sheet
             .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: (i + 1)))
-            .value = TextCellValue(enquiryData[i].enquiryid!);
+            .value = TextCellValue(enquiryData[i]
+                .enquiryid ??
+            enquiryData[i].referenceId ??
+            '');
       }
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: (i + 1)))

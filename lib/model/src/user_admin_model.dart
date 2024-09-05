@@ -14,17 +14,20 @@ class UserAdminModel {
   String? docid;
   DateTime? createdDateTime;
   DeviceModel? deviceModel;
+  String? companyName;
+  String? companyAddress;
 
-  UserAdminModel({
-    this.adminName,
-    this.phoneNo,
-    this.adminLoginId,
-    this.password,
-    this.companyId,
-    this.uid,
-    this.imageUrl,
-    this.deviceModel,
-  });
+  UserAdminModel(
+      {this.adminName,
+      this.phoneNo,
+      this.adminLoginId,
+      this.password,
+      this.companyId,
+      this.uid,
+      this.imageUrl,
+      this.deviceModel,
+      this.companyAddress,
+      this.companyName});
 
   factory UserAdminModel.fromJson(Map<String, dynamic> json) =>
       _$UserAdminModelFromJson(json);
@@ -42,6 +45,8 @@ class UserAdminModel {
     mapping["image_url"] = imageUrl;
     mapping["created_date_time"] = createdDateTime;
     mapping["device"] = deviceModel!.toMap();
+    mapping["company_name"] = companyName;
+    mapping["company_address"] = companyAddress;
 
     return mapping;
   }
@@ -52,6 +57,7 @@ class UserAdminModel {
     mapping["phone_no"] = phoneNo;
     mapping["user_login_id"] = adminLoginId;
     mapping["password"] = password;
+    mapping["image_url"] = imageUrl;
     return mapping;
   }
 }

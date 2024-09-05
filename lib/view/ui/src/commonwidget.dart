@@ -837,3 +837,59 @@ class _EmptyListPageState extends State<EmptyListPage> {
     );
   }
 }
+
+Widget noInternet(context) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Icon(
+          CupertinoIcons.wifi_slash,
+          size: 50,
+        ),
+        const SizedBox(
+          height: 10,
+        ),
+        Text(
+          "No Internet",
+          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(
+          height: 5,
+        ),
+        Text(
+          "But you can made enquiry, estimate.",
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget notSync(context) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Icon(
+          CupertinoIcons.exclamationmark_square,
+          size: 50,
+        ),
+        const SizedBox(
+          height: 10,
+        ),
+        Text(
+          "You haven't sync your data yet.\nPlease sync your data to use billing offline",
+          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
+  );
+}

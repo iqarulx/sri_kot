@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '/view/admin/admin.dart';
 import '/view/auth/auth.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -85,14 +85,15 @@ class _SigninState extends State<Signin> {
           );
 
           if (deviceAccessResult!.docs.isNotEmpty) {
-            await LocalDbProvider()
-                .createNewUser(
+            await LocalDB.createNewUser(
               username: companyData.docs.first["user_name"].toString(),
               loginEmail: companyData.docs.first["user_login_id"].toString(),
               uID: companyData.docs.first["uid"].toString(),
               companyID: companyData.docs.first.id.toString(),
               companyUniqueId:
                   companyData.docs.first["company_unique_id"].toString(),
+              companyAddress: companyData.docs.first["address"].toString(),
+              companyName: companyData.docs.first["company_name"].toString(),
               isAdmin: true,
               prCategory: true,
               prCustomer: true,
@@ -100,8 +101,7 @@ class _SigninState extends State<Signin> {
               prOrder: true,
               prProduct: true,
               prBillofSupply: true,
-            )
-                .then((value) {
+            ).then((value) {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
@@ -177,12 +177,13 @@ class _SigninState extends State<Signin> {
           );
 
           if (deviceAccessResult!.docs.isNotEmpty) {
-            await LocalDbProvider()
-                .createNewUser(
+            await LocalDB.createNewUser(
               username: value.docs.first["staff_name"],
               loginEmail: value.docs.first["user_login_id"],
               uID: value.docs.first.id,
               companyID: value.docs.first["company_id"],
+              companyAddress: value.docs.first["address"].toString(),
+              companyName: value.docs.first["company_name"].toString(),
               companyUniqueId: tmpData[1],
               isAdmin: false,
               prCategory: value.docs.first["permission"]["category"],
@@ -191,8 +192,7 @@ class _SigninState extends State<Signin> {
               prOrder: value.docs.first["permission"]["orders"],
               prProduct: value.docs.first["permission"]["product"],
               prBillofSupply: value.docs.first["permission"]["billofsupply"],
-            )
-                .then((value) {
+            ).then((value) {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
@@ -272,13 +272,14 @@ class _SigninState extends State<Signin> {
           );
 
           if (deviceAccessResult!.docs.isNotEmpty) {
-            await LocalDbProvider()
-                .createNewUser(
+            await LocalDB.createNewUser(
               username: value.docs.first["admin_name"],
               loginEmail: value.docs.first["user_login_id"],
               uID: value.docs.first.id,
               companyID: value.docs.first["company_id"],
               companyUniqueId: tmpData[1],
+              companyAddress: value.docs.first["address"].toString(),
+              companyName: value.docs.first["company_name"].toString(),
               isAdmin: false,
               prCategory: true,
               prCustomer: true,
@@ -286,8 +287,7 @@ class _SigninState extends State<Signin> {
               prOrder: true,
               prProduct: true,
               prBillofSupply: true,
-            )
-                .then((value) {
+            ).then((value) {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,

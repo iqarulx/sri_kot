@@ -8,7 +8,11 @@ import '/view/auth/src/auth.dart';
 class MyApp extends StatelessWidget {
   final bool login;
   final bool isSuperAdmin;
-  const MyApp({super.key, required this.login, required this.isSuperAdmin});
+  const MyApp({
+    super.key,
+    required this.login,
+    required this.isSuperAdmin,
+  });
 
   @override
   Widget build(BuildContext context) {

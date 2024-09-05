@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -306,9 +306,7 @@ class _AddUserState extends State<AddUser> {
           imageError = null;
         });
 
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             await LocalService.checkCount(type: ProfileType.admin)
                 .then((value) async {
@@ -320,6 +318,10 @@ class _AddUserState extends State<AddUser> {
                 userData.password = password.text;
                 userData.phoneNo = phoneNo.text;
                 userData.createdDateTime = DateTime.now();
+                userData.companyAddress =
+                    await LocalDB.fetchInfo(type: LocalData.companyAddress);
+                userData.companyName =
+                    await LocalDB.fetchInfo(type: LocalData.companyName);
                 String? downloadLink;
                 if (profileImage != null) {
                   downloadLink = await FireStorageProvider().uploadImage(
@@ -351,8 +353,7 @@ class _AddUserState extends State<AddUser> {
                       phoneNo.clear();
                     });
                     Navigator.pop(context, true);
-                    snackBarCustom(
-                        context, true, "Successfully Created New User");
+                    snackBarCustom(context, true, "Successfully User Created");
                   } else {
                     snackBarCustom(context, false, "Failed to Create New User");
                   }
@@ -397,11 +398,9 @@ class _AddUserState extends State<AddUser> {
   }
 
   initFun() async {
-    await LocalDbProvider()
-        .fetchInfo(
+    await LocalDB.fetchInfo(
       type: LocalData.companyUniqueId,
-    )
-        .then((value) {
+    ).then((value) {
       setState(() {
         unqiueId = value;
       });

@@ -1,12 +1,9 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-
-import '/constants/enum.dart';
-import '/gen/assets.gen.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -34,7 +31,20 @@ class _ProductDetailsState extends State<ProductDetails> {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(),
-      body: body(context),
+      body: FutureBuilder(
+        future: productDetails,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          } else {
+            return body(context);
+          }
+        },
+      ),
       bottomNavigationBar: bottomAppbar(context),
     );
   }
@@ -99,7 +109,70 @@ class _ProductDetailsState extends State<ProductDetails> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                imageOption(context),
+                Center(
+                  child: GestureDetector(
+                    onTap: () async {
+                      var imageResult =
+                          await FilePickerProvider().showFileDialog(context);
+                      if (imageResult != null) {
+                        setState(() {
+                          productImage = imageResult;
+                        });
+                      }
+                    },
+                    child: Container(
+                      height: 120,
+                      width: 120,
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Stack(
+                        children: [
+                          productImage == null
+                              ? ClipRRect(
+                                  clipBehavior: Clip.hardEdge,
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  child: CachedNetworkImage(
+                                    placeholder: (context, url) => const Center(
+                                        child: CircularProgressIndicator()),
+                                    imageUrl: imageUrl ?? Strings.productImg,
+                                    fit: BoxFit.cover,
+                                  ))
+                              : Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade300,
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: FileImage(productImage!),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border:
+                                    Border.all(width: 2, color: Colors.white),
+                                color: Colors.yellow.shade800,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(5),
+                              child: const Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(
                   height: 10,
                 ),
@@ -330,69 +403,6 @@ class _ProductDetailsState extends State<ProductDetails> {
     );
   }
 
-  Center imageOption(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        onTap: () async {
-          var imageResult = await FilePickerProvider().showFileDialog(context);
-          if (imageResult != null) {
-            setState(() {
-              productImage = imageResult;
-            });
-          }
-        },
-        child: Container(
-          height: 120,
-          width: 120,
-          decoration: const BoxDecoration(
-            color: Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  shape: BoxShape.circle,
-                  image: productImage != null
-                      ? DecorationImage(
-                          image: FileImage(productImage!),
-                          fit: BoxFit.cover,
-                        )
-                      : DecorationImage(
-                          image:
-                              imageUrl != null && File(imageUrl!).existsSync()
-                                  ? FileImage(File(imageUrl!))
-                                  : AssetImage(Assets.images.noImage.path),
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(width: 2, color: Colors.white),
-                    color: Colors.yellow.shade800,
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(5),
-                  child: const Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   AppBar appbar() {
     return AppBar(
       title: Text(widget.title),
@@ -425,9 +435,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   bool active = true;
 
   Future getCategory() async {
-    await LocalDbProvider()
-        .fetchInfo(type: LocalData.companyid)
-        .then((cid) async {
+    await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
       await FireStoreProvider().categoryListing(cid: cid).then((value) {
         if (value!.docs.isNotEmpty) {
           setState(() {
@@ -450,9 +458,9 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   var addProductKey = GlobalKey<FormState>();
 
-  inifunc() async {
+  Future inifunc() async {
     if (widget.edit) {
-      var directory = await getApplicationDocumentsDirectory();
+      // var directory = await getApplicationDocumentsDirectory();
       setState(() {
         categoryID = widget.productData!.categoryid ?? "";
         categoryName.text = widget.productData!.categoryName ?? "";
@@ -464,13 +472,12 @@ class _ProductDetailsState extends State<ProductDetails> {
             ? ""
             : widget.productData!.price.toString();
         videoUrl.text = widget.productData!.videoUrl ?? "";
-        // imageUrl = widget.productData!.productImg ?? "";
-
-        imageUrl = path.join(
-          directory.path,
-          'product',
-          widget.productData!.productId,
-        );
+        imageUrl = widget.productData!.productImg ?? "";
+        // imageUrl = path.join(
+        //   directory.path,
+        //   'product',
+        //   widget.productData!.productId,
+        // );
         discountLock = widget.productData!.discountLock ?? false;
         active = widget.productData!.active ?? false;
       });
@@ -506,13 +513,12 @@ class _ProductDetailsState extends State<ProductDetails> {
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (addProductKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             var productData = ProductDataModel();
             productData.companyId = cid;
             productData.active = active;
+            productData.categoryName = categoryName.text;
             productData.categoryid = categoryID;
             productData.discountLock = discountLock; // Change Discount Lock
             productData.price = double.parse(price.text);
@@ -530,11 +536,9 @@ class _ProductDetailsState extends State<ProductDetails> {
               if (productImage != null) {
                 var downloadLink = await FireStorageProvider().uploadImage(
                   fileData: productImage!,
-                  fileName: widget.productData!.productId!,
+                  fileName: DateTime.now().millisecondsSinceEpoch.toString(),
                   filePath: 'products',
                 );
-
-                print(downloadLink);
 
                 await FireStoreProvider()
                     .updateProductPic(
@@ -542,18 +546,17 @@ class _ProductDetailsState extends State<ProductDetails> {
                   imageLink: downloadLink.toString(),
                 )
                     .then((value) async {
-                  await FireStorageProvider()
-                      .saveLocal(
-                    fileData: productImage!,
-                    id: widget.productData!.productId!,
-                    folder: 'product',
-                  )
-                      .then((value) {
-                    Navigator.pop(context);
-                    Navigator.pop(context, true);
-                    snackBarCustom(
-                        context, true, "Product Update Successfully");
-                  });
+                  // await FireStorageProvider()
+                  //     .saveLocal(
+                  //   fileData: productImage!,
+                  //   id: widget.productData!.productId!,
+                  //   folder: 'product',
+                  // )
+                  //     .then((value) {
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
+                  snackBarCustom(context, true, "Product Update Successfully");
+                  // });
                 });
               } else {
                 Navigator.pop(context);
@@ -578,14 +581,13 @@ class _ProductDetailsState extends State<ProductDetails> {
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (addProductKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             var productData = ProductDataModel();
             productData.companyId = cid;
             productData.active = active;
             productData.categoryid = categoryID;
+            productData.categoryName = categoryName.text;
             productData.delete = false;
             productData.discountLock = true; // Change Discount Lock
             productData.price = double.parse(price.text);
@@ -647,10 +649,12 @@ class _ProductDetailsState extends State<ProductDetails> {
     }
   }
 
+  Future? productDetails;
+
   @override
   void initState() {
     super.initState();
     getCategory();
-    inifunc();
+    productDetails = inifunc();
   }
 }

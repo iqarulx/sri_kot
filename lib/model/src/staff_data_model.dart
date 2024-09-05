@@ -15,19 +15,22 @@ class StaffDataModel {
   String? docID;
   bool? deleteAt;
   DeviceModel? deviceModel;
+  String? companyName;
+  String? companyAddress;
 
-  StaffDataModel({
-    this.userName,
-    this.phoneNo,
-    this.userid,
-    this.password,
-    this.companyID,
-    this.profileImg,
-    this.permission,
-    this.docID,
-    this.deleteAt,
-    this.deviceModel,
-  });
+  StaffDataModel(
+      {this.userName,
+      this.phoneNo,
+      this.userid,
+      this.password,
+      this.companyID,
+      this.profileImg,
+      this.permission,
+      this.docID,
+      this.deleteAt,
+      this.deviceModel,
+      this.companyAddress,
+      this.companyName});
 
   factory StaffDataModel.fromJson(Map<String, dynamic> json) =>
       _$StaffDataModelFromJson(json);

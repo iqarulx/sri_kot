@@ -1,4 +1,5 @@
 export 'src/commonfun.dart';
+export 'src/connection.dart';
 export 'src/customer_excel_creation.dart';
 export 'src/device_info_provider.dart';
 export 'src/download_file_provider.dart';

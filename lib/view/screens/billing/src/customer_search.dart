@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/view/ui/ui.dart';
 
 class CustomerSearch extends StatefulWidget {
-  const CustomerSearch({super.key});
+  final bool isConnected;
+  const CustomerSearch({super.key, required this.isConnected});
 
   @override
   State<CustomerSearch> createState() => _CustomerSearchState();
@@ -21,7 +22,7 @@ class _CustomerSearchState extends State<CustomerSearch> {
   Future getCustomerInfo() async {
     try {
       FireStoreProvider provider = FireStoreProvider();
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 
       if (cid != null) {
         final result = await provider.customerListing(cid: cid);
@@ -52,12 +53,47 @@ class _CustomerSearchState extends State<CustomerSearch> {
     }
   }
 
+  Future getOfflineCustomerInfo() async {
+    try {
+      var localCustomer = await DatabaseHelper().getCustomer();
+
+      if (localCustomer.isNotEmpty) {
+        setState(() {
+          customerDataList.clear();
+        });
+        for (var element in localCustomer) {
+          CustomerDataModel model = CustomerDataModel();
+          model.address = element["address"].toString();
+          model.mobileNo = element["mobile_no"].toString();
+          model.city = element["city"].toString();
+          model.customerName = element["customer_name"].toString();
+          model.email = element["email"].toString();
+          model.state = element["state"].toString();
+          model.docID = element["customer_id"];
+          model.companyID = element["company_id"].toString();
+          setState(() {
+            customerDataList.add(model);
+          });
+        }
+        return customerDataList;
+      }
+
+      return null;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
   late Future customerHandler;
 
   @override
   void initState() {
     super.initState();
-    customerHandler = getCustomerInfo();
+    if (widget.isConnected) {
+      customerHandler = getCustomerInfo();
+    } else {
+      customerHandler = getOfflineCustomerInfo();
+    }
   }
 
   @override
@@ -110,7 +146,62 @@ class _CustomerSearchState extends State<CustomerSearch> {
               body: FutureBuilder(
                 future: customerHandler,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return futureLoading(context);
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        margin: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Center(
+                              child: Text(
+                                "Failed",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 15,
+                            ),
+                            Text(
+                              snapshot.error.toString() == "null"
+                                  ? "Something went Wrong"
+                                  : snapshot.error.toString(),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    customerHandler = getCustomerInfo();
+                                  });
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text(
+                                  "Refresh",
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  } else {
                     return RefreshIndicator(
                       onRefresh: () async {
                         setState(() {
@@ -192,62 +283,6 @@ class _CustomerSearchState extends State<CustomerSearch> {
                         },
                       ),
                     );
-                  } else if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.hasError) {
-                    return Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        margin: const EdgeInsets.all(20),
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Center(
-                              child: Text(
-                                "Failed",
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 15,
-                            ),
-                            Text(
-                              snapshot.error.toString() == "null"
-                                  ? "Something went Wrong"
-                                  : snapshot.error.toString(),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.black54,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Center(
-                              child: TextButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    customerHandler = getCustomerInfo();
-                                  });
-                                },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text(
-                                  "Refresh",
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  } else {
-                    return futureLoading(context);
                   }
                 },
               ),

@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class EnquiryDetails extends StatefulWidget {
   final EstimateDataModel estimateData;
@@ -55,39 +56,62 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
 
   printEnquiry() async {
     loading(context);
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .getCompanyDocInfo(cid: cid)
-              .then((companyInfo) {
-            if (companyInfo != null) {
-              setState(() {
-                companyData.companyName = companyInfo["company_name"];
-                companyData.address = companyInfo["address"];
-                companyData.contact = companyInfo["contact"];
-              });
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
 
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => PrintView(
-                    estimateData: widget.estimateData,
-                    companyInfo: companyData,
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .getCompanyDocInfo(cid: cid)
+                .then((companyInfo) {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
+                  companyData.contact = companyInfo["contact"];
+                });
+
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => PrintView(
+                      estimateData: widget.estimateData,
+                      companyInfo: companyData,
+                    ),
                   ),
-                ),
-              );
-            } else {
-              Navigator.pop(context);
-            }
-          });
-        } else {
-          Navigator.pop(context);
-        }
-      });
+                );
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        // add contact
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+          // add also
+        });
+
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => PrintView(
+              estimateData: widget.estimateData,
+              companyInfo: companyData,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
@@ -96,70 +120,119 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
 
   downloadPrintEnquiry() async {
     loading(context);
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .getCompanyDocInfo(cid: cid)
-              .then((companyInfo) async {
-            if (companyInfo != null) {
-              setState(() {
-                companyData.companyName = companyInfo["company_name"];
-                companyData.address = companyInfo["address"];
-              });
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
 
-              var pdf = EnqueryPdfCreation(
-                estimateData: widget.estimateData,
-                type: PdfType.enquiry,
-                companyInfo: companyData,
-              );
-              var dataResult =
-                  await pdf.createPDFDemoA4(pageSize: PdfPageFormat.a4);
-              // var dataResult = await pdf.create3InchPDF();
-              if (dataResult != null) {
-                var data = Uint8List.fromList(dataResult);
-                await DownloadFileOffline(
-                        fileData: data,
-                        fileName: "Enquiry ${widget.estimateData.enquiryid}",
-                        fileext: "pdf")
-                    .startDownload()
-                    .then((value) {
-                  Navigator.pop(context);
-                  if (value != null && value.isNotEmpty) {
-                    downloadFileSnackBarCustom(context,
-                        isSuccess: true, msg: "Download Enquiry", path: value);
-                    // snackBarCustom(context, true, "Download Enquiry 3 inch ${widget.estimateData.enquiryid}");
-                  } else {
-                    snackBarCustom(context, false, "Failed to Download");
-                  }
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .getCompanyDocInfo(cid: cid)
+                .then((companyInfo) async {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
                 });
+
+                var pdf = EnqueryPdfCreation(
+                  estimateData: widget.estimateData,
+                  type: PdfType.enquiry,
+                  companyInfo: companyData,
+                );
+                var dataResult =
+                    await pdf.createPDFDemoA4(pageSize: PdfPageFormat.a4);
+                // var dataResult = await pdf.create3InchPDF();
+                if (dataResult != null) {
+                  var data = Uint8List.fromList(dataResult);
+                  await DownloadFileOffline(
+                          fileData: data,
+                          fileName: "Enquiry ${widget.estimateData.enquiryid}",
+                          fileext: "pdf")
+                      .startDownload()
+                      .then((value) {
+                    Navigator.pop(context);
+                    if (value != null && value.isNotEmpty) {
+                      downloadFileSnackBarCustom(context,
+                          isSuccess: true,
+                          msg: "Download Enquiry",
+                          path: value);
+                    } else {
+                      snackBarCustom(context, false, "Failed to Download");
+                    }
+                  });
+                }
+              } else {
+                Navigator.pop(context);
               }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+        });
+
+        var pdf = EnqueryPdfCreation(
+          estimateData: widget.estimateData,
+          type: PdfType.enquiry,
+          companyInfo: companyData,
+        );
+        var dataResult = await pdf.createPDFDemoA4(pageSize: PdfPageFormat.a4);
+        // var dataResult = await pdf.create3InchPDF();
+        if (dataResult != null) {
+          var data = Uint8List.fromList(dataResult);
+          await DownloadFileOffline(
+                  fileData: data,
+                  fileName: "Enquiry ${widget.estimateData.enquiryid}",
+                  fileext: "pdf")
+              .startDownload()
+              .then((value) {
+            Navigator.pop(context);
+            if (value != null && value.isNotEmpty) {
+              downloadFileSnackBarCustom(context,
+                  isSuccess: true, msg: "Download Enquiry", path: value);
             } else {
-              Navigator.pop(context);
+              snackBarCustom(context, false, "Failed to Download");
             }
           });
-        } else {
-          Navigator.pop(context);
         }
-      });
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
     }
   }
 
-  deleteEnquery() async {
+  deleteEnquiry() async {
     loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
     try {
-      await FireStoreProvider()
-          .deleteEnquiry(docID: widget.estimateData.docID!)
-          .then((value) {
-        Navigator.pop(context);
-        Navigator.pop(context, true);
-        snackBarCustom(context, true, "Successfully Deleted");
-      });
+      if (connectionProvider.isConnected) {
+        await FireStoreProvider()
+            .deleteEnquiry(docID: widget.estimateData.docID!)
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(context, true, "Successfully Deleted");
+        });
+      } else {
+        await LocalService.deleteEnquiry(
+                referenceId: widget.estimateData.referenceId ?? '')
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(context, true, "Successfully Deleted");
+        });
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
@@ -168,65 +241,103 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
 
   convertEstimate() async {
     // loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
     try {
       if (widget.estimateData.customer != null &&
-          widget.estimateData.customer!.customerName != null) {
+          widget.estimateData.customer!.customerName != null &&
+          widget.estimateData.customer!.customerName!.isNotEmpty) {
         loading(context);
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
-          if (cid != null) {
-            await FireStoreProvider()
-                .orderToConvertEstimate(
-              cid: cid,
-              docID: widget.estimateData.docID!,
-            )
-                .then((value) async {
+
+        if (connectionProvider.isConnected) {
+          await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+            if (cid != null) {
               await FireStoreProvider()
-                  .deleteEnquiry(docID: widget.estimateData.docID!)
-                  .then((value) {
-                Navigator.pop(context);
-                Navigator.pop(context, true);
-                snackBarCustom(
-                  context,
-                  true,
-                  "Successfully Convert Enuiry to Estimate",
-                );
+                  .orderToConvertEstimate(
+                cid: cid,
+                docID: widget.estimateData.docID!,
+              )
+                  .then((value) async {
+                await FireStoreProvider()
+                    .deleteEnquiry(docID: widget.estimateData.docID!)
+                    .then((value) {
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
+                  snackBarCustom(
+                    context,
+                    true,
+                    "Successfully Enquiry Converted to Estimate",
+                  );
+                });
               });
-            });
-          }
-        });
+            }
+          });
+        } else {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(
+            context,
+            true,
+            "Successfully Enquiry Converted to Estimate",
+          );
+          LocalService.enquiryToEstimate(
+              referenceId: widget.estimateData.referenceId ?? '',
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid));
+        }
       } else {
         showDialog(
           barrierDismissible: false,
           context: context,
           builder: (context) {
-            return const CustomerSearch();
+            return CustomerSearch(
+              isConnected: connectionProvider.isConnected,
+            );
           },
         ).then((value) async {
           if (value != null) {
-            await FireStoreProvider()
-                .updateEnquiryCustomer(
-                    docId: widget.estimateData.docID!,
-                    address: value.address,
-                    city: value.city,
-                    companyId: value.companyID,
-                    customerId: value.docID,
-                    customerName: value.customerName,
-                    email: value.email,
-                    mobileNo: value.mobileNo,
-                    state: value.state)
-                .then((onValue) {
-              setState(() {
-                widget.estimateData.customer!.customerName = value.customerName;
-                widget.estimateData.customer!.address = value.address;
-                widget.estimateData.customer!.city = value.city;
-                widget.estimateData.customer!.state = value.state;
-                widget.estimateData.customer!.email = value.email;
-                widget.estimateData.customer!.mobileNo = value.mobileNo;
+            if (connectionProvider.isConnected) {
+              await FireStoreProvider()
+                  .updateEnquiryCustomer(
+                      docId: widget.estimateData.docID!,
+                      address: value.address,
+                      city: value.city,
+                      companyId: value.companyID,
+                      customerId: value.docID,
+                      customerName: value.customerName,
+                      email: value.email,
+                      mobileNo: value.mobileNo,
+                      state: value.state)
+                  .then((onValue) {
+                setState(() {
+                  widget.estimateData.customer!.customerName =
+                      value.customerName ?? '';
+                  widget.estimateData.customer!.address = value.address ?? '';
+                  widget.estimateData.customer!.city = value.city ?? '';
+                  widget.estimateData.customer!.state = value.state ?? '';
+                  widget.estimateData.customer!.email = value.email ?? '';
+                  widget.estimateData.customer!.mobileNo = value.mobileNo ?? '';
+                });
+                convertEstimate();
               });
-              convertEstimate();
-            });
+            } else {
+              await LocalService.updateCustomerInfo(
+                      customerInfo: value,
+                      referenceId: widget.estimateData.referenceId ?? '')
+                  .then((result) {
+                setState(() {
+                  widget.estimateData.customer!.customerName =
+                      value?.customerName ?? '';
+                  widget.estimateData.customer!.address = value?.address ?? '';
+                  widget.estimateData.customer!.city = value?.city ?? '';
+                  widget.estimateData.customer!.state = value?.state ?? '';
+                  widget.estimateData.customer!.email = value?.email ?? '';
+                  widget.estimateData.customer!.mobileNo =
+                      value?.mobileNo ?? '';
+                });
+                convertEstimate();
+              });
+            }
           }
         });
       }
@@ -239,20 +350,31 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
 
   duplicateEnquiry() async {
     loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
     try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .duplicateEnquiry(docID: widget.estimateData.docID!, cid: cid)
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context, true);
-            snackBarCustom(context, true, "Successfully Duplicate a Enqiry");
-          });
-        }
-      });
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .duplicateEnquiry(docID: widget.estimateData.docID!, cid: cid)
+                .then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+              snackBarCustom(context, true, "Successfully Enqiry Duplicated");
+            });
+          }
+        });
+      } else {
+        await LocalService.duplicateEnquiry(
+                referenceId: widget.estimateData.referenceId!)
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(context, true, "Successfully Enqiry Duplicated");
+        });
+      }
     } catch (e) {
       Navigator.pop(context);
       throw e.toString();
@@ -260,87 +382,120 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
   }
 
   bool isloading = false;
-  checkProductsList() async {
-    if (widget.estimateData.products!.isEmpty) {
-      setState(() {
-        isloading = true;
-      });
-      await FireStoreProvider()
-          .getEnquiryProducts(docid: widget.estimateData.docID!)
-          .then((products) {
-        if (products != null && products.docs.isNotEmpty) {
-          for (var product in products.docs) {
-            var productDataModel = ProductDataModel();
-            productDataModel.categoryid = product["category_id"];
-            productDataModel.categoryName = product["category_name"];
-            productDataModel.price = product["price"];
-            productDataModel.productId = product["product_id"];
-            productDataModel.productName = product["product_name"];
-            productDataModel.qty = product["qty"];
-            productDataModel.productCode = product["product_code"] ?? "";
-            productDataModel.discountLock = product["discount_lock"];
-            productDataModel.docid = product.id;
-            productDataModel.name = product["name"];
-            productDataModel.productContent = product["product_content"];
-            productDataModel.productImg = product["product_img"];
-            productDataModel.qrCode = product["qr_code"];
-            productDataModel.videoUrl = product["video_url"];
 
+  checkProductsList() async {
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+    if (connectionProvider.isConnected) {
+      if (widget.estimateData.products!.isEmpty) {
+        setState(() {
+          isloading = true;
+        });
+        await FireStoreProvider()
+            .getEnquiryProducts(docid: widget.estimateData.docID!)
+            .then((products) {
+          if (products != null && products.docs.isNotEmpty) {
+            for (var product in products.docs) {
+              var productDataModel = ProductDataModel();
+              productDataModel.categoryid = product["category_id"];
+              productDataModel.categoryName = product["category_name"];
+              productDataModel.price = product["price"];
+              productDataModel.productId = product["product_id"];
+              productDataModel.productName = product["product_name"];
+              productDataModel.qty = product["qty"];
+              productDataModel.productCode = product["product_code"] ?? "";
+              productDataModel.discountLock = product["discount_lock"];
+              productDataModel.docid = product.id;
+              productDataModel.name = product["name"];
+              productDataModel.productContent = product["product_content"];
+              productDataModel.productImg = product["product_img"];
+              productDataModel.qrCode = product["qr_code"];
+              productDataModel.videoUrl = product["video_url"];
+
+              setState(() {
+                widget.estimateData.products!.add(productDataModel);
+              });
+            }
             setState(() {
-              widget.estimateData.products!.add(productDataModel);
+              isloading = false;
             });
           }
-          setState(() {
-            isloading = false;
-          });
-        }
-      });
+        });
+      }
     }
   }
 
   sharePDF() async {
     loading(context);
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .getCompanyDocInfo(cid: cid)
-              .then((companyInfo) async {
-            if (companyInfo != null) {
-              setState(() {
-                companyData.companyName = companyInfo["company_name"];
-                companyData.address = companyInfo["address"];
-              });
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
 
-              var pdf = EnqueryPdfCreation(
-                estimateData: widget.estimateData,
-                type: PdfType.enquiry,
-                companyInfo: companyData,
-              );
-              await pdf
-                  .createPDFDemoA4(pageSize: PdfPageFormat.a4)
-                  .then((dataResult) async {
-                if (dataResult != null) {
-                  await Printing.sharePdf(
-                    bytes: dataResult,
-                  ).then((value) {
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .getCompanyDocInfo(cid: cid)
+                .then((companyInfo) async {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
+                });
+
+                var pdf = EnqueryPdfCreation(
+                  estimateData: widget.estimateData,
+                  type: PdfType.enquiry,
+                  companyInfo: companyData,
+                );
+                await pdf
+                    .createPDFDemoA4(pageSize: PdfPageFormat.a4)
+                    .then((dataResult) async {
+                  if (dataResult != null) {
+                    await Printing.sharePdf(
+                      bytes: dataResult,
+                    ).then((value) {
+                      Navigator.pop(context);
+                    });
+                  } else {
                     Navigator.pop(context);
-                  });
-                } else {
-                  Navigator.pop(context);
-                }
-              });
-              // var dataResult = await pdf.create3InchPDF();
-            } else {
+                  }
+                });
+                // var dataResult = await pdf.create3InchPDF();
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+        });
+        var pdf = EnqueryPdfCreation(
+          estimateData: widget.estimateData,
+          type: PdfType.enquiry,
+          companyInfo: companyData,
+        );
+        await pdf
+            .createPDFDemoA4(pageSize: PdfPageFormat.a4)
+            .then((dataResult) async {
+          if (dataResult != null) {
+            await Printing.sharePdf(
+              bytes: dataResult,
+            ).then((value) {
               Navigator.pop(context);
-            }
-          });
-        } else {
-          Navigator.pop(context);
-        }
-      });
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
@@ -356,115 +511,8 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: Text(widget.estimateData.enquiryid!),
-        // actions: [
-        // IconButton(
-        //   tooltip: "Print Enquiry",
-        //   splashRadius: 29,
-        //   onPressed: () {
-        //     printEnquiry();
-        //   },
-        //   icon: const Icon(
-        //     Icons.print,
-        //   ),
-        // ),
-        // IconButton(
-        //   tooltip: "Delete Enquiry",
-        //   splashRadius: 29,
-        //   onPressed: () async {
-        //     await confirmationDialog(
-        //       context,
-        //       title: "Alert",
-        //       message: "Do you want delete enquiry?",
-        //     ).then((value) {
-        //       if (value != null && value == true) {
-        //         deleteEnquery();
-        //       }
-        //     });
-        //   },
-        //   icon: const Icon(
-        //     Icons.delete,
-        //   ),
-        // ),
-        // IconButton(
-        //   tooltip: "Copy Enquiry",
-        //   splashRadius: 29,
-        //   onPressed: () async {
-        //     await confirmationDialog(
-        //       context,
-        //       title: "Alert",
-        //       message: "Do you want Duplicate enquiry?",
-        //     ).then((value) {
-        //       if (value != null && value == true) {
-        //         duplicateEnquiry();
-        //       }
-        //     });
-        //   },
-        //   icon: const Icon(
-        //     Icons.copy,
-        //   ),
-        // ),
-        // IconButton(
-        //   tooltip: "Download PDF",
-        //   splashRadius: 29,
-        //   onPressed: () async {
-        //     await confirmationDialog(
-        //       context,
-        //       title: "Alert",
-        //       message: "Do you want Download enquiry?",
-        //     ).then((value) {
-        //       if (value != null && value == true) {
-        //         downloadPrintEnquiry();
-        //       }
-        //     });
-        //   },
-        //   icon: const Icon(
-        //     Icons.file_download_outlined,
-        //   ),
-        // ),
-        // ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Theme.of(context).primaryColor,
-        shape: RoundedRectangleBorder(
-          side: BorderSide.none,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        onPressed: () async {
-          await LocalDbProvider().getBillingIndex().then((value) async {
-            if (value != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) {
-                  if (value == 1) {
-                    return BillingOne(
-                      isEdit: true,
-                      enquiryData: widget.estimateData,
-                    );
-                  } else {
-                    return BillingTwo(
-                      isEdit: true,
-                      enquiryData: widget.estimateData,
-                    );
-                  }
-                }),
-              );
-            }
-          });
-        },
-        label: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.edit),
-            SizedBox(
-              width: 10,
-            ),
-            Text("Edit"),
-          ],
-        ),
-      ),
+      appBar: appbar(),
+      floatingActionButton: floatingButton(context),
       backgroundColor: const Color(0xffEEEEEE),
       body: ListView(
         padding: const EdgeInsets.all(10),
@@ -512,7 +560,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                           message: "Do you want delete enquiry?",
                         ).then((value) {
                           if (value != null && value == true) {
-                            deleteEnquery();
+                            deleteEnquiry();
                           }
                         });
                       },
@@ -581,7 +629,10 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 ),
                 Table(
                   children: [
-                    tableRow("Order No", widget.estimateData.enquiryid),
+                    tableRow(
+                        "Order No",
+                        widget.estimateData.enquiryid ??
+                            widget.estimateData.referenceId),
                     tableRow(
                       "Order Date",
                       DateFormat('dd-MM-yyyy hh:mm a')
@@ -755,6 +806,21 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // FastCachedImage(
+                                //   width: 80,
+                                //   height: 80,
+                                //   url: product.productImg ?? Strings.productImg,
+                                //   fit: BoxFit.cover,
+                                //   repeat: ImageRepeat.noRepeat,
+                                //   showErrorLog: true,
+                                //   filterQuality: FilterQuality.low,
+                                //   fadeInDuration: const Duration(seconds: 1),
+                                //   errorBuilder:
+                                //       (context, exception, stacktrace) {
+                                //     return Text(stacktrace.toString());
+                                //   },
+                                // ),
+
                                 Container(
                                   height: 80,
                                   width: 80,
@@ -826,6 +892,123 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
           ),
         ],
       ),
+    );
+  }
+
+  FloatingActionButton floatingButton(BuildContext context) {
+    return FloatingActionButton.extended(
+      backgroundColor: Theme.of(context).primaryColor,
+      shape: RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      onPressed: () async {
+        await LocalDB.getBillingIndex().then((value) async {
+          if (value != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) {
+                if (value == 1) {
+                  return BillingOne(
+                    isEdit: true,
+                    enquiryData: widget.estimateData,
+                  );
+                } else {
+                  return BillingTwo(
+                    isEdit: true,
+                    enquiryData: widget.estimateData,
+                  );
+                }
+              }),
+            );
+          }
+        });
+      },
+      label: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.edit),
+          SizedBox(
+            width: 10,
+          ),
+          Text("Edit"),
+        ],
+      ),
+    );
+  }
+
+  AppBar appbar() {
+    return AppBar(
+      titleSpacing: 0,
+      title: Text(
+        widget.estimateData.enquiryid ?? widget.estimateData.referenceId ?? '',
+      ),
+      // actions: [
+      // IconButton(
+      //   tooltip: "Print Enquiry",
+      //   splashRadius: 29,
+      //   onPressed: () {
+      //     printEnquiry();
+      //   },
+      //   icon: const Icon(
+      //     Icons.print,
+      //   ),
+      // ),
+      // IconButton(
+      //   tooltip: "Delete Enquiry",
+      //   splashRadius: 29,
+      //   onPressed: () async {
+      //     await confirmationDialog(
+      //       context,
+      //       title: "Alert",
+      //       message: "Do you want delete enquiry?",
+      //     ).then((value) {
+      //       if (value != null && value == true) {
+      //         deleteEnquiry();
+      //       }
+      //     });
+      //   },
+      //   icon: const Icon(
+      //     Icons.delete,
+      //   ),
+      // ),
+      // IconButton(
+      //   tooltip: "Copy Enquiry",
+      //   splashRadius: 29,
+      //   onPressed: () async {
+      //     await confirmationDialog(
+      //       context,
+      //       title: "Alert",
+      //       message: "Do you want Duplicate enquiry?",
+      //     ).then((value) {
+      //       if (value != null && value == true) {
+      //         duplicateEnquiry();
+      //       }
+      //     });
+      //   },
+      //   icon: const Icon(
+      //     Icons.copy,
+      //   ),
+      // ),
+      // IconButton(
+      //   tooltip: "Download PDF",
+      //   splashRadius: 29,
+      //   onPressed: () async {
+      //     await confirmationDialog(
+      //       context,
+      //       title: "Alert",
+      //       message: "Do you want Download enquiry?",
+      //     ).then((value) {
+      //       if (value != null && value == true) {
+      //         downloadPrintEnquiry();
+      //       }
+      //     });
+      //   },
+      //   icon: const Icon(
+      //     Icons.file_download_outlined,
+      //   ),
+      // ),
+      // ],
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -50,9 +50,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
   ScrollController scrollController = ScrollController();
   getProductsList() async {
     try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         await FireStoreProvider().categoryListing(cid: cid).then((value) {
           if (value != null && value.docs.isNotEmpty) {
             for (var categorylist in value.docs) {

@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -83,20 +83,29 @@ class _AddStaffState extends State<AddStaff> {
                                 width: 90,
                                 child: Stack(
                                   children: [
-                                    Container(
-                                      height: 90,
-                                      width: 90,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade300,
-                                        shape: BoxShape.circle,
-                                        image: profileImage != null
-                                            ? DecorationImage(
+                                    profileImage == null
+                                        ? CachedNetworkImage(
+                                            placeholder: (context, url) =>
+                                                const Center(
+                                                    child:
+                                                        CircularProgressIndicator()),
+                                            imageUrl: Strings.profileImg,
+                                            fit: BoxFit.cover,
+                                            height: 120,
+                                            width: 120,
+                                          )
+                                        : Container(
+                                            height: 90,
+                                            width: 90,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade300,
+                                              shape: BoxShape.circle,
+                                              image: DecorationImage(
                                                 image: FileImage(profileImage!),
                                                 fit: BoxFit.cover,
-                                              )
-                                            : null,
-                                      ),
-                                    ),
+                                              ),
+                                            ),
+                                          ),
                                     Align(
                                       alignment: Alignment.bottomRight,
                                       child: Container(
@@ -486,9 +495,7 @@ class _AddStaffState extends State<AddStaff> {
           setState(() {
             imageError = null;
           });
-          await LocalDbProvider()
-              .fetchInfo(type: LocalData.companyid)
-              .then((cid) async {
+          await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
             if (cid != null) {
               StaffDataModel model = StaffDataModel();
               model.userName = fullName.text;
@@ -496,6 +503,11 @@ class _AddStaffState extends State<AddStaff> {
               model.userid = "${userid.text}@${widget.companyID}";
               model.password = password.text;
               model.companyID = cid;
+              model.companyAddress =
+                  await LocalDB.fetchInfo(type: LocalData.companyAddress) ?? '';
+              model.companyName =
+                  await LocalDB.fetchInfo(type: LocalData.companyName) ?? '';
+
               StaffPermissionModel permissionModel = StaffPermissionModel();
               permissionModel.product = product;
               permissionModel.category = category;
@@ -531,40 +543,40 @@ class _AddStaffState extends State<AddStaff> {
                   await FireStoreProvider()
                       .registerStaff(staffData: model)
                       .then((value) {
-                    FireStorageProvider()
-                        .saveLocal(
-                      fileData: profileImage!,
-                      id: value.id.toString(),
-                      folder: "staff",
-                    )
-                        .then((data) {
-                      Navigator.pop(context);
+                    // FireStorageProvider()
+                    //     .saveLocal(
+                    //   fileData: profileImage!,
+                    //   id: value.id.toString(),
+                    //   folder: "staff",
+                    // )
+                    //     .then((data) {
+                    Navigator.pop(context);
 
-                      if (data) {
-                        if (value.id.isNotEmpty) {
-                          setState(() {
-                            profileImage = null;
-                            userid.clear();
-                            fullName.clear();
-                            password.clear();
-                            phoneNo.clear();
-                            product = false;
-                            category = false;
-                            customer = false;
-                            orders = false;
-                            estimate = false;
-                            billofSupply = false;
-                          });
-                          Navigator.pop(context, true);
-                          snackBarCustom(
-                              context, true, "Successfully Created New Staff");
-                        } else {
-                          Navigator.pop(context);
-                          snackBarCustom(
-                              context, false, "Failed to Create New Staff");
-                        }
-                      }
-                    });
+                    // if (data) {
+                    if (value.id.isNotEmpty) {
+                      setState(() {
+                        profileImage = null;
+                        userid.clear();
+                        fullName.clear();
+                        password.clear();
+                        phoneNo.clear();
+                        product = false;
+                        category = false;
+                        customer = false;
+                        orders = false;
+                        estimate = false;
+                        billofSupply = false;
+                      });
+                      Navigator.pop(context, true);
+                      snackBarCustom(
+                          context, true, "Successfully Created New Staff");
+                    } else {
+                      Navigator.pop(context);
+                      snackBarCustom(
+                          context, false, "Failed to Create New Staff");
+                    }
+                    // }
+                    // });
                   });
                 } else {
                   Navigator.pop(context);

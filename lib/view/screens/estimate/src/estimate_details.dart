@@ -3,13 +3,14 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class EstimateDetails extends StatefulWidget {
   final EstimateDataModel estimateData;
@@ -54,38 +55,59 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
   printEstimate() async {
     loading(context);
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .getCompanyDocInfo(cid: cid)
-              .then((companyInfo) {
-            if (companyInfo != null) {
-              setState(() {
-                companyData.companyName = companyInfo["company_name"];
-                companyData.address = companyInfo["address"];
-              });
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
 
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => PrintViewEstimate(
-                    estimateData: widget.estimateData,
-                    companyInfo: companyData,
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .getCompanyDocInfo(cid: cid)
+                .then((companyInfo) {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
+                });
+
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => PrintViewEstimate(
+                      estimateData: widget.estimateData,
+                      companyInfo: companyData,
+                    ),
                   ),
-                ),
-              );
-            } else {
-              Navigator.pop(context);
-            }
-          });
-        } else {
-          Navigator.pop(context);
-        }
-      });
+                );
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+        });
+
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => PrintViewEstimate(
+              estimateData: widget.estimateData,
+              companyInfo: companyData,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
@@ -94,68 +116,120 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
   downloadPrintEnquiry() async {
     loading(context);
-    try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .getCompanyDocInfo(cid: cid)
-              .then((companyInfo) async {
-            if (companyInfo != null) {
-              setState(() {
-                companyData.companyName = companyInfo["company_name"];
-                companyData.address = companyInfo["address"];
-              });
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
 
-              var pdf = EnqueryPdfCreation(
-                estimateData: widget.estimateData,
-                type: PdfType.estimate,
-                companyInfo: companyData,
-              );
-              var dataResult = await pdf.createPdfA4();
-              if (dataResult != null) {
-                var data = Uint8List.fromList(dataResult);
-                await DownloadFileOffline(
-                        fileData: data,
-                        fileName: "Estimate ${widget.estimateData.estimateid}",
-                        fileext: "pdf")
-                    .startDownload()
-                    .then((value) {
-                  Navigator.pop(context);
-                  if (value != null && value.isNotEmpty) {
-                    downloadFileSnackBarCustom(context,
-                        isSuccess: true, msg: "Download Estimate", path: value);
-                    // snackBarCustom(context, true, "Download Estimate ${widget.estimateData.estimateid}");
-                  } else {
-                    snackBarCustom(context, false, "Failed to Download");
-                  }
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .getCompanyDocInfo(cid: cid)
+                .then((companyInfo) async {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
                 });
+
+                var pdf = EnqueryPdfCreation(
+                  estimateData: widget.estimateData,
+                  type: PdfType.estimate,
+                  companyInfo: companyData,
+                );
+                var dataResult = await pdf.createPdfA4();
+                if (dataResult != null) {
+                  var data = Uint8List.fromList(dataResult);
+                  await DownloadFileOffline(
+                          fileData: data,
+                          fileName:
+                              "Estimate ${widget.estimateData.estimateid ?? widget.estimateData.referenceId}",
+                          fileext: "pdf")
+                      .startDownload()
+                      .then((value) {
+                    Navigator.pop(context);
+                    if (value != null && value.isNotEmpty) {
+                      downloadFileSnackBarCustom(context,
+                          isSuccess: true,
+                          msg: "Download Estimate",
+                          path: value);
+                      // snackBarCustom(context, true, "Download Estimate ${widget.estimateData.estimateid}");
+                    } else {
+                      snackBarCustom(context, false, "Failed to Download");
+                    }
+                  });
+                }
+              } else {
+                Navigator.pop(context);
               }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+        });
+
+        var pdf = EnqueryPdfCreation(
+          estimateData: widget.estimateData,
+          type: PdfType.estimate,
+          companyInfo: companyData,
+        );
+        var dataResult = await pdf.createPdfA4();
+        if (dataResult != null) {
+          var data = Uint8List.fromList(dataResult);
+          await DownloadFileOffline(
+                  fileData: data,
+                  fileName:
+                      "Estimate ${widget.estimateData.estimateid ?? widget.estimateData.referenceId}",
+                  fileext: "pdf")
+              .startDownload()
+              .then((value) {
+            Navigator.pop(context);
+            if (value != null && value.isNotEmpty) {
+              downloadFileSnackBarCustom(context,
+                  isSuccess: true, msg: "Download Estimate", path: value);
+              // snackBarCustom(context, true, "Download Estimate ${widget.estimateData.estimateid}");
             } else {
-              Navigator.pop(context);
+              snackBarCustom(context, false, "Failed to Download");
             }
           });
-        } else {
-          Navigator.pop(context);
         }
-      });
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
     }
   }
 
-  deleteEnquery() async {
+  deleteEnquiry() async {
     loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
     try {
-      await FireStoreProvider()
-          .deleteEstimate(docID: widget.estimateData.docID!)
-          .then((value) {
-        Navigator.pop(context);
-        Navigator.pop(context, true);
-        snackBarCustom(context, true, "Successfully Deleted");
-      });
+      if (connectionProvider.isConnected) {
+        await FireStoreProvider()
+            .deleteEstimate(docID: widget.estimateData.docID!)
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(context, true, "Successfully Deleted");
+        });
+      } else {
+        await LocalService.deleteEstimate(
+                referenceId: widget.estimateData.referenceId ?? '')
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(context, true, "Successfully Deleted");
+        });
+      }
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
@@ -164,20 +238,30 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
   duplicateEstimate() async {
     loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
     try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        if (cid != null) {
-          await FireStoreProvider()
-              .duplicateEstimate(docID: widget.estimateData.docID!, cid: cid)
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context, true);
-            snackBarCustom(context, true, "Successfully Duplicate a Estimate");
-          });
-        }
-      });
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStoreProvider()
+                .duplicateEstimate(docID: widget.estimateData.docID!, cid: cid)
+                .then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+              snackBarCustom(context, true, "Successfully Estimate Duplicated");
+            });
+          }
+        });
+      } else {
+        await LocalService.duplicateEstimate(
+                referenceId: widget.estimateData.referenceId!)
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackBarCustom(context, true, "Successfully Estimate Duplicated");
+        });
+      }
     } catch (e) {
       Navigator.pop(context);
       throw e.toString();
@@ -186,73 +270,79 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
   List<CategoryDataModel> categoryList = [];
   bool isloading = false;
+
   checkProductsList() async {
-    if (widget.estimateData.products!.isEmpty) {
-      setState(() {
-        isloading = true;
-      });
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
-        await FireStoreProvider().categoryListing(cid: cid).then((value) {
-          if (value != null && value.docs.isNotEmpty) {
-            for (var categorylist in value.docs) {
-              CategoryDataModel model = CategoryDataModel();
-              model.categoryName = categorylist["category_name"].toString();
-              model.postion = categorylist["postion"];
-              model.tmpcatid = categorylist.id;
-              model.discount = categorylist["discount"];
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+    if (connectionProvider.isConnected) {
+      if (widget.estimateData.products!.isEmpty) {
+        setState(() {
+          isloading = true;
+        });
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStoreProvider().categoryListing(cid: cid).then((value) {
+            if (value != null && value.docs.isNotEmpty) {
+              for (var categorylist in value.docs) {
+                CategoryDataModel model = CategoryDataModel();
+                model.categoryName = categorylist["category_name"].toString();
+                model.postion = categorylist["postion"];
+                model.tmpcatid = categorylist.id;
+                model.discount = categorylist["discount"];
+                setState(() {
+                  categoryList.add(model);
+                });
+              }
+            }
+          });
+        });
+        await FireStoreProvider()
+            .getEstimateProducts(docid: widget.estimateData.docID!)
+            .then((products) {
+          if (products != null && products.docs.isNotEmpty) {
+            for (var product in products.docs) {
+              var productDataModel = ProductDataModel();
+
+              productDataModel.categoryid = product["category_id"];
+              productDataModel.categoryName = product["category_name"];
+              productDataModel.price = product["price"];
+              productDataModel.productId = product["product_id"];
+              productDataModel.productName = product["product_name"];
+              productDataModel.qty = product["qty"];
+              productDataModel.productCode = product["product_code"] ?? "";
+              productDataModel.discountLock = product["discount_lock"];
+              var getCategoryid = categoryList.indexWhere(
+                  (elements) => elements.tmpcatid == product["category_id"]);
+              productDataModel.discount = categoryList[getCategoryid].discount;
+              productDataModel.docid = product.id;
+              productDataModel.name = product["name"];
+              productDataModel.productContent = product["product_content"];
+              productDataModel.productImg = product["product_img"];
+              productDataModel.qrCode = product["qr_code"];
+              productDataModel.videoUrl = product["video_url"];
               setState(() {
-                categoryList.add(model);
+                widget.estimateData.products!.add(productDataModel);
               });
             }
-          }
-        });
-      });
-      await FireStoreProvider()
-          .getEstimateProducts(docid: widget.estimateData.docID!)
-          .then((products) {
-        if (products != null && products.docs.isNotEmpty) {
-          for (var product in products.docs) {
-            var productDataModel = ProductDataModel();
-
-            productDataModel.categoryid = product["category_id"];
-            productDataModel.categoryName = product["category_name"];
-            productDataModel.price = product["price"];
-            productDataModel.productId = product["product_id"];
-            productDataModel.productName = product["product_name"];
-            productDataModel.qty = product["qty"];
-            productDataModel.productCode = product["product_code"] ?? "";
-            productDataModel.discountLock = product["discount_lock"];
-            var getCategoryid = categoryList.indexWhere(
-                (elements) => elements.tmpcatid == product["category_id"]);
-            productDataModel.discount = categoryList[getCategoryid].discount;
-            productDataModel.docid = product.id;
-            productDataModel.name = product["name"];
-            productDataModel.productContent = product["product_content"];
-            productDataModel.productImg = product["product_img"];
-            productDataModel.qrCode = product["qr_code"];
-            productDataModel.videoUrl = product["video_url"];
             setState(() {
-              widget.estimateData.products!.add(productDataModel);
+              isloading = false;
             });
           }
-          setState(() {
-            isloading = false;
-          });
-        }
-      });
+        });
+      }
     }
   }
 
   getinfo() async {
-    FireStoreProvider fireStoreProvider = FireStoreProvider();
-    var result = await fireStoreProvider.getInvoiceAvailable(
-        uid:
-            await LocalDbProvider().fetchInfo(type: LocalData.companyid) ?? '');
-    setState(() {
-      invoiceEntry = result ?? false;
-    });
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+    if (connectionProvider.isConnected) {
+      FireStoreProvider fireStoreProvider = FireStoreProvider();
+      var result = await fireStoreProvider.getInvoiceAvailable(
+          uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '');
+      setState(() {
+        invoiceEntry = result ?? false;
+      });
+    }
   }
 
   bool invoiceEntry = false;
@@ -266,10 +356,14 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: Text(widget.estimateData.estimateid!),
+        title: Text(widget.estimateData.estimateid ??
+            widget.estimateData.referenceId ??
+            ''),
         actions: [
           IconButton(
             tooltip: "Print Enquiry",
@@ -291,7 +385,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                 message: "Do you want delete Estimate?",
               ).then((value) {
                 if (value != null && value == true) {
-                  deleteEnquery();
+                  deleteEnquiry();
                 }
               });
             },
@@ -344,7 +438,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           borderRadius: BorderRadius.circular(10),
         ),
         onPressed: () async {
-          await LocalDbProvider().getBillingIndex().then((value) async {
+          await LocalDB.getBillingIndex().then((value) async {
             if (value != null) {
               Navigator.push(
                 context,
@@ -399,7 +493,10 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                 ),
                 Table(
                   children: [
-                    tableRow("Estimate No", widget.estimateData.estimateid),
+                    tableRow(
+                        "Estimate No",
+                        widget.estimateData.estimateid ??
+                            widget.estimateData.referenceId),
                     tableRow(
                       "Estimate Date",
                       DateFormat('dd-MM-yyyy HH:mm a')
@@ -407,67 +504,70 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                     ),
                   ],
                 ),
-                Visibility(
-                  visible: invoiceEntry,
-                  child: Center(
-                    child: TextButton(
-                      onPressed: () async {
-                        await confirmationDialog(
-                          context,
-                          title: "Alert",
-                          message: "Do you want Convert the Bill of Supply?",
-                        ).then((value) {
-                          if (value != null && value == true) {
-                            Navigator.pop(context);
+                if (connectionProvider.isConnected)
+                  Visibility(
+                    visible: invoiceEntry,
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () async {
+                          await confirmationDialog(
+                            context,
+                            title: "Alert",
+                            message: "Do you want Convert the Bill of Supply?",
+                          ).then((value) {
+                            if (value != null && value == true) {
+                              Navigator.pop(context);
 
-                            InvoiceModel model = InvoiceModel();
-                            model.isEstimateConverted = true;
-                            model.address =
-                                widget.estimateData.customer?.address ?? "";
-                            model.deliveryaddress =
-                                widget.estimateData.customer?.address ?? "";
-                            model.partyName =
-                                widget.estimateData.customer?.customerName ??
-                                    "";
-                            model.phoneNumber =
-                                widget.estimateData.customer?.mobileNo ?? "";
-                            model.totalBillAmount = widget
-                                    .estimateData.price?.total
-                                    ?.toStringAsFixed(2) ??
-                                "";
+                              InvoiceModel model = InvoiceModel();
+                              model.isEstimateConverted = true;
+                              model.address =
+                                  widget.estimateData.customer?.address ?? "";
+                              model.deliveryaddress =
+                                  widget.estimateData.customer?.address ?? "";
+                              model.partyName =
+                                  widget.estimateData.customer?.customerName ??
+                                      "";
+                              model.phoneNumber =
+                                  widget.estimateData.customer?.mobileNo ?? "";
+                              model.totalBillAmount = widget
+                                      .estimateData.price?.total
+                                      ?.toStringAsFixed(2) ??
+                                  "";
 
-                            model.price = widget.estimateData.price;
-                            model.listingProducts = [];
-                            for (var element in widget.estimateData.products!) {
-                              InvoiceProductModel productElement =
-                                  InvoiceProductModel();
-                              productElement.productID = element.productId;
-                              productElement.productName = element.productName;
-                              productElement.qty = element.qty;
-                              productElement.rate = element.price;
-                              productElement.total =
-                                  element.qty!.toDouble() * element.price!;
-                              productElement.unit = element.productContent;
-                              productElement.discountLock =
-                                  element.discountLock;
-                              productElement.discount = element.discount;
-                              productElement.categoryID = element.companyId;
-                              model.listingProducts!.add(productElement);
+                              model.price = widget.estimateData.price;
+                              model.listingProducts = [];
+                              for (var element
+                                  in widget.estimateData.products!) {
+                                InvoiceProductModel productElement =
+                                    InvoiceProductModel();
+                                productElement.productID = element.productId;
+                                productElement.productName =
+                                    element.productName;
+                                productElement.qty = element.qty;
+                                productElement.rate = element.price;
+                                productElement.total =
+                                    element.qty!.toDouble() * element.price!;
+                                productElement.unit = element.productContent;
+                                productElement.discountLock =
+                                    element.discountLock;
+                                productElement.discount = element.discount;
+                                productElement.categoryID = element.companyId;
+                                model.listingProducts!.add(productElement);
+                              }
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      InvoiceCreation(invoice: model),
+                                ),
+                              );
                             }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    InvoiceCreation(invoice: model),
-                              ),
-                            );
-                          }
-                        });
-                      },
-                      child: const Text("Convert to Bill of Supply"),
+                          });
+                        },
+                        child: const Text("Convert to Bill of Supply"),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

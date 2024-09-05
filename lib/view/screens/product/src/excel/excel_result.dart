@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/class.dart';
 import '/model/model.dart';
 import '/services/services.dart';
@@ -27,7 +27,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
   uploadExcel() async {
     loading(context);
     try {
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         List<ProductDataModel> tmpProducts = [];
         setState(() {
@@ -93,9 +93,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
   uploadCategoryProduct() async {
     loading(context);
     try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           await confirmationDialogNew(context,
                   title: "Alert",
@@ -243,9 +241,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
   checkAlreadyExcits() async {
     try {
       loading(context);
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           List<CategoryDataModel> categoryDataList = [];
           List<ProductDataModel> productDataList = [];

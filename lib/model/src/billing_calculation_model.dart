@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-
 part 'billing_calculation_model.g.dart';
 
 @JsonSerializable()

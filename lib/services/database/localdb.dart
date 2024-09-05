@@ -1,33 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '/constants/constants.dart';
 
-import '/constants/enum.dart';
-
-class LocalDbProvider {
-  Future<SharedPreferences> _connect() async {
+class LocalDB {
+  static Future<SharedPreferences> _connect() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     return preferences;
   }
 
-  Future<bool> setCompanyCollection({
-    required String collection,
-  }) async {
-    var db = await _connect();
-    db.setString('company_collection', collection);
-    return true;
-  }
-
-  Future<String?> getCompany() async {
-    var db = await _connect();
-    String? collection = db.getString('company_collection');
-    return collection;
-  }
-
-  Future<bool> createNewUser({
+  static Future<bool> createNewUser({
     required String username,
     required String loginEmail,
     required String uID,
     required String companyID,
     required String companyUniqueId,
+    required String companyName,
+    required String companyAddress,
     required bool prCategory,
     required bool prCustomer,
     required bool prEstimate,
@@ -43,6 +30,8 @@ class LocalDbProvider {
     db.setString('uid', uID);
     db.setString('company_id', companyID);
     db.setString('company_unique_id', companyUniqueId);
+    db.setString('company_name', companyName);
+    db.setString('company_address', companyAddress);
     db.setInt('billing', 1);
     db.setBool('pr_category', prCategory);
     db.setBool('pr_customer', prCustomer);
@@ -54,13 +43,13 @@ class LocalDbProvider {
     return true;
   }
 
-  Future<bool> superAdminLogin() async {
+  static Future<bool> superAdminLogin() async {
     var db = await _connect();
     db.setBool('super_login', true);
     return true;
   }
 
-  Future<List> checklogin() async {
+  static Future<List> checklogin() async {
     var db = await _connect();
     var result = db.getBool('login') ?? false;
     if (result) {
@@ -71,19 +60,66 @@ class LocalDbProvider {
     }
   }
 
-  Future<bool> changeBilling(int value) async {
+  static Future<bool> changeBilling(int value) async {
     var db = await _connect();
     db.setInt('billing', value);
     return true;
   }
 
-  Future<int?> getBillingIndex() async {
+  static Future<String?> getLastSync() async {
+    var db = await _connect();
+    var result = db.getString('last_sync');
+    return result;
+  }
+
+  static Future setLastSync() async {
+    var db = await _connect();
+    db.setString('last_sync', DateTime.now().toString());
+  }
+
+  static Future<int> getLastEnquiry() async {
+    var db = await _connect();
+    var result = db.getInt("last_enquiry");
+    return result ?? 0;
+  }
+
+  static Future<int> getLastEstimate() async {
+    var db = await _connect();
+    var result = db.getInt("last_estimate");
+    return result ?? 0;
+  }
+
+  static Future setLastEnquiry() async {
+    var db = await _connect();
+    var lastEnquiry = await LocalDB.getLastEnquiry();
+    db.setInt('last_enquiry', lastEnquiry + 1);
+  }
+
+  static Future reverseEnquiry() async {
+    var db = await _connect();
+    var lastEnquiry = await LocalDB.getLastEstimate();
+    db.setInt('last_enquiry', lastEnquiry - 1);
+  }
+
+  static Future setLastEstimate() async {
+    var db = await _connect();
+    var lastEstimate = await LocalDB.getLastEstimate();
+    db.setInt('last_estimate', lastEstimate + 1);
+  }
+
+  static Future reverseEstimate() async {
+    var db = await _connect();
+    var lastEstimate = await LocalDB.getLastEstimate();
+    db.setInt('last_estimate', lastEstimate - 1);
+  }
+
+  static Future<int?> getBillingIndex() async {
     var db = await _connect();
     int? index = db.getInt('billing');
     return index;
   }
 
-  Future<dynamic> fetchInfo({required LocalData type}) async {
+  static Future<dynamic> fetchInfo({required LocalData type}) async {
     var db = await _connect();
     if (type == LocalData.userName) {
       return db.getString('user_name');
@@ -97,6 +133,10 @@ class LocalDbProvider {
       return db.getString('company_id');
     } else if (type == LocalData.companyUniqueId) {
       return db.getString('company_unique_id');
+    } else if (type == LocalData.companyName) {
+      return db.getString('company_name');
+    } else if (type == LocalData.companyAddress) {
+      return db.getString('company_address');
     } else if (type == LocalData.all) {
       var data = {
         "login": db.getBool('login'),
@@ -117,7 +157,7 @@ class LocalDbProvider {
     }
   }
 
-  Future<bool> logout() async {
+  static Future<bool> logout() async {
     var db = await _connect();
     await db.clear();
     return true;

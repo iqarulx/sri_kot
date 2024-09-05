@@ -1,11 +1,9 @@
-import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-
-import '/constants/enum.dart';
+import 'package:provider/provider.dart';
+import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -27,7 +25,11 @@ class _ProductListingState extends State<ProductListing> {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
-      body: body(),
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return connectionProvider.isConnected ? body() : noInternet(context);
+        },
+      ),
     );
   }
 
@@ -35,13 +37,12 @@ class _ProductListingState extends State<ProductListing> {
     return FutureBuilder(
       future: productHandler,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return screenView(context);
-        } else if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasError) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
           return errorDisplay(snapshot);
         } else {
-          return futureLoading(context);
+          return screenView(context);
         }
       },
     );
@@ -168,28 +169,33 @@ class _ProductListingState extends State<ProductListing> {
                                   }
                                 });
                               },
-                              leading: Container(
-                                height: 45,
-                                width: 45,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    image: productDataList[index].productImg !=
-                                                null &&
-                                            File(productDataList[index]
-                                                    .productImg!)
-                                                .existsSync()
-                                        ? FileImage(
-                                            File(productDataList[index]
-                                                .productImg!),
-                                          )
-                                        : AssetImage(
-                                            Assets.images.noImage.path),
+                              leading: ClipRRect(
+                                  clipBehavior: Clip.hardEdge,
+                                  borderRadius: BorderRadius.circular(25.0),
+                                  child: CachedNetworkImage(
+                                    placeholder: (context, url) =>
+                                        const CircularProgressIndicator(),
+                                    imageUrl:
+                                        productDataList[index].productImg ??
+                                            Strings.productImg,
                                     fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
+                                  )),
+                              // : Container(
+                              //     height: 45,
+                              //     width: 45,
+                              //     decoration: BoxDecoration(
+                              //       color: Colors.grey.shade300,
+                              //       shape: BoxShape.circle,
+                              //       image: DecorationImage(
+                              //         image: productDataList[index]
+                              //                         .productImg !=
+                              //                     null &&
+
+                              //         fit: BoxFit.cover,
+                              //       ),
+                              //     ),
+                              //   ),
+
                               title: Text(
                                 productDataList[index].productName ?? "",
                               ),
@@ -422,22 +428,26 @@ class _ProductListingState extends State<ProductListing> {
       actions: [
         IconButton(
           onPressed: () {
-            // openModelBottomSheat(context);
-            Navigator.push(
-              context,
-              CupertinoPageRoute(
-                builder: (context) => const ProductDetails(
-                  title: 'Create Product',
-                  edit: false,
+            final connectionProvider =
+                Provider.of<ConnectionProvider>(context, listen: false);
+            if (connectionProvider.isConnected) {
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => const ProductDetails(
+                    title: 'Create Product',
+                    edit: false,
+                  ),
                 ),
-              ),
-            ).then((value) {
-              if (value != null && value == true) {
-                setState(() {
-                  productHandler = getProductInfo();
-                });
-              }
-            });
+              ).then((value) {
+                if (value != null && value == true) {
+                  setState(() {
+                    productHandler = getProductInfo();
+                  });
+                }
+              });
+            }
+            // openModelBottomSheat(context);
           },
           splashRadius: 20,
           icon: const Icon(
@@ -447,31 +457,35 @@ class _ProductListingState extends State<ProductListing> {
         PopupMenuButton(
           splashRadius: 10,
           onSelected: (String item) async {
-            switch (item) {
-              case 'excel':
-                await Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => const UploadExcel(),
-                  ),
-                ).then((value) {
-                  if (value != null && value == true) {
-                    productHandler = getProductInfo();
-                  }
-                });
-                break;
-              case 'download':
-                downloadTemplate();
-                break;
-              case 'print':
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => const PdfPriceListView(),
-                  ),
-                );
-                break;
-              default:
+            final connectionProvider =
+                Provider.of<ConnectionProvider>(context, listen: false);
+            if (connectionProvider.isConnected) {
+              switch (item) {
+                case 'excel':
+                  await Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (context) => const UploadExcel(),
+                    ),
+                  ).then((value) {
+                    if (value != null && value == true) {
+                      productHandler = getProductInfo();
+                    }
+                  });
+                  break;
+                case 'download':
+                  downloadTemplate();
+                  break;
+                case 'print':
+                  Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (context) => const PdfPriceListView(),
+                    ),
+                  );
+                  break;
+                default:
+              }
             }
           },
           itemBuilder: (context) => [
@@ -545,7 +559,7 @@ class _ProductListingState extends State<ProductListing> {
 
   Future getProductInfo() async {
     try {
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         final result = await provider.productListing(cid: cid);
         final result2 = await provider.categoryListing(cid: cid);
@@ -567,13 +581,12 @@ class _ProductListingState extends State<ProductListing> {
             model.price = double.parse(element["price"].toString());
             model.videoUrl = element["video_url"] ?? "";
             model.productImg = element["product_img"] ?? "";
-
-            var directory = await getApplicationDocumentsDirectory();
-            model.productImg = path.join(
-              directory.path,
-              'product',
-              element.id,
-            );
+            // var directory = await getApplicationDocumentsDirectory();
+            // model.productImg = path.join(
+            //   directory.path,
+            //   'product',
+            //   element.id,
+            // );
             model.active = element["active"];
             model.productId = element.id;
             model.discountLock = element['discount_lock'];
@@ -736,10 +749,26 @@ class _ProductListingState extends State<ProductListing> {
   @override
   void initState() {
     super.initState();
-    productHandler = getProductInfo();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        productHandler = getProductInfo();
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      connectionProvider.addListener(() {
+        if (connectionProvider.isConnected) {
+          productHandler = getProductInfo();
+        }
+      });
+    });
   }
 
-  late Future productHandler;
+  Future? productHandler;
 
   //search Varibale
   List<DropdownMenuItem> categorylist = [];

@@ -4,7 +4,7 @@ import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class CategoryCreate extends StatefulWidget {
   final bool? isEdit;
@@ -43,9 +43,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (addCategoryKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             await FireStoreProvider()
                 .findCategory(
@@ -109,9 +107,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (addCategoryKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             var categoryData = CategoryDataModel();
 

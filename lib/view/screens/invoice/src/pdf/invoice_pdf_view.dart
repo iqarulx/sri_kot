@@ -4,7 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -30,9 +30,7 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
               billDate: widget.invoice.biilDate!,
               billNo: widget.invoice.billNo!)
           .then((lastAmount) async {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           await FireStoreProvider()
               .getCompanyDocInfo(cid: cid)
               .then((result) async {

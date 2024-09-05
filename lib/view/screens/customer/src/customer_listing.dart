@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -9,7 +10,7 @@ import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 PageController customerListingcontroller = PageController();
 
@@ -29,7 +30,7 @@ class _CustomerListingState extends State<CustomerListing> {
   Future getCustomerInfo() async {
     try {
       FireStoreProvider provider = FireStoreProvider();
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 
       if (cid != null) {
         final result = await provider.customerListing(cid: cid);
@@ -131,230 +132,266 @@ class _CustomerListingState extends State<CustomerListing> {
     }
   }
 
-  late Future customerHandler;
+  Future? customerHandler;
 
   @override
   void initState() {
     super.initState();
-    customerHandler = getCustomerInfo();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        customerHandler = getCustomerInfo();
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      connectionProvider.addListener(() {
+        if (connectionProvider.isConnected) {
+          customerHandler = getCustomerInfo();
+        }
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
-      appBar: AppBar(
-        leading: IconButton(
-          icon:
-              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text("Customer"),
-        actions: [
-          IconButton(
-            onPressed: () {
-              downloadExcelData();
-            },
-            splashRadius: 20,
-            icon: const Icon(
-              Icons.file_download_outlined,
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              // openModelBottomSheat(context);
-
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => const AddCustomer(),
-                ),
-              );
-            },
-            splashRadius: 20,
-            icon: const Icon(
-              Icons.add,
-            ),
-          ),
-        ],
-      ),
-      body: FutureBuilder(
-        future: customerHandler,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Container(
-                height: double.infinity,
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: customerDataList.isNotEmpty
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            child: SearchForm(
-                              controller: searchForm,
-                              formName: "Search Customer",
-                              prefixIcon: Icons.search,
-                              onChanged: (v) {
-                                searchCustomerFun(v);
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            child: RefreshIndicator(
-                              onRefresh: () async {
-                                setState(() {
-                                  customerHandler = getCustomerInfo();
-                                });
-                              },
-                              child: ListView.builder(
-                                itemCount: customerDataList.length,
-                                itemBuilder: (context, index) {
-                                  return Column(
-                                    children: [
-                                      ListTile(
-                                        contentPadding: const EdgeInsets.all(0),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            CupertinoPageRoute(
-                                              builder: (context) =>
-                                                  CustomerDetails(
-                                                customeData:
-                                                    customerDataList[index],
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        leading: Container(
-                                          height: 50,
-                                          width: 50,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade200,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Center(
-                                            child: Icon(
-                                              Icons.person,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ),
-                                        title: Text(
-                                          customerDataList[index]
-                                              .customerName
-                                              .toString(),
-                                        ),
-                                        subtitle: Text(
-                                          customerDataList[index]
-                                              .mobileNo
-                                              .toString(),
-                                          style: TextStyle(
-                                            color: Colors.grey.shade400,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        trailing: const Icon(
-                                            Icons.chevron_right_outlined),
-                                      ),
-                                      Divider(
-                                        height: 0,
-                                        color: Colors.grey.shade300,
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : EmptyListPage(
-                        assetsPath: Assets.emptyList3,
-                        title: 'No Customer Data',
-                        content:
-                            'You have not create any Customer, so first you have create user using add user button below',
-                        addFun: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const AddCustomer(),
-                            ),
-                          );
-                        },
-                        refreshFun: () {
-                          setState(() {
-                            customerHandler = getCustomerInfo();
-                          });
-                        },
-                      ),
-              ),
-            );
-          } else if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasError) {
-            return Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Failed",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      snapshot.error.toString() == "null"
-                          ? "Something went Wrong"
-                          : snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            customerHandler = getCustomerInfo();
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text(
-                          "Refresh",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return futureLoading(context);
-          }
+      appBar: appbar(context),
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return connectionProvider.isConnected
+              ? screenView()
+              : noInternet(context);
         },
       ),
+    );
+  }
+
+  FutureBuilder<dynamic> screenView() {
+    return FutureBuilder(
+      future: customerHandler,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Center(
+                    child: Text(
+                      "Failed",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  Text(
+                    snapshot.error.toString() == "null"
+                        ? "Something went Wrong"
+                        : snapshot.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          customerHandler = getCustomerInfo();
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text(
+                        "Refresh",
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          return Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Container(
+              height: double.infinity,
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: customerDataList.isNotEmpty
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          child: SearchForm(
+                            controller: searchForm,
+                            formName: "Search Customer",
+                            prefixIcon: Icons.search,
+                            onChanged: (v) {
+                              searchCustomerFun(v);
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: () async {
+                              setState(() {
+                                customerHandler = getCustomerInfo();
+                              });
+                            },
+                            child: ListView.builder(
+                              itemCount: customerDataList.length,
+                              itemBuilder: (context, index) {
+                                return Column(
+                                  children: [
+                                    ListTile(
+                                      contentPadding: const EdgeInsets.all(0),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          CupertinoPageRoute(
+                                            builder: (context) =>
+                                                CustomerDetails(
+                                              customeData:
+                                                  customerDataList[index],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      leading: Container(
+                                        height: 50,
+                                        width: 50,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade200,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.person,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        customerDataList[index]
+                                            .customerName
+                                            .toString(),
+                                      ),
+                                      subtitle: Text(
+                                        customerDataList[index]
+                                            .mobileNo
+                                            .toString(),
+                                        style: TextStyle(
+                                          color: Colors.grey.shade400,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      trailing: const Icon(
+                                          Icons.chevron_right_outlined),
+                                    ),
+                                    Divider(
+                                      height: 0,
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : EmptyListPage(
+                      assetsPath: Assets.emptyList3,
+                      title: 'No Customer Data',
+                      content:
+                          'You have not create any Customer, so first you have create user using add customer button below',
+                      addFun: () {
+                        Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                            builder: (context) => const AddCustomer(),
+                          ),
+                        );
+                      },
+                      refreshFun: () {
+                        setState(() {
+                          customerHandler = getCustomerInfo();
+                        });
+                      },
+                    ),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  AppBar appbar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: const Text("Customer"),
+      actions: [
+        Provider.of<ConnectionProvider>(context, listen: false).isConnected
+            ? IconButton(
+                onPressed: () {
+                  final connectionProvider =
+                      Provider.of<ConnectionProvider>(context, listen: false);
+                  if (connectionProvider.isConnected) {
+                    downloadExcelData();
+                  }
+                },
+                splashRadius: 20,
+                icon: const Icon(
+                  Icons.file_download_outlined,
+                ),
+              )
+            : Container(),
+        Provider.of<ConnectionProvider>(context, listen: false).isConnected
+            ? IconButton(
+                onPressed: () {
+                  // openModelBottomSheat(context);
+
+                  Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (context) => const AddCustomer(),
+                    ),
+                  );
+                },
+                splashRadius: 20,
+                icon: const Icon(
+                  Icons.add,
+                ),
+              )
+            : Container()
+      ],
     );
   }
 }

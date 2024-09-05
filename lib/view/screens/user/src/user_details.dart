@@ -1,7 +1,8 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:sri_kot/gen/assets.gen.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -17,6 +18,8 @@ class UserDetails extends StatefulWidget {
 }
 
 class _UserDetailsState extends State<UserDetails> {
+  File? selectedImage;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -77,7 +80,7 @@ class _UserDetailsState extends State<UserDetails> {
                             await FilePickerProvider().showFileDialog(context);
                         if (imageResult != null) {
                           setState(() {
-                            adminProfileImage = imageResult.path;
+                            selectedImage = imageResult;
                           });
                         }
                       },
@@ -87,27 +90,30 @@ class _UserDetailsState extends State<UserDetails> {
                           width: 90,
                           child: Stack(
                             children: [
-                              Container(
-                                height: 90,
-                                width: 90,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  shape: BoxShape.circle,
-                                  image: adminProfileImage == null
-                                      ? null
-                                      : DecorationImage(
-                                          image: File(adminProfileImage!)
-                                                  .existsSync()
-                                              ? FileImage(
-                                                  File(adminProfileImage!),
-                                                )
-                                              : AssetImage(
-                                                  Assets.images.noImage.path,
-                                                ),
-                                          fit: BoxFit.cover,
-                                        ),
-                                ),
-                              ),
+                              selectedImage == null
+                                  ? ClipRRect(
+                                      clipBehavior: Clip.hardEdge,
+                                      borderRadius: BorderRadius.circular(50.0),
+                                      child: CachedNetworkImage(
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                        imageUrl: adminProfileImage ??
+                                            Strings.profileImg,
+                                        fit: BoxFit.cover,
+                                        height: 120,
+                                        width: 120,
+                                      ))
+                                  : Container(
+                                      height: 90,
+                                      width: 90,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          shape: BoxShape.circle,
+                                          image: DecorationImage(
+                                              image:
+                                                  FileImage(selectedImage!)))),
                               Align(
                                 alignment: Alignment.bottomRight,
                                 child: Container(
@@ -294,29 +300,30 @@ class _UserDetailsState extends State<UserDetails> {
 
         await FireStorageProvider()
             .uploadImage(
-          fileData: File(adminProfileImage!),
+          fileData: selectedImage!,
           fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-          filePath: 'user',
+          filePath: 'users',
         )
             .then((value) async {
           userData.imageUrl = value;
+          print(userData.imageUrl);
           await FireStoreProvider()
               .updateUser(docID: docid.toString(), userData: userData)
               .then((value) async {
             if (value != null) {
-              await FireStorageProvider()
-                  .saveLocal(
-                fileData: File(adminProfileImage!),
-                id: docid.toString(),
-                folder: "user",
-              )
-                  .then((value) {
-                Navigator.pop(context);
-                snackBarCustom(context, true, "Successfully User Data Updated");
-              }).catchError((onError) {
-                snackBarCustom(
-                    context, false, "Something Went wrong Please try again");
-              });
+              // await FireStorageProvider()
+              //     .saveLocal(
+              //   fileData: File(adminProfileImage!),
+              //   id: docid.toString(),
+              //   folder: "user",
+              // )
+              //     .then((value) {
+              Navigator.pop(context);
+              snackBarCustom(context, true, "Successfully User Data Updated");
+              // }).catchError((onError) {
+              //   snackBarCustom(
+              //       context, false, "Something Went wrong Please try again");
+              // });
             } else {
               snackBarCustom(
                   context, false, "Something Went wrong Please try again");
@@ -390,4 +397,5 @@ class _UserDetailsState extends State<UserDetails> {
   String? uid;
   String? docid;
   String? unqiueId;
+  String? imageUrl;
 }

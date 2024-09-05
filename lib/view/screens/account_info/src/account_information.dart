@@ -9,6 +9,11 @@ class AccountInformation extends StatefulWidget {
 
 class _AccountInformationState extends State<AccountInformation> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

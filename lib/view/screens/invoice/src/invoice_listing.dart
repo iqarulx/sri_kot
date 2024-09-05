@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sri_kot/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -419,8 +420,26 @@ class _InvoiceListingState extends State<InvoiceListing> {
 
   @override
   void initState() {
-    invoiceHandler = getInvoiceList();
-    _scrollController.addListener(_loadMore);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        invoiceHandler = getInvoiceList();
+        _scrollController.addListener(_loadMore);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      connectionProvider.addListener(() {
+        if (connectionProvider.isConnected) {
+          invoiceHandler = getInvoiceList();
+          _scrollController.addListener(_loadMore);
+        }
+      });
+    });
+
     super.initState();
   }
 
@@ -474,225 +493,284 @@ class _InvoiceListingState extends State<InvoiceListing> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: invoiceHandler,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.data != null) {
-            return invoiceList.isNotEmpty
-                ? RefreshIndicator(
-                    onRefresh: () async {
-                      setState(() {
-                        invoiceHandler = getInvoiceList();
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            child: TextFormField(
-                              controller: search,
-                              keyboardType: TextInputType.text,
-                              textInputAction: TextInputAction.search,
-                              decoration: InputDecoration(
-                                hintText: "Search Bill of Supply",
-                                filled: true,
-                                fillColor: Colors.white,
-                                prefixIcon: const Icon(Icons.search),
-                                suffixIcon: IconButton(
-                                  splashRadius: 20,
-                                  onPressed: () async {
-                                    await showFilterSheet();
-                                  },
-                                  icon: const Icon(Icons.filter_list),
-                                ),
-                              ),
-                              onTapOutside: (event) {
-                                FocusManager.instance.primaryFocus!.unfocus();
-                              },
-                              onEditingComplete: () {
-                                FocusManager.instance.primaryFocus!.unfocus();
-                              },
-                              onChanged: (v) {
-                                searchInvoice();
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              itemCount: invoiceList.length,
-                              itemBuilder: (context, index) {
-                                if (invoiceList[index].billNo == null) {
-                                  return const SizedBox();
-                                } else {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => InvoiceDetails(
-                                            invoice: invoiceList[index],
-                                          ),
-                                        ),
-                                      ).then((value) {
-                                        if (value != null && value) {
-                                          setState(() {
-                                            invoiceHandler = getInvoiceList();
-                                          });
-                                        }
-                                      });
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.only(top: 10),
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        color: Colors.white,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                invoiceList[index].billNo ?? "",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyLarge!
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                              ),
-                                              Text(
-                                                DateFormat('dd-MM-yyyy').format(
-                                                    invoiceList[index]
-                                                        .biilDate!),
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const SizedBox(height: 10),
-                                                    Text(
-                                                      invoiceList[index]
-                                                              .partyName ??
-                                                          "",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .titleLarge!
-                                                          .copyWith(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                    ),
-                                                    const SizedBox(height: 5),
-                                                    Text(
-                                                      invoiceList[index]
-                                                              .address ??
-                                                          "",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .bodyMedium,
-                                                    ),
-                                                    Text(
-                                                      invoiceList[index]
-                                                              .phoneNumber ??
-                                                          "",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .bodyMedium,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                "\u{20B9}${invoiceList[index].totalBillAmount ?? ""}",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge!
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(15.0),
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return connectionProvider.isConnected ? body() : noInternet(context);
+        },
+      ),
+    );
+  }
+
+  FutureBuilder<dynamic> body() {
+    return FutureBuilder(
+      future: invoiceHandler,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
+          return errorDisplay(snapshot);
+        } else {
+          return invoiceList.isNotEmpty
+              ? RefreshIndicator(
+                  onRefresh: () async {
+                    setState(() {
+                      invoiceHandler = getInvoiceList();
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: AspectRatio(
-                            aspectRatio: (1 / 0.7),
-                            child: SvgPicture.asset(
-                              Assets.emptyList3,
+                        SizedBox(
+                          child: TextFormField(
+                            controller: search,
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.search,
+                            decoration: InputDecoration(
+                              hintText: "Search Bill of Supply",
+                              filled: true,
+                              fillColor: Colors.white,
+                              prefixIcon: const Icon(Icons.search),
+                              suffixIcon: IconButton(
+                                splashRadius: 20,
+                                onPressed: () async {
+                                  await showFilterSheet();
+                                },
+                                icon: const Icon(Icons.filter_list),
+                              ),
                             ),
+                            onTapOutside: (event) {
+                              FocusManager.instance.primaryFocus!.unfocus();
+                            },
+                            onEditingComplete: () {
+                              FocusManager.instance.primaryFocus!.unfocus();
+                            },
+                            onChanged: (v) {
+                              searchInvoice();
+                            },
                           ),
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
-                        Text(
-                          "No Bill of Supply",
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge!
-                              .copyWith(),
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Center(
-                          child: Text(
-                            "You have not create any invoice, so first you have create invoice",
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
-                                .copyWith(color: Colors.grey),
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: invoiceList.length,
+                            itemBuilder: (context, index) {
+                              if (invoiceList[index].billNo == null) {
+                                return const SizedBox();
+                              } else {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => InvoiceDetails(
+                                          invoice: invoiceList[index],
+                                        ),
+                                      ),
+                                    ).then((value) {
+                                      if (value != null && value) {
+                                        setState(() {
+                                          invoiceHandler = getInvoiceList();
+                                        });
+                                      }
+                                    });
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.only(top: 10),
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.white,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              invoiceList[index].billNo ?? "",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge!
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                            Text(
+                                              DateFormat('dd-MM-yyyy').format(
+                                                  invoiceList[index].biilDate!),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall,
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const SizedBox(height: 10),
+                                                  Text(
+                                                    invoiceList[index]
+                                                            .partyName ??
+                                                        "",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleLarge!
+                                                        .copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 5),
+                                                  Text(
+                                                    invoiceList[index]
+                                                            .address ??
+                                                        "",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium,
+                                                  ),
+                                                  Text(
+                                                    invoiceList[index]
+                                                            .phoneNumber ??
+                                                        "",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              "\u{20B9}${invoiceList[index].totalBillAmount ?? ""}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge!
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
                           ),
-                        ),
-                        const SizedBox(
-                          height: 15,
                         ),
                       ],
                     ),
-                  );
-          } else {
-            return futureLoading(context);
-          }
-        },
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: AspectRatio(
+                          aspectRatio: (1 / 0.7),
+                          child: SvgPicture.asset(
+                            Assets.emptyList3,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      Text(
+                        "No Bill of Supply",
+                        style:
+                            Theme.of(context).textTheme.titleLarge!.copyWith(),
+                      ),
+                      const SizedBox(
+                        height: 8,
+                      ),
+                      Center(
+                        child: Text(
+                          "You have not create any invoice, so first you have create invoice",
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall!
+                              .copyWith(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                    ],
+                  ),
+                );
+        }
+      },
+    );
+  }
+
+  Center errorDisplay(AsyncSnapshot<dynamic> snapshot) {
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Center(
+              child: Text(
+                "Failed",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 15,
+            ),
+            Text(
+              snapshot.error.toString() == "null"
+                  ? "Something went Wrong"
+                  : snapshot.error.toString(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+              ),
+            ),
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    invoiceHandler = getInvoiceList();
+                  });
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text(
+                  "Refresh",
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

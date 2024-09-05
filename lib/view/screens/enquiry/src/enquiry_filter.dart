@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 
@@ -21,7 +21,7 @@ class _EnquiryFilterState extends State<EnquiryFilter> {
   Future getCustomerInfo() async {
     try {
       FireStoreProvider provider = FireStoreProvider();
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 
       if (cid != null) {
         final result = await provider.customerListing(cid: cid);

@@ -2,8 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import '../../../../gen/assets.gen.dart';
-import '/constants/enum.dart';
+import 'package:provider/provider.dart';
+import '../../../../provider/provider.dart';
+import '/gen/assets.gen.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -24,7 +26,7 @@ class _CategoryListingState extends State<CategoryListing> {
 
   Future getCategoryInfo() async {
     try {
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         FireStoreProvider provider = FireStoreProvider();
         final result = await provider.categoryListing(cid: cid);
@@ -61,7 +63,7 @@ class _CategoryListingState extends State<CategoryListing> {
   // }) async {
   //   loading(context);
   //   try {
-  //     await LocalDbProvider()
+  //     await LocalDB
   //         .fetchInfo(type: LocalData.companyid)
   //         .then((cid) async {
   //       if (cid != null) {
@@ -116,9 +118,7 @@ class _CategoryListingState extends State<CategoryListing> {
   }) async {
     loading(context);
     try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var category = FirebaseFirestore.instance.collection('category');
           var batch = FirebaseFirestore.instance.batch();
@@ -233,361 +233,410 @@ class _CategoryListingState extends State<CategoryListing> {
     }
   }
 
-  late Future categoryHandler;
+  Future? categoryHandler;
+  late final VoidCallback _connectionListener;
+  bool _isConnected = false;
 
   @override
   void initState() {
     super.initState();
-    categoryHandler = getCategoryInfo();
+
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
+    // Initial check of connection status
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _isConnected = connectionProvider.isConnected;
+      });
+
+      if (_isConnected) {
+        // Fetch initial category info
+        categoryHandler = getCategoryInfo();
+      }
+    });
+
+    // Set up listener for connection changes
+    _connectionListener = () {
+      if (mounted) {
+        setState(() {
+          _isConnected = connectionProvider.isConnected;
+        });
+
+        if (_isConnected) {
+          // Fetch category info when connected
+          categoryHandler = getCategoryInfo();
+        }
+      }
+    };
+    connectionProvider.addListener(_connectionListener);
+  }
+
+  @override
+  void dispose() {
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+    connectionProvider.removeListener(_connectionListener);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon:
-              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text("Category"),
-        actions: [
-          IconButton(
-            onPressed: () {
-              addCategoryForm(context, isedit: false);
-
-              // Navigator.push(
-              //   context,
-              //   CupertinoPageRoute(
-              //     builder: (context) => const AddCustomer(),
-              //   ),
-              // );
-            },
-            splashRadius: 20,
-            icon: const Icon(
-              Icons.add,
-            ),
-          ),
-        ],
-      ),
+      appBar: appbar(context),
       backgroundColor: const Color(0xffEEEEEE),
-      body: FutureBuilder(
-        future: categoryHandler,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Padding(
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return connectionProvider.isConnected
+              ? screenView()
+              : noInternet(context);
+        },
+      ),
+    );
+  }
+
+  FutureBuilder<dynamic> screenView() {
+    return FutureBuilder(
+      future: categoryHandler,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(20),
               padding: const EdgeInsets.all(10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Form(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InputForm(
-                              controller: searchForm,
-                              formName: "Search",
-                              prefixIcon: Icons.search,
-                              onChanged: (value) {
-                                searchCategoryFun(value);
-                              },
-                            ),
-                          ],
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Center(
+                    child: Text(
+                      "Failed",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          setState(() {
-                            categoryHandler = getCategoryInfo();
-                          });
-                        },
-                        child: categoryList.isNotEmpty
-                            ? ReorderableListView.builder(
-                                buildDefaultDragHandles: false,
-                                onReorder: (oldIndex, newIndex) {
-                                  setState(() {
-                                    if (searchForm.text.isEmpty) {
-                                      final index = newIndex > oldIndex
-                                          ? newIndex - 1
-                                          : newIndex;
-                                      var cargory =
-                                          categoryList.removeAt(oldIndex);
-                                      categoryList.insert(
-                                        index,
-                                        cargory,
-                                      );
-                                      rearrangecatvalid(
-                                        newIndex: index + 1,
-                                        categoryid:
-                                            categoryList[index].tmpcatid!,
-                                      );
-                                    }
-                                  });
-                                },
-                                itemCount: categoryList.length,
-                                itemBuilder: (context, index) {
-                                  return GestureDetector(
-                                    key: ValueKey(index),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        CupertinoPageRoute(
-                                          builder: (context) =>
-                                              ProductListingCategory(
-                                            categoryID:
-                                                categoryList[index].tmpcatid!,
-                                            categoryName: categoryList[index]
-                                                .categoryName!,
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  Text(
+                    snapshot.error.toString() == "null"
+                        ? "Something went Wrong"
+                        : snapshot.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          categoryHandler = getCategoryInfo();
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text(
+                        "Refresh",
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          return Padding(
+            padding: const EdgeInsets.all(10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Form(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InputForm(
+                            controller: searchForm,
+                            formName: "Search",
+                            prefixIcon: Icons.search,
+                            onChanged: (value) {
+                              searchCategoryFun(value);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        setState(() {
+                          categoryHandler = getCategoryInfo();
+                        });
+                      },
+                      child: categoryList.isNotEmpty
+                          ? ReorderableListView.builder(
+                              buildDefaultDragHandles: false,
+                              onReorder: (oldIndex, newIndex) {
+                                setState(() {
+                                  if (searchForm.text.isEmpty) {
+                                    final index = newIndex > oldIndex
+                                        ? newIndex - 1
+                                        : newIndex;
+                                    var cargory =
+                                        categoryList.removeAt(oldIndex);
+                                    categoryList.insert(
+                                      index,
+                                      cargory,
+                                    );
+                                    rearrangecatvalid(
+                                      newIndex: index + 1,
+                                      categoryid: categoryList[index].tmpcatid!,
+                                    );
+                                  }
+                                });
+                              },
+                              itemCount: categoryList.length,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                  key: ValueKey(index),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      CupertinoPageRoute(
+                                        builder: (context) =>
+                                            ProductListingCategory(
+                                          categoryID:
+                                              categoryList[index].tmpcatid!,
+                                          categoryName:
+                                              categoryList[index].categoryName!,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                      horizontal: 10,
+                                    ),
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      border: index > 0
+                                          ? const Border(
+                                              top: BorderSide(
+                                                width: 0.5,
+                                                color: Color(0xffE0E0E0),
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        ReorderableDragStartListener(
+                                          enabled: searchForm.text.isEmpty
+                                              ? true
+                                              : false,
+                                          index: index,
+                                          child: const Icon(
+                                            Icons.drag_handle,
                                           ),
                                         ),
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 15,
-                                        horizontal: 10,
-                                      ),
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        border: index > 0
-                                            ? const Border(
-                                                top: BorderSide(
-                                                  width: 0.5,
-                                                  color: Color(0xffE0E0E0),
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          ReorderableDragStartListener(
-                                            enabled: searchForm.text.isEmpty
-                                                ? true
-                                                : false,
-                                            index: index,
-                                            child: const Icon(
-                                              Icons.drag_handle,
-                                            ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            categoryList[index]
+                                                .categoryName
+                                                .toString(),
                                           ),
-                                          const SizedBox(
-                                            width: 10,
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                              categoryList[index]
-                                                  .categoryName
-                                                  .toString(),
-                                            ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () async {
-                                              await addCategoryForm(
-                                                context,
-                                                isedit: true,
-                                                categoryName:
-                                                    categoryList[index]
-                                                        .categoryName,
-                                                docID: categoryList[index]
-                                                    .tmpcatid,
-                                              ).then((value) {
-                                                if (value != null &&
-                                                    value == true) {
-                                                  setState(() {
-                                                    categoryHandler =
-                                                        getCategoryInfo();
-                                                  });
-                                                }
-                                              });
-                                              // Navigator.push(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //     builder: (context) =>
-                                              //         AddCategory(
-                                              //       category: CategoryClass(
-                                              //         categoryid:
-                                              //             categorylist[index]
-                                              //                 .categoryid,
-                                              //         name: categorylist[index]
-                                              //             .name,
-                                              //         productList: [],
-                                              //       ),
-                                              //     ),
-                                              //   ),
-                                              // ).then((value) {
-                                              //   setState(() {
-                                              //     getcategorydata =
-                                              //         getcategorydatafun("");
-                                              //   });
-                                              // });
-                                            },
-                                            child: Container(
-                                              color: Colors.transparent,
-                                              padding: const EdgeInsets.all(10),
-                                              child: const Center(
-                                                child: Icon(
-                                                  Icons.edit,
-                                                  size: 18,
-                                                  color: Color(0xff6B6B6B),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Container(
+                                        ),
+                                        GestureDetector(
+                                          onTap: () async {
+                                            await addCategoryForm(
+                                              context,
+                                              isedit: true,
+                                              categoryName: categoryList[index]
+                                                  .categoryName,
+                                              docID:
+                                                  categoryList[index].tmpcatid,
+                                            ).then((value) {
+                                              if (value != null &&
+                                                  value == true) {
+                                                setState(() {
+                                                  categoryHandler =
+                                                      getCategoryInfo();
+                                                });
+                                              }
+                                            });
+                                            // Navigator.push(
+                                            //   context,
+                                            //   MaterialPageRoute(
+                                            //     builder: (context) =>
+                                            //         AddCategory(
+                                            //       category: CategoryClass(
+                                            //         categoryid:
+                                            //             categorylist[index]
+                                            //                 .categoryid,
+                                            //         name: categorylist[index]
+                                            //             .name,
+                                            //         productList: [],
+                                            //       ),
+                                            //     ),
+                                            //   ),
+                                            // ).then((value) {
+                                            //   setState(() {
+                                            //     getcategorydata =
+                                            //         getcategorydatafun("");
+                                            //   });
+                                            // });
+                                          },
+                                          child: Container(
+                                            color: Colors.transparent,
                                             padding: const EdgeInsets.all(10),
                                             child: const Center(
                                               child: Icon(
-                                                Icons.arrow_forward_ios,
+                                                Icons.edit,
                                                 size: 18,
                                                 color: Color(0xff6B6B6B),
                                               ),
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(10.0),
-                                      child: AspectRatio(
-                                        aspectRatio: (1 / 0.7),
-                                        child: SvgPicture.asset(
-                                          Assets.emptyList3,
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 15,
-                                    ),
-                                    Text(
-                                      "No Categories",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge!
-                                          .copyWith(),
-                                    ),
-                                    const SizedBox(
-                                      height: 8,
-                                    ),
-                                    Center(
-                                      child: Text(
-                                        "You have not create any category, so first you have create category using add category button below",
-                                        textAlign: TextAlign.center,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .copyWith(color: Colors.grey),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 15,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        TextButton.icon(
-                                          onPressed: () {
-                                            addCategoryForm(context,
-                                                isedit: false);
-                                          },
-                                          icon: const Icon(Icons.add),
-                                          label: const Text("Add Category"),
-                                        ),
-                                        TextButton.icon(
-                                          onPressed: () {
-                                            setState(() {
-                                              categoryHandler =
-                                                  getCategoryInfo();
-                                            });
-                                          },
-                                          icon: const Icon(Icons.refresh),
-                                          label: const Text("Refresh"),
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.arrow_forward_ios,
+                                              size: 18,
+                                              color: Color(0xff6B6B6B),
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.all(15.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: AspectRatio(
+                                      aspectRatio: (1 / 0.7),
+                                      child: SvgPicture.asset(
+                                        Assets.emptyList3,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 15,
+                                  ),
+                                  Text(
+                                    "No Categories",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge!
+                                        .copyWith(),
+                                  ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  Center(
+                                    child: Text(
+                                      "You have not create any category, so first you have create category using add category button below",
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall!
+                                          .copyWith(color: Colors.grey),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 15,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          addCategoryForm(context,
+                                              isedit: false);
+                                        },
+                                        icon: const Icon(Icons.add),
+                                        label: const Text("Add Category"),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          setState(() {
+                                            categoryHandler = getCategoryInfo();
+                                          });
+                                        },
+                                        icon: const Icon(Icons.refresh),
+                                        label: const Text("Refresh"),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                      ),
+                            ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          } else if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasError) {
-            return Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Failed",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      snapshot.error.toString() == "null"
-                          ? "Something went Wrong"
-                          : snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            categoryHandler = getCategoryInfo();
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text(
-                          "Refresh",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return futureLoading(context);
-          }
-        },
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  AppBar appbar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
       ),
+      title: const Text("Category"),
+      actions: [
+        Provider.of<ConnectionProvider>(context, listen: false).isConnected
+            ? IconButton(
+                onPressed: () {
+                  addCategoryForm(context, isedit: false);
+                  // Navigator.push(
+                  //   context,
+                  //   CupertinoPageRoute(
+                  //     builder: (context) => const AddCustomer(),
+                  //   ),
+                  // );
+                },
+                splashRadius: 20,
+                icon: const Icon(
+                  Icons.add,
+                ),
+              )
+            : Container()
+      ],
     );
   }
 }

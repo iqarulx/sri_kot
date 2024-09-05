@@ -1,23 +1,21 @@
 import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app/app.dart';
 import 'firebase_options.dart';
-import 'in_app_purchase/purchase.dart';
-import 'in_app_purchase/revenuecat.dart';
+// import 'in_app_purchase/purchase.dart';
+// import 'in_app_purchase/revenuecat.dart';
+import 'provider/provider.dart';
 import 'services/services.dart';
 
 Future<List> checklogin() async {
-  LocalDbProvider localdb = LocalDbProvider();
-  return localdb.checklogin();
+  return LocalDB.checklogin();
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Purchase.init();
+  // await Purchase.init();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -29,7 +27,9 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => RevenuecatProvider()),
+        ChangeNotifierProvider(
+          create: (context) => ConnectionProvider(),
+        )
       ],
       child: MyApp(
         login: login,

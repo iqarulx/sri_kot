@@ -229,7 +229,9 @@ class _OrderSummaryState extends State<OrderSummary> {
                         Navigator.push(
                           context,
                           CupertinoPageRoute(
-                            builder: (context) => const CustomerSearch(),
+                            builder: (context) => const CustomerSearch(
+                              isConnected: true,
+                            ),
                           ),
                         ).then((value) {
                           if (value != null) {

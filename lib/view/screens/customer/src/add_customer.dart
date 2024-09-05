@@ -4,7 +4,7 @@ import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class AddCustomer extends StatefulWidget {
   const AddCustomer({super.key});
@@ -69,9 +69,7 @@ class _AddCustomerState extends State<AddCustomer> {
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (addCustomerKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             var customerData = CustomerDataModel();
             customerData.companyID = cid;

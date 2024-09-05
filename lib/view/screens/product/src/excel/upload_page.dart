@@ -1,6 +1,6 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';

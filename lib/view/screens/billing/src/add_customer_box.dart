@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 
 class AddCustomerBox extends StatefulWidget {
   const AddCustomerBox({super.key});
@@ -254,9 +253,7 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (addCustomerKey.currentState!.validate()) {
-        await LocalDbProvider()
-            .fetchInfo(type: LocalData.companyid)
-            .then((cid) async {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             var customerData = CustomerDataModel();
             customerData.companyID = cid;
@@ -305,8 +302,8 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
 
   @override
   void initState() {
-    super.initState();
     getState();
+    super.initState();
   }
 
   TextEditingController customerName = TextEditingController();

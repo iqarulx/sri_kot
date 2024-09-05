@@ -1,11 +1,9 @@
-import 'dart:io';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sri_kot/model/model.dart';
-import '/constants/enum.dart';
-import '/gen/assets.gen.dart';
+import '/constants/constants.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
@@ -17,6 +15,9 @@ class CartDrawer extends StatefulWidget {
   final String? estimateDocId;
   final int pageType;
   final Color? backgroundColor;
+  final bool isConnected;
+  final String? enquiryReferenceId;
+  final String? estimateReferenceId;
   const CartDrawer({
     super.key,
     this.isEdit,
@@ -24,6 +25,9 @@ class CartDrawer extends StatefulWidget {
     this.estimateDocId,
     required this.pageType,
     this.backgroundColor,
+    required this.isConnected,
+    required this.enquiryReferenceId,
+    required this.estimateReferenceId,
   });
 
   @override
@@ -121,55 +125,65 @@ class _CartDrawerState extends State<CartDrawer> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         cartDataList[index].discountLock == true
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(5),
-                                child: Banner(
-                                  message: "Net Rate",
-                                  location: BannerLocation.topStart,
-                                  child: Container(
-                                    height: 80,
-                                    width: 80,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade300,
-                                      borderRadius: BorderRadius.circular(5),
-                                      image: DecorationImage(
-                                        image: File(cartDataList[index]
-                                                    .productImg!)
-                                                .existsSync()
-                                            ? FileImage(
-                                                File(cartDataList[index]
-                                                    .productImg!),
-                                              )
-                                            : AssetImage(
-                                                Assets.images.noImage.path),
-                                        fit: BoxFit.cover,
+                            ? widget.isConnected
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(5),
+                                    child: Banner(
+                                        message: "Net Rate",
+                                        location: BannerLocation.topStart,
+                                        child: CachedNetworkImage(
+                                          placeholder: (context, url) =>
+                                              const Center(
+                                                  child:
+                                                      CircularProgressIndicator()),
+                                          imageUrl:
+                                              cartDataList[index].productImg ??
+                                                  Strings.productImg,
+                                          fit: BoxFit.cover,
+                                          height: 80.0,
+                                          width: 80.0,
+                                        )),
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(5),
+                                    child: Banner(
+                                      message: "Net Rate",
+                                      location: BannerLocation.topStart,
+                                      child: Container(
+                                        height: 80.0,
+                                        width: 80.0,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
                                       ),
                                     ),
+                                  )
+                            : widget.isConnected
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(5),
+                                    child: CachedNetworkImage(
+                                      placeholder: (context, url) =>
+                                          const Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                      imageUrl:
+                                          cartDataList[index].productImg ??
+                                              Strings.productImg,
+                                      fit: BoxFit.cover,
+                                      height: 80.0,
+                                      width: 80.0,
+                                    ),
+                                  )
+                                : Container(
+                                    height: 80.0,
+                                    width: 80.0,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade300,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
-                                ),
-                              )
-                            : Container(
-                                height: 80,
-                                width: 80,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(5),
-                                  image: cartDataList[index].productImg != null
-                                      ? DecorationImage(
-                                          image: File(cartDataList[index]
-                                                      .productImg!)
-                                                  .existsSync()
-                                              ? FileImage(
-                                                  File(cartDataList[index]
-                                                      .productImg!),
-                                                )
-                                              : AssetImage(
-                                                  Assets.images.noImage.path),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
-                                ),
-                              ),
                         const SizedBox(
                           width: 10,
                         ),
@@ -412,58 +426,59 @@ class _CartDrawerState extends State<CartDrawer> {
                           "Customer",
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            customerAddAlert();
+                        if (widget.isConnected)
+                          GestureDetector(
+                            onTap: () {
+                              customerAddAlert();
 
-                            // Navigator.push(
-                            //   context,
-                            //   CupertinoPageRoute(
-                            //     builder: (context) => const CustomerSearch(),
-                            //   ),
-                            // ).then((value) {
-                            //   if (value != null) {
-                            //     setState(() {
-                            //       customerInfo = value;
-                            //     });
-                            //   }
-                            // });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.add,
-                                  color: Theme.of(context).primaryColor,
-                                  size: 15,
-                                ),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Text(
-                                  "Add",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall!
-                                      .copyWith(
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                ),
-                              ],
+                              // Navigator.push(
+                              //   context,
+                              //   CupertinoPageRoute(
+                              //     builder: (context) => const CustomerSearch(),
+                              //   ),
+                              // ).then((value) {
+                              //   if (value != null) {
+                              //     setState(() {
+                              //       customerInfo = value;
+                              //     });
+                              //   }
+                              // });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.add,
+                                    color: Theme.of(context).primaryColor,
+                                    size: 15,
+                                  ),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  Text(
+                                    "Add",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall!
+                                        .copyWith(
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                  )
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -819,16 +834,30 @@ class _CartDrawerState extends State<CartDrawer> {
                       onPressed: cartDataList.isEmpty
                           ? null
                           : () {
-                              if (widget.isEdit != null &&
-                                  widget.isEdit == true &&
-                                  widget.enquiryDocId != null) {
-                                updateEnquiryApi();
-                              } else if (widget.isEdit != null &&
-                                  widget.isEdit == true &&
-                                  widget.estimateDocId != null) {
-                                updateEstimateApi();
+                              if (widget.isConnected) {
+                                if (widget.isEdit != null &&
+                                    widget.isEdit == true &&
+                                    widget.enquiryDocId != null) {
+                                  updateEnquiryApi();
+                                } else if (widget.isEdit != null &&
+                                    widget.isEdit == true &&
+                                    widget.estimateDocId != null) {
+                                  updateEstimateApi();
+                                } else {
+                                  orderApi();
+                                }
                               } else {
-                                orderApi();
+                                if (widget.isEdit != null &&
+                                    widget.isEdit == true &&
+                                    widget.enquiryReferenceId!.isNotEmpty) {
+                                  updateEnquiryApi();
+                                } else if (widget.isEdit != null &&
+                                    widget.isEdit == true &&
+                                    widget.estimateReferenceId!.isNotEmpty) {
+                                  updateEstimateApi();
+                                } else {
+                                  orderApi();
+                                }
                               }
                             },
                       // child: const Text("Checkout"),
@@ -1173,52 +1202,71 @@ class _CartDrawerState extends State<CartDrawer> {
     calcul.subTotal = double.parse(subTotal());
     calcul.total = double.parse(cartTotal());
 
-    var cloud = FireStoreProvider();
-    await LocalService.newEstimate(
-      productList: cartDataList,
-      calCulation: calcul,
-      cid: cid,
-      customerInfo: customerInfo,
-    ).then((value) {
-      Navigator.pop(context);
-      snackBarCustom(context, true, "SuccessFully Place the Order");
-      setState(() {
-        cartDataList.clear();
-      });
-    });
+    if (widget.isConnected) {
+      var cloud = FireStoreProvider();
 
-    // await cloud
-    //     .createNewEstimate(
-    //   calCulation: calcul,
-    //   cid: cid,
-    //   productList: cartDataList,
-    //   customerInfo: customerInfo,
-    // )
-    //     .then((estimateData) async {
-    //   if (estimateData != null && estimateData.id.isNotEmpty) {
-    //     await cloud
-    //         .updateEstimateId(
-    //       cid: cid,
-    //       docID: estimateData.id,
-    //     )
-    //         .then((resultFinal) async {
-    //       if (resultFinal != null) {
-    //         Navigator.pop(context);
-    //         snackBarCustom(context, true, "SuccessFully Place the Order");
-    //         setState(() {
-    //           cartDataList.clear();
-    //         });
-    //       }
-    //     });
-    //   } else {
-    //     Navigator.pop(context);
-    //     snackBarCustom(
-    //       context,
-    //       false,
-    //       "Something went Wrong Please try again",
-    //     );
-    //   }
-    // });
+      await cloud
+          .createNewEstimate(
+        calCulation: calcul,
+        cid: cid,
+        productList: cartDataList,
+        customerInfo: customerInfo,
+      )
+          .then((estimateData) async {
+        if (estimateData != null && estimateData.id.isNotEmpty) {
+          await cloud
+              .updateEstimateId(
+            cid: cid,
+            docID: estimateData.id,
+          )
+              .then((resultFinal) async {
+            if (resultFinal != null) {
+              Navigator.pop(context);
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+              snackBarCustom(context, true, "SuccessFully Place the Order");
+              setState(() {
+                cartDataList.clear();
+              });
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => const EstimateListing(),
+                ),
+              );
+            }
+          });
+        } else {
+          Navigator.pop(context);
+          snackBarCustom(
+            context,
+            false,
+            "Something went Wrong Please try again",
+          );
+        }
+      });
+    } else {
+      await LocalService.newEstimate(
+        productList: cartDataList,
+        calCulation: calcul,
+        cid: cid,
+        customerInfo: customerInfo,
+      ).then((value) {
+        Navigator.pop(context);
+        Navigator.of(context).pop();
+        Navigator.of(context).pop();
+        snackBarCustom(context, true, "SuccessFully Order Placed");
+        setState(() {
+          cartDataList.clear();
+        });
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => const EstimateListing(),
+          ),
+        );
+      });
+    }
   }
 
   orderApi() async {
@@ -1234,8 +1282,7 @@ class _CartDrawerState extends State<CartDrawer> {
           try {
             loading(context);
 
-            await LocalDbProvider()
-                .fetchInfo(type: LocalData.companyid)
+            await LocalDB.fetchInfo(type: LocalData.companyid)
                 .then((cid) async {
               if (cid != null) {
                 if (value == true) {
@@ -1254,62 +1301,72 @@ class _CartDrawerState extends State<CartDrawer> {
                   calcul.subTotal = double.parse(subTotal());
                   calcul.total = double.parse(cartTotal());
 
-                  await LocalService.newEnquiry(
-                          calCulation: calcul,
-                          cid: cid,
-                          productList: cartDataList,
-                          customerInfo: customerInfo)
-                      .then((value) {
-                    Navigator.pop(context);
-                    snackBarCustom(context, true, "Successfully order placed");
-                    setState(() {
-                      cartDataList.clear();
-                    });
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (context) => const EnquiryListing(),
-                      ),
-                    );
-                  });
-                  // await cloud
-                  //     .createnewEnquiry(
-                  //   calCulation: calcul,
-                  //   cid: cid,
-                  //   productList: cartDataList,
-                  //   customerInfo: customerInfo,
-                  // )
-                  //     .then((enquryData) async {
-                  //   if (enquryData != null && enquryData.id.isNotEmpty) {
-                  //     await cloud
-                  //         .updateEnquiryId(cid: cid, docID: enquryData.id)
-                  //         .then((resultFinal) {
-                  //       if (resultFinal != null) {
-                  //         // Successfuly Order Placed
-                  //         Navigator.pop(context);
-                  //         snackBarCustom(
-                  //             context, true, "Successfully order placed");
-                  //         setState(() {
-                  //           cartDataList.clear();
-                  //         });
+                  if (widget.isConnected) {
+                    var cloud = FireStoreProvider();
+                    await cloud
+                        .createnewEnquiry(
+                      calCulation: calcul,
+                      cid: cid,
+                      productList: cartDataList,
+                      customerInfo: customerInfo,
+                    )
+                        .then((enquryData) async {
+                      if (enquryData != null && enquryData.id.isNotEmpty) {
+                        await cloud
+                            .updateEnquiryId(cid: cid, docID: enquryData.id)
+                            .then((resultFinal) {
+                          if (resultFinal != null) {
+                            // Successfuly Order Placed
+                            Navigator.pop(context);
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                            snackBarCustom(
+                                context, true, "Successfully order placed");
+                            setState(() {
+                              cartDataList.clear();
+                            });
 
-                  //         Navigator.push(
-                  //           context,
-                  //           CupertinoPageRoute(
-                  //             builder: (context) => const EnquiryListing(),
-                  //           ),
-                  //         );
-                  //       }
-                  //     });
-                  //   } else {
-                  //     Navigator.pop(context);
-                  //     snackBarCustom(
-                  //       context,
-                  //       false,
-                  //       "Something went Wrong Please try again",
-                  //     );
-                  //   }
-                  // });
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const EnquiryListing(),
+                              ),
+                            );
+                          }
+                        });
+                      } else {
+                        Navigator.pop(context);
+                        snackBarCustom(
+                          context,
+                          false,
+                          "Something went Wrong Please try again",
+                        );
+                      }
+                    });
+                  } else {
+                    await LocalService.newEnquiry(
+                            calCulation: calcul,
+                            cid: cid,
+                            productList: cartDataList,
+                            customerInfo: customerInfo)
+                        .then((value) {
+                      snackBarCustom(
+                          context, true, "Successfully order placed");
+                      setState(() {
+                        cartDataList.clear();
+                      });
+                      Navigator.pop(context);
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) => const EnquiryListing(),
+                        ),
+                      );
+                    });
+                  }
                 }
               } else {
                 Navigator.pop(context);
@@ -1354,7 +1411,9 @@ class _CartDrawerState extends State<CartDrawer> {
       barrierDismissible: false,
       context: context,
       builder: (context) {
-        return const CustomerSearch();
+        return CustomerSearch(
+          isConnected: widget.isConnected,
+        );
       },
     ).then((value) {
       if (value != null) {
@@ -1384,10 +1443,7 @@ class _CartDrawerState extends State<CartDrawer> {
   updateEnquiryApi() async {
     try {
       loading(context);
-
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var calcul = BillingCalCulationModel();
           calcul.discount = discountInput;
@@ -1402,21 +1458,36 @@ class _CartDrawerState extends State<CartDrawer> {
           calcul.subTotal = double.parse(subTotal());
           calcul.total = double.parse(cartTotal());
 
-          var cloud = FireStoreProvider();
-          await cloud
-              .updateEnquiryDetails(
-            docID: widget.enquiryDocId!,
-            calCulation: calcul,
-            productList: cartDataList,
-            customerInfo: customerInfo,
-          )
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context, true);
-            snackBarCustom(context, true, "SuccessFully Update the Order");
-          });
+          if (widget.isConnected) {
+            var cloud = FireStoreProvider();
+            await cloud
+                .updateEnquiryDetails(
+              docID: widget.enquiryDocId!,
+              calCulation: calcul,
+              productList: cartDataList,
+              customerInfo: customerInfo,
+            )
+                .then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+              snackBarCustom(context, true, "Successfully Order Updated");
+            });
+          } else {
+            // print(widget.enquiryReferenceId);
+            await LocalService.updateEnquiry(
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid),
+              calCulation: calcul,
+              productList: cartDataList,
+              customerInfo: customerInfo,
+              referenceId: widget.enquiryReferenceId ?? '',
+            ).then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+              snackBarCustom(context, true, "Successfully Order Updated");
+            });
+          }
         } else {
           Navigator.pop(context);
           snackBarCustom(
@@ -1436,9 +1507,7 @@ class _CartDrawerState extends State<CartDrawer> {
     try {
       loading(context);
 
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var calcul = BillingCalCulationModel();
           calcul.discount = discountInput;
@@ -1453,22 +1522,35 @@ class _CartDrawerState extends State<CartDrawer> {
           calcul.subTotal = double.parse(subTotal());
           calcul.total = double.parse(cartTotal());
 
-          var cloud = FireStoreProvider();
-
-          await cloud
-              .updateEstimateDetails(
-            docID: widget.estimateDocId!,
-            calCulation: calcul,
-            productList: cartDataList,
-            customerInfo: customerInfo,
-          )
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context, true);
-            snackBarCustom(context, true, "SuccessFully Update the Estimate");
-          });
+          if (widget.isConnected) {
+            var cloud = FireStoreProvider();
+            await cloud
+                .updateEstimateDetails(
+              docID: widget.estimateDocId!,
+              calCulation: calcul,
+              productList: cartDataList,
+              customerInfo: customerInfo,
+            )
+                .then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+              snackBarCustom(context, true, "SuccessFully Estimate Updated");
+            });
+          } else {
+            await LocalService.updateEstimate(
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid),
+              calCulation: calcul,
+              productList: cartDataList,
+              customerInfo: customerInfo,
+              referenceId: widget.estimateReferenceId ?? '',
+            ).then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+              snackBarCustom(context, true, "Successfully Estimate Updated");
+            });
+          }
         } else {
           Navigator.pop(context);
           snackBarCustom(
@@ -1492,6 +1574,7 @@ class _CartDrawerState extends State<CartDrawer> {
   //   result = tmpTotal.toStringAsFixed(2);
   //   return result;
   // }
+
   String eachProductTotal(int index) {
     String result = "0.00";
     double? price = cartDataList[index].price;

@@ -1,10 +1,8 @@
-import 'dart:io';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-import '/constants/enum.dart';
+import 'package:provider/provider.dart';
+import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -29,7 +27,11 @@ class _StaffListingState extends State<StaffListing> {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
-      body: body(),
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return connectionProvider.isConnected ? body() : noInternet(context);
+        },
+      ),
     );
   }
 
@@ -37,36 +39,9 @@ class _StaffListingState extends State<StaffListing> {
     return FutureBuilder(
       future: staffHandler,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return PageView(
-            physics: const NeverScrollableScrollPhysics(),
-            controller: staffListingcontroller,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Container(
-                  height: double.infinity,
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      staffHandler = getStaffInfo();
-                    },
-                    child: staffDataList.isNotEmpty
-                        ? screenView()
-                        : noData(context),
-                  ),
-                ),
-              ),
-              const StaffDetails(),
-            ],
-          );
-        } else if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasError) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
           return Center(
             child: Container(
               decoration: BoxDecoration(
@@ -120,7 +95,33 @@ class _StaffListingState extends State<StaffListing> {
             ),
           );
         } else {
-          return futureLoading(context);
+          return PageView(
+            physics: const NeverScrollableScrollPhysics(),
+            controller: staffListingcontroller,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Container(
+                  height: double.infinity,
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      staffHandler = getStaffInfo();
+                    },
+                    child: staffDataList.isNotEmpty
+                        ? screenView()
+                        : noData(context),
+                  ),
+                ),
+              ),
+              const StaffDetails(),
+            ],
+          );
         }
       },
     );
@@ -144,25 +145,15 @@ class _StaffListingState extends State<StaffListing> {
                   );
                 });
               },
-              leading: Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  shape: BoxShape.circle,
-                  image: staffDataList[index].profileImg == null
-                      ? null
-                      : DecorationImage(
-                          image: File(staffDataList[index].profileImg!)
-                                  .existsSync()
-                              ? FileImage(
-                                  File(staffDataList[index].profileImg!),
-                                )
-                              : AssetImage(
-                                  Assets.images.noImage.path,
-                                ),
-                          fit: BoxFit.cover,
-                        ),
+              leading: ClipRRect(
+                clipBehavior: Clip.hardEdge,
+                borderRadius: BorderRadius.circular(25.0),
+                child: CachedNetworkImage(
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
+                  imageUrl:
+                      staffDataList[index].profileImg ?? Strings.productImg,
+                  fit: BoxFit.cover,
                 ),
               ),
               title: Text(staffDataList[index].userName ?? ""),
@@ -266,24 +257,26 @@ class _StaffListingState extends State<StaffListing> {
       ),
       title: const Text("Staff"),
       actions: [
-        IconButton(
-          onPressed: () async {
-            await addStaffForm(
-              context,
-              companyID: companyUniqueID ?? "",
-            ).then((value) {
-              if (value != null && value == true) {
-                setState(() {
-                  staffHandler = getStaffInfo();
-                });
-              }
-            });
-          },
-          splashRadius: 20,
-          icon: const Icon(
-            Icons.add,
-          ),
-        ),
+        Provider.of<ConnectionProvider>(context, listen: false).isConnected
+            ? IconButton(
+                onPressed: () async {
+                  await addStaffForm(
+                    context,
+                    companyID: companyUniqueID ?? "",
+                  ).then((value) {
+                    if (value != null && value == true) {
+                      setState(() {
+                        staffHandler = getStaffInfo();
+                      });
+                    }
+                  });
+                },
+                splashRadius: 20,
+                icon: const Icon(
+                  Icons.add,
+                ),
+              )
+            : Container()
       ],
     );
   }
@@ -292,7 +285,7 @@ class _StaffListingState extends State<StaffListing> {
     try {
       FireStoreProvider provider = FireStoreProvider();
 
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       await FireStoreProvider().getCompanyDocInfo(cid: cid).then((companyInfo) {
         if (companyInfo != null && companyInfo.exists) {
           setState(() {
@@ -315,13 +308,13 @@ class _StaffListingState extends State<StaffListing> {
             model.phoneNo = element["phone_no"] ?? "";
             model.userid = element["user_login_id"] ?? "";
             model.password = element["password"] ?? "";
-
-            var directory = await getApplicationDocumentsDirectory();
-            model.profileImg = path.join(
-              directory.path,
-              'staff',
-              element.id,
-            );
+            model.profileImg = element["profile_img"] ?? "";
+            // var directory = await getApplicationDocumentsDirectory();
+            // model.profileImg = path.join(
+            //   directory.path,
+            //   'staff',
+            //   element.id,
+            // );
 
             model.docID = element.id;
             StaffPermissionModel permissionModel = StaffPermissionModel();
@@ -350,7 +343,7 @@ class _StaffListingState extends State<StaffListing> {
     }
   }
 
-  late Future staffHandler;
+  Future? staffHandler;
 
   changeState() {
     if (mounted) {
@@ -369,8 +362,26 @@ class _StaffListingState extends State<StaffListing> {
   @override
   void initState() {
     super.initState();
-    staffHandler = getStaffInfo();
-    staffListingPageProvider.addListener(changeState);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        staffHandler = getStaffInfo();
+        staffListingPageProvider.addListener(changeState);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      connectionProvider.addListener(() {
+        if (connectionProvider.isConnected) {
+          staffHandler = getStaffInfo();
+          staffListingPageProvider.addListener(changeState);
+        }
+      });
+    });
   }
 
   List<StaffDataModel> staffDataList = [];

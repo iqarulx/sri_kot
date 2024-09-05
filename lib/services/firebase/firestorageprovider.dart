@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/services/services.dart';
 
 final _instances = FirebaseFirestore.instance;
@@ -56,9 +56,9 @@ class FireStorageProvider {
     required String fileName,
     required String filePath,
   }) async {
-    final cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+    final cid = await LocalDB.fetchInfo(type: LocalData.companyid);
     String? downloadLink;
-    final uploadDir = storage.child("$cid/$filePath/$fileName");
+    final uploadDir = storage.child("$cid/$filePath/$fileName.jpg");
     try {
       await uploadDir.putFile(fileData);
       downloadLink = await uploadDir.getDownloadURL();

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/src/logger.dart';
 import '/utils/src/utilities.dart';
@@ -107,7 +107,7 @@ class FireStoreProvider {
     try {
       return await _staff
           .where('company_id', isEqualTo: cid)
-          .where('delete_at', isEqualTo: false)
+          .where('deleted_at', isEqualTo: false)
           .get();
     } catch (e) {
       rethrow;

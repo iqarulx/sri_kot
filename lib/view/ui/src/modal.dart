@@ -6,7 +6,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../constants/enum.dart';
+import '/constants/constants.dart';
 
 class Modal extends StatefulWidget {
   final String title, content;

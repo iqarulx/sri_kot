@@ -5,7 +5,7 @@ import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:pdf/pdf.dart' as pf;
 import 'package:pdf/widgets.dart' as pw;
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 
 class PdfCreationProvider {
@@ -507,7 +507,7 @@ class EnqueryPdfCreation {
 
     PdfGridRow titleHeader = headerGrid.headers[0];
     titleHeader.cells[0].value =
-        'Estimate ID: ${type == PdfType.enquiry ? estimateData.enquiryid : estimateData.estimateid}';
+        'Estimate ID: ${type == PdfType.enquiry ? estimateData.enquiryid ?? estimateData.referenceId : estimateData.estimateid ?? estimateData.referenceId}';
     titleHeader.cells[2].value = 'Estimate';
     titleHeader.cells[5].value =
         'Date: ${DateFormat('dd-MM-yyyy HH:mm a').format(estimateData.createddate!)}';
@@ -873,7 +873,7 @@ class EnqueryPdfCreation {
 
     PdfGridRow titleHeader = headerGrid.headers[0];
     titleHeader.cells[0].value =
-        'Estimate ID: ${type == PdfType.enquiry ? estimateData.enquiryid : estimateData.estimateid}';
+        'Estimate ID: ${type == PdfType.enquiry ? estimateData.enquiryid ?? estimateData.referenceId : estimateData.estimateid ?? estimateData.referenceId}';
     titleHeader.cells[2].value = 'Estimate';
     titleHeader.cells[5].value =
         'Date: ${DateFormat('dd-MM-yyyy HH:mm a').format(estimateData.createddate!)}';
@@ -1259,7 +1259,7 @@ class EnqueryPdfCreation {
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(2),
                         child: pw.Text(
-                          "Estimate ID : ${estimateData.enquiryid}",
+                          "Estimate ID : ${estimateData.enquiryid ?? estimateData.referenceId}",
                           style: const pw.TextStyle(
                             fontSize: 10,
                           ),
@@ -1673,7 +1673,7 @@ class EnqueryPdfCreation {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    "No: ${estimateData.enquiryid}",
+                    "No: ${estimateData.enquiryid ?? estimateData.referenceId}",
                     textAlign: pw.TextAlign.center,
                     style: subtitle1,
                   ),

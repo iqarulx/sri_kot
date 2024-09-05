@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -23,7 +23,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
   List<ProductDataModel> productDataList = [];
   Future getCategoryWishProductInfo() async {
     try {
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         FireStoreProvider provider = FireStoreProvider();
         final result = await provider.productBilling(
@@ -58,9 +58,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
   }) async {
     loading(context);
     try {
-      await LocalDbProvider()
-          .fetchInfo(type: LocalData.companyid)
-          .then((cid) async {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           await FireStoreProvider()
               .getProductPostion(docID: productID)
@@ -157,7 +155,62 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
       body: FutureBuilder(
         future: productHandler,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return futureLoading(context);
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Center(
+                      child: Text(
+                        "Failed",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Text(
+                      snapshot.error.toString() == "null"
+                          ? "Something went Wrong"
+                          : snapshot.error.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            productHandler = getCategoryWishProductInfo();
+                          });
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text(
+                          "Refresh",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else {
             return Padding(
               padding: const EdgeInsets.all(10),
               child: Container(
@@ -235,62 +288,6 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                 ),
               ),
             );
-          } else if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasError) {
-            return Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Failed",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      snapshot.error.toString() == "null"
-                          ? "Something went Wrong"
-                          : snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            productHandler = getCategoryWishProductInfo();
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text(
-                          "Refresh",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return futureLoading(context);
           }
         },
       ),

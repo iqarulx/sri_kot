@@ -143,7 +143,7 @@ class _SideBarState extends State<SideBar> {
                       message: "Do you want logout this account ?")
                   .then((value) async {
                 if (value != null && value == true) {
-                  await LocalDbProvider().logout().then((result) {
+                  await LocalDB.logout().then((result) {
                     if (result) {
                       Navigator.pop(context);
                       Navigator.pushReplacement(

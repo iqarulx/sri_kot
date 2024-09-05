@@ -8,6 +8,7 @@ class Firebase {
   static final staff = _instances.collection('staff');
   static final enquiry = _instances.collection('enquiry');
   static final estimate = _instances.collection('estimate');
+  static final product = _instances.collection('product');
 
   static Future<List<QueryDocumentSnapshot>?> get({
     required CollectionReference collection,

@@ -1,20 +1,16 @@
-import 'dart:io';
-
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-
-import '/gen/assets.gen.dart';
+import 'package:provider/provider.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-import '/constants/enum.dart';
 
 BilingPageProvider billPageProvider = BilingPageProvider();
 
@@ -49,7 +45,15 @@ class _BillingOneState extends State<BillingOne>
         appBar: appbar(context),
         floatingActionButton:
             isLoading == false ? floatingButton(context) : null,
-        body: body(),
+        body: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return connectionProvider.isConnected
+                ? body()
+                : synced
+                    ? body()
+                    : notSync(context);
+          },
+        ),
       ),
     );
   }
@@ -58,17 +62,16 @@ class _BillingOneState extends State<BillingOne>
     return FutureBuilder(
       future: billingHandler,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
+          return noProductsError(snapshot);
+        } else {
           if (productDataList.isNotEmpty) {
             return screenView();
           } else {
             return noCategoryError(snapshot);
           }
-        } else if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasError) {
-          return noProductsError(snapshot);
-        } else {
-          return futureLoading(context);
         }
       },
     );
@@ -124,7 +127,27 @@ class _BillingOneState extends State<BillingOne>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                productImage(tmpProductDetails),
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade300,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: isConnected
+                                        ? CachedNetworkImage(
+                                            placeholder: (context, url) =>
+                                                const Center(
+                                                    child:
+                                                        CircularProgressIndicator()),
+                                            imageUrl:
+                                                tmpProductDetails.productImg ??
+                                                    Strings.productImg,
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                          )
+                                        : Container(),
+                                  ),
+                                ),
                                 const SizedBox(
                                   height: 5,
                                 ),
@@ -371,6 +394,9 @@ class _BillingOneState extends State<BillingOne>
                         estimateDocId: widget.estimateData?.docID,
                         pageType: 1,
                         backgroundColor: Colors.grey.shade300,
+                        isConnected: isConnected,
+                        enquiryReferenceId: widget.enquiryData?.referenceId,
+                        estimateReferenceId: widget.estimateData?.referenceId,
                       ),
                     ),
                   )
@@ -416,27 +442,6 @@ class _BillingOneState extends State<BillingOne>
           ],
         ),
       ],
-    );
-  }
-
-  Expanded productImage(ProductDataModel tmpProductDetails) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(5),
-          image: tmpProductDetails.productImg != null
-              ? DecorationImage(
-                  image: File(tmpProductDetails.productImg!).existsSync()
-                      ? FileImage(
-                          File(tmpProductDetails.productImg!),
-                        )
-                      : AssetImage(Assets.images.noImage.path),
-                  fit: BoxFit.cover,
-                )
-              : null,
-        ),
-      ),
     );
   }
 
@@ -578,7 +583,9 @@ class _BillingOneState extends State<BillingOne>
           ? IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded,
                   color: Colors.white),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () async {
+                await dialogBox();
+              },
             )
           : null,
       title: const Text("Billing"),
@@ -594,7 +601,9 @@ class _BillingOneState extends State<BillingOne>
               IconButton(
                 splashRadius: 20,
                 onPressed: () {
-                  addCustomProductAlert();
+                  if (isConnected) {
+                    addCustomProductAlert();
+                  }
                 },
                 icon: const Icon(Icons.add),
               ),
@@ -661,6 +670,9 @@ class _BillingOneState extends State<BillingOne>
       enquiryDocId: widget.enquiryData?.docID,
       estimateDocId: widget.estimateData?.docID,
       pageType: 1,
+      isConnected: isConnected,
+      enquiryReferenceId: widget.enquiryData?.referenceId ?? "",
+      estimateReferenceId: widget.estimateData?.referenceId ?? "",
     );
   }
 
@@ -774,11 +786,13 @@ class _BillingOneState extends State<BillingOne>
     try {
       setState(() {
         isLoading = true;
+        categoryList.clear();
         billingProductList.clear();
       });
+
       var storeProvider = FireStoreProvider();
 
-      var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         var categoryAPI = await storeProvider.categoryListing(cid: cid);
         var productAPI = await storeProvider.productListing(cid: cid);
@@ -786,12 +800,12 @@ class _BillingOneState extends State<BillingOne>
             categoryAPI.docs.isNotEmpty &&
             productAPI != null &&
             productAPI.docs.isNotEmpty) {
-          for (var categorylist in categoryAPI.docs) {
+          for (var category in categoryAPI.docs) {
             CategoryDataModel model = CategoryDataModel();
-            model.categoryName = categorylist["category_name"].toString();
-            model.postion = categorylist["postion"];
-            model.tmpcatid = categorylist.id;
-            model.discount = categorylist["discount"];
+            model.categoryName = category["category_name"].toString();
+            model.postion = category["postion"];
+            model.tmpcatid = category.id;
+            model.discount = category["discount"];
             setState(() {
               categoryList.add(model);
             });
@@ -807,15 +821,7 @@ class _BillingOneState extends State<BillingOne>
             productInfo.qrCode = product["qr_code"];
             productInfo.videoUrl = product["video_url"];
             productInfo.productName = product["product_name"];
-
-            var directory = await getApplicationDocumentsDirectory();
-            productInfo.productImg = path.join(
-              directory.path,
-              'product',
-              product.id,
-            );
-
-            // productInfo.productImg = product["product_img"];
+            productInfo.productImg = product["product_img"];
             productInfo.price = double.parse(product["price"].toString());
             productInfo.productId = product.id;
             productInfo.qty = 0;
@@ -973,6 +979,203 @@ class _BillingOneState extends State<BillingOne>
         return null;
       }
     } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      snackBarCustom(context, false, e.toString());
+      return null;
+    }
+  }
+
+  Future getOfflineProductList() async {
+    try {
+      setState(() {
+        isLoading = true;
+        categoryList.clear();
+        billingProductList.clear();
+      });
+
+      var localProducts = await DatabaseHelper().getProducts();
+      var localCategories = await DatabaseHelper().getCategory();
+
+      if (localCategories.isNotEmpty && localProducts.isNotEmpty) {
+        for (var i = 0; i < localCategories.length; i++) {
+          CategoryDataModel model = CategoryDataModel();
+          model.categoryName =
+              localCategories[i]["category_name"]?.toString() ?? "";
+          model.postion = int.parse(localCategories[i]["postion"]);
+          model.tmpcatid = localCategories[i]["category_id"];
+          model.discount =
+              int.tryParse(localCategories[i]["discount"]?.toString() ?? "0") ??
+                  0;
+          setState(() {
+            categoryList.add(model);
+          });
+        }
+
+        for (var product in localProducts) {
+          ProductDataModel productInfo = ProductDataModel();
+          productInfo.categoryName = "";
+          productInfo.categoryid = product["category_id"];
+          productInfo.discountLock =
+              product["discount_lock"] == 1 ? false : true;
+          productInfo.name = product["name"] ?? "";
+          productInfo.productCode = product["product_code"] ?? "";
+          productInfo.productContent = product["product_content"] ?? "";
+          productInfo.qrCode = product["qr_code"] ?? "";
+          productInfo.videoUrl = product["video_url"] ?? "";
+          productInfo.productName = product["product_name"] ?? "";
+          productInfo.productImg = product["product_img"] ?? "";
+          productInfo.price =
+              double.tryParse(product["price"]?.toString() ?? "0.0") ?? 0.0;
+          productInfo.productId = product["product_id"] ?? 0;
+          productInfo.qty = 0;
+          productInfo.qtyForm =
+              TextEditingController(text: productInfo.qty.toString());
+
+          setState(() {
+            productDataList.add(productInfo);
+          });
+        }
+
+        tmpProductDataList.addAll(productDataList);
+
+        // Category & Product Merge
+        for (var category in categoryList) {
+          Iterable<ProductDataModel> products = productDataList
+              .where((element) => element.categoryid == category.tmpcatid);
+          for (var element in products) {
+            setState(() {
+              element.categoryName = category.categoryName;
+              element.discount = category.discount;
+            });
+          }
+          var data = BillingDataModel(
+            category: category,
+            products: [for (var product in products) product],
+          );
+          setState(() {
+            billingProductList.add(data);
+          });
+        }
+
+        setState(() {
+          controller = TabController(
+            length: billingProductList.length,
+            vsync: this,
+          );
+        });
+
+        if (widget.isEdit != null && widget.isEdit! == true) {
+          if (widget.enquiryData != null) {
+            for (var elements in widget.enquiryData!.products!) {
+              int catId = billingProductList.indexWhere((element) =>
+                  element.category!.tmpcatid == elements.categoryid);
+              int proId = -1;
+              if (catId != -1) {
+                proId = billingProductList[catId].products!.indexWhere(
+                    (element) => element.productId == elements.productId);
+              }
+
+              if (catId != -1 && proId != -1) {
+                setState(() {
+                  elements.discount =
+                      billingProductList[catId].products![proId].discount;
+                  billingProductList[catId].products![proId].qty = elements.qty;
+                  billingProductList[catId].products![proId].qtyForm!.text =
+                      elements.qty.toString();
+                });
+
+                editaddtoCart(elements);
+
+                /// Add to Cart Function Creation Work Pending
+              } else {
+                BillingDataModel billing = BillingDataModel();
+
+                var category = CategoryDataModel();
+                category.categoryName = "";
+                category.tmpcatid = "";
+
+                billing.category = category;
+                billing.products = [];
+
+                setState(() {
+                  billingProductList.add(billing);
+                  editaddtoCart(elements);
+                });
+              }
+            }
+            // Update Discount & Packing Charges
+            setState(() {
+              discountSys = widget.enquiryData!.price!.discountsys ?? "%";
+              extraDiscountSys =
+                  widget.enquiryData!.price!.extraDiscountsys ?? "%";
+              packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
+              discountInput = widget.enquiryData!.price!.discount ?? 0;
+              extraDiscountInput =
+                  widget.enquiryData!.price!.extraDiscount ?? 0;
+              packingChargeInput = widget.enquiryData!.price!.package ?? 0;
+
+              customerInfo = widget.enquiryData!.customer;
+            });
+          } else if (widget.estimateData != null) {
+            for (var elements in widget.estimateData!.products!) {
+              int catId = billingProductList.indexWhere((element) =>
+                  element.category!.tmpcatid == elements.categoryid);
+              int proId = -1;
+              if (catId != -1) {
+                proId = billingProductList[catId].products!.indexWhere(
+                    (element) => element.productId == elements.productId);
+              }
+              if (catId != -1 && proId != -1) {
+                setState(() {
+                  elements.discount =
+                      billingProductList[catId].products![proId].discount;
+                  billingProductList[catId].products![proId].qty = elements.qty;
+                  billingProductList[catId].products![proId].qtyForm!.text =
+                      elements.qty.toString();
+                });
+
+                editaddtoCart(elements);
+              } else {
+                BillingDataModel billing = BillingDataModel();
+
+                var category = CategoryDataModel();
+                category.categoryName = "";
+                category.tmpcatid = "";
+
+                billing.category = category;
+                billing.products = [];
+
+                setState(() {
+                  billingProductList.add(billing);
+                  editaddtoCart(elements);
+                });
+              }
+            }
+            // Update Discount & Packing Charges
+            setState(() {
+              discountSys = widget.estimateData!.price!.discountsys ?? "%";
+              extraDiscountSys =
+                  widget.estimateData!.price!.extraDiscountsys ?? "%";
+              packingChargeSys = widget.estimateData!.price!.packagesys ?? "%";
+              discountInput = widget.estimateData!.price!.discount ?? 0;
+              extraDiscountInput =
+                  widget.estimateData!.price!.extraDiscount ?? 0;
+              packingChargeInput = widget.estimateData!.price!.package ?? 0;
+
+              customerInfo = widget.estimateData!.customer;
+            });
+          }
+        }
+
+        setState(() {
+          isLoading = false;
+        });
+        return true;
+      }
+    } catch (e) {
+      print(e);
       setState(() {
         isLoading = false;
       });
@@ -1157,7 +1360,7 @@ class _BillingOneState extends State<BillingOne>
       barrierDismissible: false,
       context: context,
       builder: (context) {
-        return const SearchProductBilling();
+        return SearchProductBilling(isConnected: isConnected);
       },
     ).then((value) {
       if (value != null && value.isNotEmpty) {
@@ -1269,8 +1472,60 @@ class _BillingOneState extends State<BillingOne>
   @override
   void initState() {
     super.initState();
-    billingHandler = getProductList();
-    billPageProvider.addListener(pageRefrce);
+    // Check initial connection and perform actions
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        billingHandler = getProductList();
+        billPageProvider.addListener(pageRefrce);
+        setState(() {
+          isConnected = true;
+        });
+      } else {
+        billingHandler = getOfflineProductList();
+        billPageProvider.addListener(pageRefrce);
+        setState(() {
+          isConnected = false;
+        });
+      }
+    });
+
+    // Add listener to ConnectionProvider for connection changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      connectionProvider.addListener(() {
+        if (connectionProvider.isConnected) {
+          billingHandler = getProductList();
+          billPageProvider.addListener(pageRefrce);
+          setState(() {
+            isConnected = true;
+          });
+        } else {
+          billingHandler = getOfflineProductList();
+          billPageProvider.addListener(pageRefrce);
+          setState(() {
+            isConnected = false;
+          });
+        }
+      });
+    });
+
+    initSync();
+  }
+
+  initSync() async {
+    var lastSync = await LocalDB.getLastSync();
+    if (lastSync == null) {
+      setState(() {
+        synced = false;
+      });
+    } else {
+      setState(() {
+        synced = true;
+      });
+    }
   }
 
   pageRefrce() {
@@ -1284,7 +1539,13 @@ class _BillingOneState extends State<BillingOne>
       context,
       title: "Alert",
       message: "Do you want exit this page ?",
-    );
+    ).then((value) {
+      if (value != null) {
+        if (value) {
+          Navigator.of(context).pop();
+        }
+      }
+    });
   }
 
   showQRBox({required int index, required int count}) async {
@@ -1423,7 +1684,7 @@ class _BillingOneState extends State<BillingOne>
     return result;
   }
 
-  void scrollToPosition(int row, int column) {
+  scrollToPosition(int row, int column) {
     final itemIndex = row * 2 + column;
     final itemExtent = MediaQuery.of(context).size.width /
         3.02; // Replace with your item's height or width
@@ -1450,18 +1711,19 @@ class _BillingOneState extends State<BillingOne>
     return result;
   }
 
-  List<ProductDataModel> tmpProductDataList = [];
-  List<ProductDataModel> productDataList = [];
+  List<ProductDataModel> tmpProductDataList = [], productDataList = [];
   List<CategoryDataModel> categoryList = [];
   bool isLoading = false;
+  bool isPrice = true;
+  bool keyboardVisable = false;
+  bool synced = false;
+  bool isConnected = false;
   TabController? controller;
   Future? billingHandler;
   int crttab = 0;
   var billingOneKey = GlobalKey<ScaffoldState>();
-  bool isPrice = true;
   Iterable<ProductDataModel> dataList = [];
   late Orientation orientation;
-  bool keyboardVisable = false;
   String keyboardValue = "";
   ScrollController scrollController = ScrollController();
 }
@@ -1573,23 +1835,10 @@ class _QRAlertProductState extends State<QRAlertProduct> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: MediaQuery.of(context).size.width / 1.7,
-              height: MediaQuery.of(context).size.width / 1.7,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(5),
-                image: tmpProductDetails.productImg != null
-                    ? DecorationImage(
-                        image: File(tmpProductDetails.productImg!).existsSync()
-                            ? FileImage(
-                                File(tmpProductDetails.productImg!),
-                              )
-                            : AssetImage(Assets.images.noImage.path),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
+            CachedNetworkImage(
+              imageUrl: tmpProductDetails.productImg ?? Strings.productImg,
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
             ),
             const SizedBox(
               height: 10,

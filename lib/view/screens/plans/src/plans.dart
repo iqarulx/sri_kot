@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:sri_kot/utils/utils.dart';
-import '../../../../constants/enum.dart';
+import '/utils/utils.dart';
+import '/constants/constants.dart';
 import '../../../../in_app_purchase/purchase.dart';
 import '/services/services.dart';
 
@@ -156,10 +156,9 @@ class _PlansState extends State<Plans> {
                                               "Purchase successfull");
 
                                           await LocalService.updateCount(
-                                                  uid: await LocalDbProvider()
-                                                          .fetchInfo(
-                                                              type: LocalData
-                                                                  .companyid) ??
+                                                  uid: await LocalDB.fetchInfo(
+                                                          type: LocalData
+                                                              .companyid) ??
                                                       '',
                                                   type: ProfileType.admin)
                                               .then((value) async {
@@ -167,10 +166,9 @@ class _PlansState extends State<Plans> {
 
                                             if (value) {
                                               await LocalService.addPayment(
-                                                      uid: await LocalDbProvider()
-                                                              .fetchInfo(
-                                                                  type: LocalData
-                                                                      .companyid) ??
+                                                      uid: await LocalDB.fetchInfo(
+                                                              type: LocalData
+                                                                  .companyid) ??
                                                           '',
                                                       type: PaymentType.staff)
                                                   .then((result) {

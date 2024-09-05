@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import '../../constants/enum.dart';
+import '/constants/constants.dart';
 
 class FilePickerProviderExcel {
   Future<File?> openGalary({required FileProviderType fileType}) async {
@@ -25,6 +25,21 @@ class FilePickerProviderExcel {
       if (result != null) {
         pickedFile = File(result.files.single.path!);
       }
+    }
+
+    return pickedFile;
+  }
+
+  Future<File?> uploadSql() async {
+    File? pickedFile;
+
+    var result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+      allowMultiple: false,
+    );
+    if (result != null) {
+      pickedFile = File(result.files.single.path!);
     }
 
     return pickedFile;

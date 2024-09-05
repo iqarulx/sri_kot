@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
-import '/constants/enum.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -37,7 +37,11 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
     return FutureBuilder(
       future: priceListHanler,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return futureLoading(context);
+        } else if (snapshot.hasError) {
+          return errorDisplay(snapshot);
+        } else {
           if (data != null) {
             return SfPdfViewer.memory(
               data!,
@@ -45,11 +49,6 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
           } else {
             return const SizedBox();
           }
-        } else if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasError) {
-          return errorDisplay(snapshot);
-        } else {
-          return futureLoading(context);
         }
       },
     );
@@ -173,7 +172,7 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
 
   Future getCurrentPriceList() async {
     var fireStore = FireStoreProvider();
-    var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+    var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
     if (cid != null) {
       await fireStore.categoryListing(cid: cid).then((categorylist) async {
         if (categorylist != null && categorylist.docs.isNotEmpty) {
@@ -249,7 +248,7 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
 
   // Future getPriceList() async {
   //   var fireStore = FireStoreProvider();
-  //   var cid = await LocalDbProvider().fetchInfo(type: LocalData.companyid);
+  //   var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
   //   if (cid != null) {
   //     await fireStore.categoryListing(cid: cid).then((categoryList) async {
   //       if (categoryList != null && categoryList.docs.isNotEmpty) {
