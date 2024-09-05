@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:sri_kot/in_app_purchase/purchase.dart';
+import '/in_app_purchase/purchase.dart';
 
 class PurchaseScreen extends StatefulWidget {
   const PurchaseScreen({super.key});

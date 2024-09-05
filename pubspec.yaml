@@ -3,10 +3,10 @@ description: "A new Flutter project."
 
 publish_to: 'none'
 
-version: 1.0.5
+version: 1.0.6
 
 environment:
-  sdk: '>=3.4.4 <4.0.0'
+  sdk: '>=3.4.3 <4.0.0'
 
 dependencies:
   flutter:
@@ -54,6 +54,7 @@ dependencies:
   package_info_plus: ^8.0.2
   cached_network_image: ^3.4.1
   flutter_blurhash: ^0.8.2
+  flutter_native_splash: ^2.4.1
   
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,18 @@ flutter_gen:
   outputs:
     dart:
       - lib/gen/assets.gen.dart
+
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#FFFFFF"
+  image: assets/logo_splash.png
+  branding: assets/brand.png
+  branding_mode: bottom
+  android_12:
+    color: "#FFFFFF"
+    image: assets/logo_splash.png
+    branding: assets/brand.png
 
 flutter:
   uses-material-design: true

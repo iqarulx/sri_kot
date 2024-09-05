@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sri_kot/model/model.dart';
+import '/model/model.dart';
 import '/constants/constants.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';

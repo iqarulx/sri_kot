@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sri_kot/in_app_purchase/revenuecat.dart';
-import 'package:sri_kot/view/screens/plans/plans.dart';
+import '/in_app_purchase/revenuecat.dart';
+import '/view/screens/plans/plans.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});

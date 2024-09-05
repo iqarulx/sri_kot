@@ -1,12 +1,6 @@
 import 'dart:io';
-
-import 'package:flutter/services.dart';
-// import 'package:path_provider/path_provider.dart';
-// import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
-const platform = MethodChannel('com.srisoftwarez.sri_kot/files');
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();

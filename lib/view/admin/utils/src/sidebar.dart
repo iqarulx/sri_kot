@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sri_kot/gen/assets.gen.dart';
-import '../../admin.dart';
+import '/gen/assets.gen.dart';
+import '/view/admin/admin.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
 import '/view/auth/src/auth.dart';

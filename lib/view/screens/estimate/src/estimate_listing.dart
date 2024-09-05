@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:sri_kot/gen/assets.gen.dart';
+import '/gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';

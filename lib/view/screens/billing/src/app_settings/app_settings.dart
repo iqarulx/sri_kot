@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sri_kot/utils/src/utilities.dart';
-import 'package:sri_kot/view/screens/billing/src/app_settings/deleted_items.dart';
-import '../../../../ui/ui.dart';
+import '/utils/src/utilities.dart';
+import '/view/ui/ui.dart';
 import '/provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/services/services.dart';
@@ -515,70 +514,69 @@ class _AppSettingsState extends State<AppSettings> {
               ),
             ),
           ),
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
-            onTap: () async {
-              await showModalBottomSheet(
-                backgroundColor: Colors.white,
-                useSafeArea: true,
-                shape: RoundedRectangleBorder(
-                  side: BorderSide.none,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                isScrollControlled: true,
-                context: context,
-                builder: (builder) {
-                  return const DeletedItems();
-                },
-              ).then((onValue) {
-                if (onValue != null) {}
-              });
-            },
-            child: Container(
-              height: 60,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.refresh,
-                          size: 30,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Recover Deleted Items",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall!
-                                  .copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(CupertinoIcons.forward),
-                ],
-              ),
-            ),
-          ),
-
+          // const SizedBox(
+          //   height: 10,
+          // ),
+          // GestureDetector(
+          //   onTap: () async {
+          //     await showModalBottomSheet(
+          //       backgroundColor: Colors.white,
+          //       useSafeArea: true,
+          //       shape: RoundedRectangleBorder(
+          //         side: BorderSide.none,
+          //         borderRadius: BorderRadius.circular(10),
+          //       ),
+          //       isScrollControlled: true,
+          //       context: context,
+          //       builder: (builder) {
+          //         return const DeletedItems();
+          //       },
+          //     ).then((onValue) {
+          //       if (onValue != null) {}
+          //     });
+          //   },
+          //   child: Container(
+          //     height: 60,
+          //     padding: const EdgeInsets.all(10),
+          //     decoration: BoxDecoration(
+          //       color: Colors.white,
+          //       borderRadius: BorderRadius.circular(10),
+          //     ),
+          //     child: Row(
+          //       children: [
+          //         Expanded(
+          //           child: Row(
+          //             children: [
+          //               const Icon(
+          //                 CupertinoIcons.refresh,
+          //                 size: 30,
+          //               ),
+          //               const SizedBox(
+          //                 width: 10,
+          //               ),
+          //               Column(
+          //                 mainAxisAlignment: MainAxisAlignment.center,
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Text(
+          //                     "Recover Deleted Items",
+          //                     style: Theme.of(context)
+          //                         .textTheme
+          //                         .titleSmall!
+          //                         .copyWith(
+          //                           fontWeight: FontWeight.bold,
+          //                         ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ],
+          //           ),
+          //         ),
+          //         const Icon(CupertinoIcons.forward),
+          //       ],
+          //     ),
+          //   ),
+          // ),
           // const SizedBox(
           //   height: 10,
           // ),
