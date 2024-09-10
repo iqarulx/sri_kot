@@ -412,13 +412,13 @@ class _SideBarState extends State<SideBar> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               breakBar(),
-                              //               menuTitle(data: "Account"),
-                              //               menuView(
-                              //                 context,
-                              //                 icon: Icons.person,
-                              //                 lable: "Account Information",
-                              //                 index: 15,
-                              //               ),
+                              menuTitle(data: "Account"),
+                              menuView(
+                                context,
+                                icon: Icons.person,
+                                lable: "Account Information",
+                                index: 14,
+                              ),
                               //               menuView(
                               //                 context,
                               //                 icon: Icons.credit_card,
@@ -441,7 +441,7 @@ class _SideBarState extends State<SideBar> {
                                 context,
                                 icon: Icons.support_agent,
                                 lable: "Support",
-                                index: 14,
+                                index: 15,
                               ),
                               // planUpgrade(context),
                             ],
@@ -556,12 +556,12 @@ class _SideBarState extends State<SideBar> {
           ),
           Container(
             padding: const EdgeInsets.all(5),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Text(
-                  "App Version - 1.0.1",
-                  style: TextStyle(
+                  "App Version - $currentVersion",
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 10,
                   ),
@@ -640,6 +640,8 @@ class _SideBarState extends State<SideBar> {
       case 13:
         route = const Help();
       case 14:
+        route = const AccountInformation();
+      case 15:
         route = const Support();
       default:
         route = const UserHome();

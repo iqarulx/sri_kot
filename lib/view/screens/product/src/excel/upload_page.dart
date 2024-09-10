@@ -1,10 +1,12 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';
 import '/view/screens/screens.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class UploadExcelUI extends StatefulWidget {
   const UploadExcelUI({super.key});
@@ -247,7 +249,7 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
   }
 
   uploadExcel() async {
-    loading(context);
+    // loading(context);
     try {
       await FilePickerProviderExcel()
           .openGalary(fileType: FileProviderType.excel)
@@ -257,7 +259,8 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
               .readExcelData(file: value)
               .then((excelResult) {
             if (excelResult != null) {
-              Navigator.pop(context);
+              print(excelResult);
+              // Navigator.pop(context);
               setState(() {
                 excelData.clear();
                 excelData.addAll(excelResult);
@@ -284,21 +287,11 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
   downloadTemplate() async {
     loading(context);
     try {
-      await DownloadFilesOnline(
-        urlLink:
-            "https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16",
-        fileName: 'Product Templete',
-        fileext: 'xlsx',
-      ).startDownload().then((value) {
-        Navigator.pop(context);
-        if (value != null) {
-          downloadFileSnackBarCustom(context,
-              isSuccess: true, msg: 'Successfully Download File', path: value);
-          // snackBarCustom(context, true, "");
-        } else {
-          snackBarCustom(context, false, "Something went Worng");
-        }
-      });
+      var data = await http.get(Uri.parse(
+          'https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16'));
+      var response = data.bodyBytes;
+      Navigator.pop(context);
+      helper.saveAndLaunchFile(response, "Product Template.xlsx");
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());

@@ -13,6 +13,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class EstimateListing extends StatefulWidget {
   const EstimateListing({super.key});
@@ -287,24 +288,8 @@ class _EstimateListingState extends State<EstimateListing> {
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
-          await DownloadFileOffline(
-            fileData: fileData,
-            fileName: "Estimate Excel",
-            fileext: 'xlsx',
-          ).startDownload().then((value) {
-            if (value != null && value.isNotEmpty) {
-              Navigator.pop(context);
-              downloadFileSnackBarCustom(
-                context,
-                isSuccess: true,
-                msg: "Estimate Excel Download Successfully",
-                path: value,
-              );
-            }
-          }).catchError((onError) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, onError.toString());
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(fileData, 'Estimate List.xlsx');
         } else {
           Navigator.pop(context);
         }
@@ -324,6 +309,8 @@ class _EstimateListingState extends State<EstimateListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
+
         estimateHandler = getEstimateInfo();
       } else {
         estimateHandler = getOfflineEstimateInfo();
@@ -335,6 +322,8 @@ class _EstimateListingState extends State<EstimateListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
+
           estimateHandler = getEstimateInfo();
         } else {
           estimateHandler = getOfflineEstimateInfo();
@@ -348,7 +337,7 @@ class _EstimateListingState extends State<EstimateListing> {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
-      floatingActionButton: floatingButton(context),
+      // floatingActionButton: floatingButton(context),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {
           return FutureBuilder(
@@ -380,7 +369,7 @@ class _EstimateListingState extends State<EstimateListing> {
                                 ),
                                 child: InputForm(
                                   controller: searchForm,
-                                  formName: "Search Estimate",
+                                  formName: "Search by Customer Name",
                                   prefixIcon: Icons.search,
                                   onChanged: (value) {
                                     searchEnquiryFun(value);
@@ -664,11 +653,10 @@ class _EstimateListingState extends State<EstimateListing> {
         children: [
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: AspectRatio(
-              aspectRatio: (1 / 0.7),
-              child: SvgPicture.asset(
-                Assets.emptyList3,
-              ),
+            child: SvgPicture.asset(
+              Assets.emptyList3,
+              height: 200,
+              width: 200,
             ),
           ),
           const SizedBox(

@@ -17,6 +17,7 @@ class PdfCreationProvider {
     required this.companyAddress,
     required this.priceList,
   });
+
   Future<List<int>?> createProceList() async {
     // Return Pdf Data
     List<int>? bytes;

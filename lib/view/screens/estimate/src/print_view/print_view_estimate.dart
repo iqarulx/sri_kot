@@ -89,6 +89,11 @@ class _PrintViewEstimateState extends State<PrintViewEstimate>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text("Print Enquiry"),
         bottom: TabBar(
           controller: _controller,

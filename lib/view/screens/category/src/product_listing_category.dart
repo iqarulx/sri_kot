@@ -229,6 +229,9 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                   child: ReorderableListView.builder(
                     buildDefaultDragHandles: false,
                     onReorder: (oldIndex, newIndex) {
+                      print(oldIndex);
+                      print(newIndex);
+
                       setState(() {
                         final index =
                             newIndex > oldIndex ? newIndex - 1 : newIndex;
@@ -276,7 +279,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                               ),
                               Expanded(
                                 child: Text(
-                                  "${productDataList[index].productName.toString()} - ${productDataList[index].postion}",
+                                  "${productDataList[index].productName.toString()} - ${productDataList[index].postion ?? "Position not set yet"}",
                                 ),
                               ),
                             ],

@@ -110,7 +110,6 @@ class _CategoryCreateState extends State<CategoryCreate> {
         await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
             var categoryData = CategoryDataModel();
-
             categoryData.cid = cid;
             categoryData.categoryName = categoryName.text;
             categoryData.name =
@@ -121,14 +120,15 @@ class _CategoryCreateState extends State<CategoryCreate> {
                     categoryData: categoryData, docID: widget.docID!)
                 .then((value) {
               Navigator.pop(context);
-              if (value.id.isNotEmpty) {
-                setState(() {
-                  categoryName.clear();
-                });
-                snackBarCustom(context, true, "Category Update Successfully");
-              } else {
-                snackBarCustom(context, false, "Failed to Create New Category");
-              }
+              Navigator.pop(context);
+              snackBarCustom(context, true, "Category Update Successfully");
+              // if (value.id.isNotEmpty) {
+              //   setState(() {
+              //     categoryName.clear();
+              //   });
+              // } else {
+              //   snackBarCustom(context, false, "Failed to Create New Category");
+              // }
             });
           } else {
             Navigator.pop(context);

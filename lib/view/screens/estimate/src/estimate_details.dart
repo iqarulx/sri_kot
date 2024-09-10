@@ -11,6 +11,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class EstimateDetails extends StatefulWidget {
   final EstimateDataModel estimateData;
@@ -137,27 +138,12 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                   type: PdfType.estimate,
                   companyInfo: companyData,
                 );
+                Navigator.pop(context);
                 var dataResult = await pdf.createPdfA4();
                 if (dataResult != null) {
                   var data = Uint8List.fromList(dataResult);
-                  await DownloadFileOffline(
-                          fileData: data,
-                          fileName:
-                              "Estimate ${widget.estimateData.estimateid ?? widget.estimateData.referenceId}",
-                          fileext: "pdf")
-                      .startDownload()
-                      .then((value) {
-                    Navigator.pop(context);
-                    if (value != null && value.isNotEmpty) {
-                      downloadFileSnackBarCustom(context,
-                          isSuccess: true,
-                          msg: "Download Estimate",
-                          path: value);
-                      // snackBarCustom(context, true, "Download Estimate ${widget.estimateData.estimateid}");
-                    } else {
-                      snackBarCustom(context, false, "Failed to Download");
-                    }
-                  });
+                  await helper.saveAndLaunchFile(data,
+                      'Estimate ${widget.estimateData.estimateid ?? widget.estimateData.referenceId}.pdf');
                 }
               } else {
                 Navigator.pop(context);
@@ -180,25 +166,13 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           type: PdfType.estimate,
           companyInfo: companyData,
         );
+        Navigator.pop(context);
+
         var dataResult = await pdf.createPdfA4();
         if (dataResult != null) {
           var data = Uint8List.fromList(dataResult);
-          await DownloadFileOffline(
-                  fileData: data,
-                  fileName:
-                      "Estimate ${widget.estimateData.estimateid ?? widget.estimateData.referenceId}",
-                  fileext: "pdf")
-              .startDownload()
-              .then((value) {
-            Navigator.pop(context);
-            if (value != null && value.isNotEmpty) {
-              downloadFileSnackBarCustom(context,
-                  isSuccess: true, msg: "Download Estimate", path: value);
-              // snackBarCustom(context, true, "Download Estimate ${widget.estimateData.estimateid}");
-            } else {
-              snackBarCustom(context, false, "Failed to Download");
-            }
-          });
+          await helper.saveAndLaunchFile(data,
+              'Estimate ${widget.estimateData.estimateid ?? widget.estimateData.referenceId}.pdf');
         }
       }
     } catch (e) {
@@ -360,6 +334,11 @@ class _EstimateDetailsState extends State<EstimateDetails> {
         Provider.of<ConnectionProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         titleSpacing: 0,
         title: Text(widget.estimateData.estimateid ??
             widget.estimateData.referenceId ??

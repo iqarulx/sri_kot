@@ -11,9 +11,8 @@ class ExcelReaderProvider {
 
       for (var table in excel.tables.keys) {
         if (excel.tables[table]!.maxColumns == 4 &&
-            excel.tables[table]!.rows[0][0] == null &&
-            excel.tables[table]!.rows[0][2] == null &&
-            excel.tables[table]!.rows[0][3] == null) {
+            excel.tables[table]!.rows[0][0]!.value == null &&
+            excel.tables[table]!.rows[0][2]!.value == null) {
           for (var row in excel.tables[table]!.rows) {
             if (row[0] == null &&
                 row[1] == null &&

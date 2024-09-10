@@ -12,6 +12,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class EnquiryDetails extends StatefulWidget {
   final EstimateDataModel estimateData;
@@ -146,22 +147,11 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 // var dataResult = await pdf.create3InchPDF();
                 if (dataResult != null) {
                   var data = Uint8List.fromList(dataResult);
-                  await DownloadFileOffline(
-                          fileData: data,
-                          fileName: "Enquiry ${widget.estimateData.enquiryid}",
-                          fileext: "pdf")
-                      .startDownload()
-                      .then((value) {
-                    Navigator.pop(context);
-                    if (value != null && value.isNotEmpty) {
-                      downloadFileSnackBarCustom(context,
-                          isSuccess: true,
-                          msg: "Download Enquiry",
-                          path: value);
-                    } else {
-                      snackBarCustom(context, false, "Failed to Download");
-                    }
-                  });
+                  Navigator.pop(context);
+                  await helper.saveAndLaunchFile(
+                      data, 'Enquiry ${widget.estimateData.enquiryid}.pdf');
+                } else {
+                  Navigator.pop(context);
                 }
               } else {
                 Navigator.pop(context);
@@ -188,20 +178,11 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
         // var dataResult = await pdf.create3InchPDF();
         if (dataResult != null) {
           var data = Uint8List.fromList(dataResult);
-          await DownloadFileOffline(
-                  fileData: data,
-                  fileName: "Enquiry ${widget.estimateData.enquiryid}",
-                  fileext: "pdf")
-              .startDownload()
-              .then((value) {
-            Navigator.pop(context);
-            if (value != null && value.isNotEmpty) {
-              downloadFileSnackBarCustom(context,
-                  isSuccess: true, msg: "Download Enquiry", path: value);
-            } else {
-              snackBarCustom(context, false, "Failed to Download");
-            }
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(
+              data, 'Enquiry ${widget.estimateData.enquiryid}.pdf');
+        } else {
+          Navigator.pop(context);
         }
       }
     } catch (e) {
@@ -240,7 +221,6 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
   }
 
   convertEstimate() async {
-    // loading(context);
     final connectionProvider =
         Provider.of<ConnectionProvider>(context, listen: false);
 
@@ -939,6 +919,10 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
 
   AppBar appbar() {
     return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       titleSpacing: 0,
       title: Text(
         widget.estimateData.enquiryid ?? widget.estimateData.referenceId ?? '',

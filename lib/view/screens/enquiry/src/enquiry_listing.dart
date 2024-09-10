@@ -14,6 +14,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class EnquiryListing extends StatefulWidget {
   const EnquiryListing({super.key});
@@ -339,25 +340,8 @@ class _EnquiryListingState extends State<EnquiryListing> {
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
-          await DownloadFileOffline(
-            fileData: fileData,
-            fileName: "Enquiry Excel",
-            fileext: 'xlsx',
-          ).startDownload().then((value) {
-            if (value != null) {
-              Navigator.pop(context);
-              downloadFileSnackBarCustom(
-                context,
-                isSuccess: true,
-                msg: "Enquiry Excel Download Successfully",
-                path: value,
-              );
-              // snackBarCustom(context, true, "Enquiry Excel Download Successfully");
-            }
-          }).catchError((onError) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, onError.toString());
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(fileData, 'Estimate Listing.xlsx');
         } else {
           Navigator.pop(context);
         }
@@ -378,6 +362,8 @@ class _EnquiryListingState extends State<EnquiryListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
+
         enquiryHandler = getEnquiryInfo();
       } else {
         enquiryHandler = getOfflineEnquiryInfo();
@@ -389,6 +375,8 @@ class _EnquiryListingState extends State<EnquiryListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
+
           enquiryHandler = getEnquiryInfo();
         } else {
           enquiryHandler = getOfflineEnquiryInfo();
@@ -675,11 +663,10 @@ class _EnquiryListingState extends State<EnquiryListing> {
         children: [
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: AspectRatio(
-              aspectRatio: (1 / 0.7),
-              child: SvgPicture.asset(
-                Assets.emptyList3,
-              ),
+            child: SvgPicture.asset(
+              Assets.emptyList3,
+              height: 200,
+              width: 200,
             ),
           ),
           const SizedBox(

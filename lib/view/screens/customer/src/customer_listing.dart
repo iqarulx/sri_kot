@@ -11,6 +11,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 PageController customerListingcontroller = PageController();
 
@@ -72,24 +73,8 @@ class _CustomerListingState extends State<CustomerListing> {
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
-          await DownloadFileOffline(
-            fileData: fileData,
-            fileName: "Customer Excel",
-            fileext: 'xlsx',
-          ).startDownload().then((value) {
-            if (value != null && value.isNotEmpty) {
-              Navigator.pop(context);
-              downloadFileSnackBarCustom(
-                context,
-                isSuccess: true,
-                msg: "Customer Excel Download Successfully",
-                path: value,
-              );
-            }
-          }).catchError((onError) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, onError.toString());
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(fileData, 'Customer List.xlsx');
         } else {
           Navigator.pop(context);
         }
@@ -141,6 +126,7 @@ class _CustomerListingState extends State<CustomerListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
         customerHandler = getCustomerInfo();
       }
     });
@@ -150,6 +136,7 @@ class _CustomerListingState extends State<CustomerListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
           customerHandler = getCustomerInfo();
         }
       });

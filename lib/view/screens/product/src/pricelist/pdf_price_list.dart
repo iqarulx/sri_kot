@@ -10,6 +10,7 @@ import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class PdfPriceListView extends StatefulWidget {
   const PdfPriceListView({super.key});
@@ -294,21 +295,8 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
     try {
       loading(context);
       if (data != null) {
-        var pdfData = DownloadFileOffline(
-          fileData: data!,
-          fileName: "Price List",
-          fileext: "pdf",
-        );
-
-        await pdfData.startDownload().then((value) {
-          Navigator.pop(context);
-          if (value != null) {
-            downloadFileSnackBarCustom(context,
-                isSuccess: true,
-                msg: "Successfully Download Pdf File",
-                path: value);
-          }
-        });
+        Navigator.pop(context);
+        await helper.saveAndLaunchFile(data!, 'Pricelist.pdf');
       } else {
         Navigator.pop(context);
         snackBarCustom(context, false, "No Product Avliable");

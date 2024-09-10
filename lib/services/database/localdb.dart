@@ -77,6 +77,16 @@ class LocalDB {
     db.setString('last_sync', DateTime.now().toString());
   }
 
+  static Future setPdfType(int type) async {
+    var db = await _connect();
+    return db.setInt('pdf_type', type);
+  }
+
+  static Future<int?> getPdfType() async {
+    var db = await _connect();
+    return db.getInt('pdf_type');
+  }
+
   static Future<int> getLastEnquiry() async {
     var db = await _connect();
     var result = db.getInt("last_enquiry");

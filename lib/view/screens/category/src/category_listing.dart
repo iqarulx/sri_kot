@@ -249,9 +249,8 @@ class _CategoryListingState extends State<CategoryListing> {
       setState(() {
         _isConnected = connectionProvider.isConnected;
       });
-
       if (_isConnected) {
-        // Fetch initial category info
+        AccountValid.accountValid(context);
         categoryHandler = getCategoryInfo();
       }
     });
@@ -541,11 +540,10 @@ class _CategoryListingState extends State<CategoryListing> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.all(10.0),
-                                    child: AspectRatio(
-                                      aspectRatio: (1 / 0.7),
-                                      child: SvgPicture.asset(
-                                        Assets.emptyList3,
-                                      ),
+                                    child: SvgPicture.asset(
+                                      Assets.emptyList3,
+                                      height: 200,
+                                      width: 200,
                                     ),
                                   ),
                                   const SizedBox(

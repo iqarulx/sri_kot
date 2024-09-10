@@ -17,6 +17,8 @@ class AppSettings extends StatefulWidget {
 
 class _AppSettingsState extends State<AppSettings> {
   int crtBillingTab = 1;
+  bool shortSelected = false;
+  bool detailedSelected = false;
   String? lastSynced;
 
   initFn() async {
@@ -36,6 +38,24 @@ class _AppSettingsState extends State<AppSettings> {
     await LocalDB.getLastSync().then((value) async {
       if (value != null) {
         lastSynced = await LocalService.parseDate(value);
+      }
+    });
+
+    await LocalDB.getPdfType().then((value) async {
+      if (value != null) {
+        if (value == 1) {
+          setState(() {
+            shortSelected = true;
+          });
+        } else {
+          setState(() {
+            detailedSelected = true;
+          });
+        }
+      } else {
+        setState(() {
+          shortSelected = true;
+        });
       }
     });
   }
@@ -337,6 +357,84 @@ class _AppSettingsState extends State<AppSettings> {
           const SizedBox(
             height: 10,
           ),
+          Container(
+            height: 100,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  "Pdf Type",
+                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        CupertinoSwitch(
+                            value: shortSelected,
+                            onChanged: (value) {
+                              setState(() {
+                                shortSelected = value;
+                                detailedSelected = !value;
+                                LocalDB.setPdfType(1);
+                              });
+                            }),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        Text(
+                          "Short",
+                          style:
+                              Theme.of(context).textTheme.titleSmall!.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      width: 20,
+                    ),
+                    Row(
+                      children: [
+                        CupertinoSwitch(
+                            value: detailedSelected,
+                            onChanged: (value) {
+                              setState(() {
+                                shortSelected = !value;
+                                detailedSelected = value;
+                                LocalDB.setPdfType(2);
+                              });
+                            }),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        Text(
+                          "Detailed",
+                          style:
+                              Theme.of(context).textTheme.titleSmall!.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
           GestureDetector(
             onTap: () async {
               loading(context);
@@ -350,7 +448,7 @@ class _AppSettingsState extends State<AppSettings> {
               });
             },
             child: Container(
-              height: 60,
+              height: 70,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -399,7 +497,7 @@ class _AppSettingsState extends State<AppSettings> {
               syncNow();
             },
             child: Container(
-              height: 60,
+              height: 70,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -473,7 +571,7 @@ class _AppSettingsState extends State<AppSettings> {
               });
             },
             child: Container(
-              height: 60,
+              height: 70,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -514,6 +612,7 @@ class _AppSettingsState extends State<AppSettings> {
               ),
             ),
           ),
+
           // const SizedBox(
           //   height: 10,
           // ),

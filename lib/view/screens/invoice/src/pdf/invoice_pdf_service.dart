@@ -11,11 +11,13 @@ class InvoicePDFService {
   final InvoiceModel invoice;
   final String total;
   final ProfileModel companyDoc;
+  final bool pdfType;
   InvoicePDFService(
       {required this.title,
       required this.invoice,
       required this.total,
-      required this.companyDoc});
+      required this.companyDoc,
+      required this.pdfType});
 
   String totalQty() {
     String total = "0";
@@ -674,163 +676,166 @@ class InvoicePDFService {
                     },
                     border: pw.TableBorder.all(),
                     children: [
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
+                      if (pdfType)
+                        pw.TableRow(
+                          children: [
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(
+                                  "",
+                                  textAlign: pw.TextAlign.center,
+                                  style: const pw.TextStyle(
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
                               child: pw.Text(
-                                "",
-                                textAlign: pw.TextAlign.center,
+                                "Goods Value Upto Previous Bill Rs.",
+                                textAlign: pw.TextAlign.right,
                                 style: const pw.TextStyle(
                                   fontSize: 10,
                                 ),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              "Goods Value Upto Previous Bill Rs.",
-                              textAlign: pw.TextAlign.right,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              total,
-                              textAlign: pw.TextAlign.right,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
-                              child: pw.Text(""),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
-                              child: pw.Text(""),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(""),
-                          ),
-                        ],
-                      ),
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
                               child: pw.Text(
-                                "",
-                                textAlign: pw.TextAlign.center,
+                                total,
+                                textAlign: pw.TextAlign.right,
                                 style: const pw.TextStyle(
                                   fontSize: 10,
                                 ),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              "Goods Value for bill Rs.",
-                              textAlign: pw.TextAlign.right,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(""),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              invoice.price?.total?.toStringAsFixed(2) ?? "",
-                              textAlign: pw.TextAlign.right,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(""),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
                               child: pw.Text(""),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
-                              child: pw.Text(""),
+                          ],
+                        ),
+                      if (pdfType)
+                        pw.TableRow(
+                          children: [
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(
+                                  "",
+                                  textAlign: pw.TextAlign.center,
+                                  style: const pw.TextStyle(
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(""),
-                          ),
-                        ],
-                      ),
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
                               child: pw.Text(
-                                "",
-                                textAlign: pw.TextAlign.center,
+                                "Goods Value for bill Rs.",
+                                textAlign: pw.TextAlign.right,
                                 style: const pw.TextStyle(
                                   fontSize: 10,
                                 ),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              "Total Rs.",
-                              textAlign: pw.TextAlign.right,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Text(
+                                invoice.price?.total?.toStringAsFixed(2) ?? "",
+                                textAlign: pw.TextAlign.right,
+                                style: const pw.TextStyle(
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              (double.parse(total) + invoice.price!.total!)
-                                  .toStringAsFixed(2),
-                              textAlign: pw.TextAlign.right,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(""),
                               ),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(""),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
                               child: pw.Text(""),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
+                          ],
+                        ),
+                      if (pdfType)
+                        pw.TableRow(
+                          children: [
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(
+                                  "",
+                                  textAlign: pw.TextAlign.center,
+                                  style: const pw.TextStyle(
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Text(
+                                "Total Rs.",
+                                textAlign: pw.TextAlign.right,
+                                style: const pw.TextStyle(
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Text(
+                                (double.parse(total) + invoice.price!.total!)
+                                    .toStringAsFixed(2),
+                                textAlign: pw.TextAlign.right,
+                                style: const pw.TextStyle(
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(""),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
+                              child: pw.Center(
+                                child: pw.Text(""),
+                              ),
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.all(3),
                               child: pw.Text(""),
                             ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(""),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
                   pw.Table(

@@ -109,6 +109,11 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text("Bill of Supply"),
         actions: [
           IconButton(

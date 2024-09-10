@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '/gen/assets.gen.dart';
 import '/view/admin/admin.dart';
@@ -122,13 +123,19 @@ class _SideBarState extends State<SideBar> {
                     menuView(
                       context,
                       icon: Icons.category,
-                      lable: "Dashboard",
+                      lable: "Add Company",
                       index: 0,
                     ),
                     menuView(
                       context,
                       icon: Icons.person,
-                      lable: "Add Company",
+                      lable: "Licence Update",
+                      index: 1,
+                    ),
+                    menuView(
+                      context,
+                      icon: Icons.person,
+                      lable: "Change Invoice",
                       index: 1,
                     ),
                   ],
@@ -191,95 +198,6 @@ class _SideBarState extends State<SideBar> {
               ),
             ),
           ),
-
-          // Visibility(
-          //   visible: accountSelect,
-          //   child: Expanded(
-          //     child: Column(
-          //       children: [
-          //         Expanded(
-          //           child: SingleChildScrollView(
-          //             padding: const EdgeInsets.all(10),
-          //             child: Column(
-          //               crossAxisAlignment: CrossAxisAlignment.start,
-          //               children: [
-          //                 planUpgrade(context),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.person,
-          //                   lable: "Account Information",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.credit_card,
-          //                   lable: "Payment History",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.card_giftcard,
-          //                   lable: "Plan Details",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.help,
-          //                   lable: "Help",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.support_agent,
-          //                   lable: "Support",
-          //                   index: -1,
-          //                 ),
-          //                 menuView(
-          //                   context,
-          //                   icon: Icons.quiz,
-          //                   lable: "FAQ",
-          //                   index: -1,
-          //                 ),
-          //               ],
-          //             ),
-          //           ),
-          //         ),
-          //         Padding(
-          //           padding: const EdgeInsets.all(8.0),
-          //           child: Container(
-          //             height: 40,
-          //             width: double.infinity,
-          //             decoration: BoxDecoration(
-          //               color: Colors.grey.shade300,
-          //               borderRadius: BorderRadius.circular(5),
-          //             ),
-          //             child: Row(
-          //               mainAxisAlignment: MainAxisAlignment.center,
-          //               children: [
-          //                 Icon(
-          //                   Icons.power_settings_new,
-          //                   size: 19,
-          //                   color: Colors.grey.shade700,
-          //                 ),
-          //                 const SizedBox(
-          //                   width: 15,
-          //                 ),
-          //                 Text(
-          //                   "Logout",
-          //                   style: TextStyle(
-          //                     color: Colors.grey.shade700,
-          //                     fontSize: 15,
-          //                     fontWeight: FontWeight.w500,
-          //                   ),
-          //                 ),
-          //               ],
-          //             ),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
           Container(
             padding: const EdgeInsets.only(
               left: 3,
@@ -359,188 +277,6 @@ class _SideBarState extends State<SideBar> {
     );
   }
 
-  // getcrtTabindex<int>(List<SideMultiMenuList> listData) {
-  //   return listData.indexWhere((element) => element.index == crttab);
-  // }
-
-  // selectMenu(int index) async {
-  //   if (crtpage == 7 || crtpage == 10) {
-  //     if (crtpage == 7 && cartdata.isNotEmpty) {
-  //       var data = await confirmationAlertbox(
-  //         context,
-  //         "Waring",
-  //         "Do you Confirm to exit this page and clear the Cart?",
-  //       );
-
-  //       if (data != null && data == true) {
-  //         setState(() {
-  //           crtpage = index;
-  //           action.toggletab(index);
-  //           Navigator.pop(context);
-  //         });
-  //       }
-  //     } else if (crtpage == 10 && getcountcart() > 0) {
-  //       var data = await confirmationAlertbox(
-  //         context,
-  //         "Waring",
-  //         "Do you Confirm to exit this page and clear the Cart?",
-  //       );
-
-  //       if (data != null && data == true) {
-  //         setState(() {
-  //           crttab = index;
-  //           action.toggletab(index);
-  //           Navigator.pop(context);
-  //         });
-  //       }
-  //     } else {
-  //       setState(() {
-  //         isopen = true;
-  //         crtpage = index;
-  //         action.toggletab(index);
-  //         Navigator.pop(context);
-  //       });
-  //     }
-  //   } else {
-  //     setState(() {
-  //       crtpage = index;
-  //       action.toggletab(index);
-  //       Navigator.pop(context);
-  //     });
-  //   }
-  // }
-
-  // multimenuuiDesign({
-  //   required String title,
-  //   required IconData icon,
-  //   required List<SideMultiMenuList> listData,
-  // }) {
-  //   return ClipRRect(
-  //     borderRadius: BorderRadius.circular(5),
-  //     child: ExpansionPanelList(
-  //       expandedHeaderPadding: const EdgeInsets.all(0),
-  //       elevation: 0,
-  //       expansionCallback: (panelIndex, isExpanded) {
-  //         setState(() {
-  //           switch (panelIndex) {
-  //             case 0:
-  //               isopen = isExpanded ? false : true;
-  //               break;
-  //             default:
-  //           }
-  //         });
-  //       },
-  //       children: [
-  //         ExpansionPanel(
-  //           backgroundColor: Colors.transparent,
-  //           canTapOnHeader: true,
-  //           isExpanded: isopen,
-  //           headerBuilder: (context, isExpanded) {
-  //             return Padding(
-  //               padding: const EdgeInsets.only(left: 10),
-  //               child: Row(
-  //                 children: [
-  //                   SizedBox(
-  //                     height: 30,
-  //                     width: 30,
-  //                     child: Icon(
-  //                       icon,
-  //                       size: 19,
-  //                       color: getcrtTabindex(listData) > -1
-  //                           ? Theme.of(context).primaryColor
-  //                           : const Color(0xff1E232C),
-  //                     ),
-  //                   ),
-  //                   const SizedBox(
-  //                     width: 10,
-  //                   ),
-  //                   Expanded(
-  //                     child: Text(
-  //                       title,
-  //                       style: TextStyle(
-  //                         color: getcrtTabindex(listData) > -1
-  //                             ? Theme.of(context).primaryColor
-  //                             : const Color(0xff1E232C),
-  //                         fontSize: 15,
-  //                         fontWeight: FontWeight.w500,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             );
-  //           },
-  //           body: SizedBox(
-  //             child: Column(
-  //               children: [
-  //                 for (var tabs in listData)
-  //                   InkWell(
-  //                     onTap: () {
-  //                       // selectMenu(tabs.index);
-
-  //                       setState(() {
-  //                         crttab = tabs.index;
-  //                       });
-  //                     },
-  //                     borderRadius: BorderRadius.circular(8),
-  //                     hoverColor: crttab == tabs.index
-  //                         ? Colors.transparent
-  //                         : Colors.grey.shade200,
-  //                     child: Container(
-  //                       margin: const EdgeInsets.only(
-  //                         top: 5,
-  //                         left: 10,
-  //                         right: 10,
-  //                       ),
-  //                       padding: const EdgeInsets.all(10),
-  //                       decoration: BoxDecoration(
-  //                         // color:crtpage == index ? const Color(0xfffee6e9) : Colors.transparent,
-  //                         color: crttab == tabs.index
-  //                             ? Theme.of(context).primaryColor.withOpacity(0.15)
-  //                             : Colors.transparent,
-  //                         borderRadius: BorderRadius.circular(8),
-  //                       ),
-  //                       child: Row(
-  //                         children: [
-  //                           SizedBox(
-  //                             height: 25,
-  //                             width: 25,
-  //                             child: Icon(
-  //                               tabs.icon,
-  //                               size: 19,
-  //                               color: crttab == tabs.index
-  //                                   ? Theme.of(context).primaryColor
-  //                                   : const Color(0xff1E232C),
-  //                             ),
-  //                           ),
-  //                           const SizedBox(
-  //                             width: 10,
-  //                           ),
-  //                           Expanded(
-  //                             child: Text(
-  //                               tabs.title,
-  //                               style: TextStyle(
-  //                                 color: crttab == tabs.index
-  //                                     ? Theme.of(context).primaryColor
-  //                                     : const Color(0xff1E232C),
-  //                                 fontSize: 15,
-  //                                 fontWeight: FontWeight.w500,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                   ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget menuView(
     context, {
     required IconData icon,
@@ -549,22 +285,42 @@ class _SideBarState extends State<SideBar> {
     IconData? leadingIcon,
     Function()? leadingFun,
   }) {
+    Widget route = const AdminHome();
+
+    switch (index) {
+      case 0:
+        route = const Register(
+          route: AdminHome(),
+        );
+
+      case 1:
+        route = const Register(
+          route: AdminHome(),
+        );
+
+      default:
+        route = const AdminHome();
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
         onTap: () {
-          setState(() {
-            sidebar.toggletab(index);
-            adminHomeKey.currentState!.closeDrawer();
-          });
+          // setState(() {
+          //   homeKey.currentState!.closeDrawer();
+          // });
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => route,
+            ),
+          );
         },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
-            color: sidebar.crttab == index
-                ? Theme.of(context).primaryColor.withOpacity(0.15)
-                : Colors.transparent,
+            // color: Theme.of(context).primaryColor.withOpacity(0.15),
           ),
           child: Row(
             children: [
@@ -574,9 +330,7 @@ class _SideBarState extends State<SideBar> {
                 child: Center(
                   child: Icon(
                     icon,
-                    color: sidebar.crttab == index
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade800,
+                    color: Theme.of(context).primaryColor,
                     size: 18,
                   ),
                 ),
@@ -587,9 +341,7 @@ class _SideBarState extends State<SideBar> {
               Text(
                 lable,
                 style: TextStyle(
-                  color: sidebar.crttab == index
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade800,
+                  color: Theme.of(context).primaryColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
@@ -11,6 +12,7 @@ import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class ProductListing extends StatefulWidget {
   const ProductListing({super.key});
@@ -176,8 +178,13 @@ class _ProductListingState extends State<ProductListing> {
                                     placeholder: (context, url) =>
                                         const CircularProgressIndicator(),
                                     imageUrl:
-                                        productDataList[index].productImg ??
-                                            Strings.productImg,
+                                        productDataList[index].productImg !=
+                                                    null &&
+                                                productDataList[index]
+                                                    .productImg!
+                                                    .isNotEmpty
+                                            ? productDataList[index].productImg!
+                                            : Strings.productImg,
                                     fit: BoxFit.cover,
                                   )),
                               // : Container(
@@ -233,11 +240,10 @@ class _ProductListingState extends State<ProductListing> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(10.0),
-                      child: AspectRatio(
-                        aspectRatio: (1 / 0.7),
-                        child: SvgPicture.asset(
-                          Assets.emptyList3,
-                        ),
+                      child: SvgPicture.asset(
+                        Assets.emptyList3,
+                        height: 200,
+                        width: 200,
                       ),
                     ),
                     const SizedBox(
@@ -580,13 +586,7 @@ class _ProductListingState extends State<ProductListing> {
             model.qrCode = element["qr_code"] ?? "";
             model.price = double.parse(element["price"].toString());
             model.videoUrl = element["video_url"] ?? "";
-            model.productImg = element["product_img"] ?? "";
-            // var directory = await getApplicationDocumentsDirectory();
-            // model.productImg = path.join(
-            //   directory.path,
-            //   'product',
-            //   element.id,
-            // );
+            model.productImg = element["product_img"];
             model.active = element["active"];
             model.productId = element.id;
             model.discountLock = element['discount_lock'];
@@ -650,19 +650,11 @@ class _ProductListingState extends State<ProductListing> {
   downloadTemplate() async {
     loading(context);
     try {
-      await DownloadFilesOnline(
-        urlLink:
-            "https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16",
-        fileName: 'Product Templete',
-        fileext: 'xlsx',
-      ).startDownload().then((value) {
-        Navigator.pop(context);
-        if (value != null) {
-          snackBarCustom(context, true, "Successfully Download File");
-        } else {
-          snackBarCustom(context, false, "Something went Worng");
-        }
-      });
+      var data = await http.get(Uri.parse(
+          'https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16'));
+      var response = data.bodyBytes;
+      Navigator.pop(context);
+      helper.saveAndLaunchFile(response, "Product Template.xlsx");
     } catch (e) {
       Navigator.pop(context);
       snackBarCustom(context, false, e.toString());
@@ -753,6 +745,8 @@ class _ProductListingState extends State<ProductListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
+
         productHandler = getProductInfo();
       }
     });
@@ -762,6 +756,8 @@ class _ProductListingState extends State<ProductListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
+
           productHandler = getProductInfo();
         }
       });

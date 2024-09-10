@@ -184,9 +184,6 @@ class _CartDrawerState extends State<CartDrawer> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                        const SizedBox(
-                          width: 10,
-                        ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,9 +349,9 @@ class _CartDrawerState extends State<CartDrawer> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
+                                    // const SizedBox(
+                                    //   width: 10,
+                                    // ),
                                     Column(
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment:
@@ -670,12 +667,15 @@ class _CartDrawerState extends State<CartDrawer> {
                           "Sub Total",
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        Text(
-                          "\u{20B9}${subTotal()}",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium!
-                              .copyWith(color: Colors.green.shade600),
+                        Flexible(
+                          child: Text(
+                            "\u{20B9}${subTotal()}",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium!
+                                .copyWith(color: Colors.green.shade600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
@@ -721,6 +721,7 @@ class _CartDrawerState extends State<CartDrawer> {
                                 .copyWith(
                                   color: Colors.red.shade600,
                                 ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -748,9 +749,15 @@ class _CartDrawerState extends State<CartDrawer> {
                       color: Colors.transparent,
                       child: Row(
                         children: [
-                          Text(
-                            "Extra Discount - ${extraDiscountSys.toUpperCase()} $extraDiscountInput",
-                            style: Theme.of(context).textTheme.bodyMedium,
+                          Expanded(
+                            child: Text(
+                              "Extra Discount - ${extraDiscountSys.toUpperCase()} $extraDiscountInput",
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow
+                                  .ellipsis, // Ensures ellipsis on overflow
+                              maxLines:
+                                  1, // Set max lines to ensure a single line
+                            ),
                           ),
                           const SizedBox(width: 5),
                           const Icon(
@@ -766,6 +773,7 @@ class _CartDrawerState extends State<CartDrawer> {
                                 .copyWith(
                                   color: Colors.red.shade600,
                                 ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -792,18 +800,29 @@ class _CartDrawerState extends State<CartDrawer> {
                     child: Container(
                       color: Colors.transparent,
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Packing Charges - ${packingChargeSys.toUpperCase()} $packingChargeInput",
-                            style: Theme.of(context).textTheme.bodyMedium,
+                          // Packing Charges Text with ellipsis
+                          Expanded(
+                            child: Text(
+                              "Packing Charges - ${packingChargeSys.toUpperCase()} $packingChargeInput",
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow
+                                  .ellipsis, // Ensures ellipsis on overflow
+                              maxLines:
+                                  1, // Set max lines to ensure a single line
+                            ),
                           ),
                           const SizedBox(width: 5),
+
+                          // Edit Icon
                           const Icon(
                             Icons.edit,
                             size: 15,
                           ),
+
                           const Spacer(),
+
+                          // Packing Charges Amount
                           Text(
                             "\u{20B9}${packingChareges()}",
                             style: Theme.of(context)
@@ -812,6 +831,9 @@ class _CartDrawerState extends State<CartDrawer> {
                                 .copyWith(
                                   color: Colors.green.shade600,
                                 ),
+                            overflow: TextOverflow
+                                .ellipsis, // Ensure amount can also overflow
+                            maxLines: 1,
                           ),
                         ],
                       ),

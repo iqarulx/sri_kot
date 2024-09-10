@@ -173,6 +173,7 @@ class _CompanyListingState extends State<CompanyListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
         companyHandler = getCompanyInfo(context);
       }
     });
@@ -182,6 +183,7 @@ class _CompanyListingState extends State<CompanyListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
           companyHandler = getCompanyInfo(context);
         }
       });

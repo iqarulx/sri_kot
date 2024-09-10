@@ -433,11 +433,14 @@ class _BillingOneState extends State<BillingOne>
             const SizedBox(
               width: 5,
             ),
-            Text(
-              "\u{20B9}${tmpProductDetails.price ?? ""}",
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    decoration: TextDecoration.lineThrough,
-                  ),
+            Flexible(
+              child: Text(
+                "\u{20B9}${tmpProductDetails.price ?? ""}",
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -1477,6 +1480,7 @@ class _BillingOneState extends State<BillingOne>
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
         billingHandler = getProductList();
         billPageProvider.addListener(pageRefrce);
         setState(() {
@@ -1497,6 +1501,7 @@ class _BillingOneState extends State<BillingOne>
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
           billingHandler = getProductList();
           billPageProvider.addListener(pageRefrce);
           setState(() {
@@ -1863,6 +1868,7 @@ class _QRAlertProductState extends State<QRAlertProduct> {
                     Text(
                       "\u{20B9}${tmpProductDetails.price ?? ""}",
                       style: Theme.of(context).textTheme.titleLarge,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(
                       width: 5,
@@ -1872,6 +1878,7 @@ class _QRAlertProductState extends State<QRAlertProduct> {
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
                             decoration: TextDecoration.lineThrough,
                           ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

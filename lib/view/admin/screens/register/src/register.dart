@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '/view/admin/app/app.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -81,19 +80,11 @@ class _RegisterState extends State<Register> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: widget.route.toString() == 'Signin'
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : IconButton(
-                splashRadius: 20,
-                onPressed: () {
-                  adminHomeKey.currentState!.openDrawer();
-                },
-                icon: const Icon(Icons.menu),
-              ),
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text("Register a company"),
       ),
       body: SafeArea(

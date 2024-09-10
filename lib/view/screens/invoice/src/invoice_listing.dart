@@ -13,6 +13,7 @@ import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class InvoiceListing extends StatefulWidget {
   const InvoiceListing({super.key});
@@ -236,25 +237,8 @@ class _InvoiceListingState extends State<InvoiceListing> {
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
-          await DownloadFileOffline(
-            fileData: fileData,
-            fileName: "Invoice Excel",
-            fileext: 'xlsx',
-          ).startDownload().then((value) {
-            if (value != null) {
-              Navigator.pop(context);
-              downloadFileSnackBarCustom(
-                context,
-                isSuccess: true,
-                msg: "Invoice Excel Download Successfully",
-                path: value,
-              );
-              // snackBarCustom(context, true, "Enquiry Excel Download Successfully");
-            }
-          }).catchError((onError) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, onError.toString());
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(fileData, 'Invoice List.xlsx');
         } else {
           Navigator.pop(context);
         }
@@ -424,6 +408,8 @@ class _InvoiceListingState extends State<InvoiceListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
+
         invoiceHandler = getInvoiceList();
         _scrollController.addListener(_loadMore);
       }
@@ -434,6 +420,8 @@ class _InvoiceListingState extends State<InvoiceListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
+
           invoiceHandler = getInvoiceList();
           _scrollController.addListener(_loadMore);
         }
@@ -681,11 +669,10 @@ class _InvoiceListingState extends State<InvoiceListing> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(10.0),
-                        child: AspectRatio(
-                          aspectRatio: (1 / 0.7),
-                          child: SvgPicture.asset(
-                            Assets.emptyList3,
-                          ),
+                        child: SvgPicture.asset(
+                          Assets.emptyList3,
+                          height: 200,
+                          width: 200,
                         ),
                       ),
                       const SizedBox(

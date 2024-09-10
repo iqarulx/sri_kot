@@ -100,6 +100,11 @@ class _CategoryDiscountDetailsViewState
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         title: const Text('Discount'),
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         child: GestureDetector(

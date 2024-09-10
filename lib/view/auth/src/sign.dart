@@ -25,11 +25,9 @@ class _SigninState extends State<Signin> {
 
   accountHolderLoginFn() async {
     try {
-      // auth Handlor
       FirebaseAuthProvider authProvider = FirebaseAuthProvider();
       FireStoreProvider fireStoreProvider = FireStoreProvider();
 
-      // check auth Login Device
       UserCredential? credential = await authProvider.loginAuth(
         context,
         email: email.text,
@@ -40,104 +38,110 @@ class _SigninState extends State<Signin> {
         uid: credential!.user!.uid.toString(),
       );
 
-      // Already Register But Not Fully Completed Company Information
       if (companyData!.docs.isNotEmpty) {
-        if (companyData.docs.first["info_filled"] == false) {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RegisterCompany(
+        FireStoreProvider()
+            .checkExpiry(
                 uid: credential.user!.uid.toString(),
-                docid: companyData.docs.first.id,
-                companyName: companyData.docs.first["company_name"].toString(),
-                username: companyData.docs.first["user_name"].toString(),
-                email: companyData.docs.first["user_login_id"].toString(),
-                password: companyData.docs.first["password"].toString(),
-                route: const Signin(),
-              ),
-            ),
-          );
-        } else {
-          /*
-            Company Account Only Access Device in Server
-              1. Check Current Requet Device Already Enrolled
-              2. Already Entrolled to Store local Db on User Data then Go to Dashboard
-            */
-
-          // Collect the Device Information
-          DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
-
-          // Device Information Collected
-
-          DeviceModel deviceDetails = DeviceModel();
-
-          deviceDetails.deviceId = deviceInfo!.deviceId;
-          deviceDetails.modelName = deviceInfo.modelName;
-          deviceDetails.deviceName = deviceInfo.deviceName;
-          deviceDetails.lastlogin = DateTime.now();
-
-          var deviceAccessResult = await fireStoreProvider.checkLoginDeviceInfo(
-            context,
-            uid: credential.user!.uid.toString(),
-            deviceData: deviceDetails,
-            type: UserType.accountHolder,
-          );
-
-          if (deviceAccessResult!.docs.isNotEmpty) {
-            await LocalDB.createNewUser(
-              username: companyData.docs.first["user_name"].toString(),
-              loginEmail: companyData.docs.first["user_login_id"].toString(),
-              uID: companyData.docs.first["uid"].toString(),
-              companyID: companyData.docs.first.id.toString(),
-              companyUniqueId:
-                  companyData.docs.first["company_unique_id"].toString(),
-              companyAddress: companyData.docs.first["address"].toString(),
-              companyName: companyData.docs.first["company_name"].toString(),
-              isAdmin: true,
-              prCategory: true,
-              prCustomer: true,
-              prEstimate: true,
-              prOrder: true,
-              prProduct: true,
-              prBillofSupply: true,
-            ).then((value) {
+                type: UserType.accountHolder)
+            .then((value) async {
+          if (value) {
+            if (companyData.docs.first["info_filled"] == false) {
               Navigator.pop(context);
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const UserHome(),
+                  builder: (context) => RegisterCompany(
+                    uid: credential.user!.uid.toString(),
+                    docid: companyData.docs.first.id,
+                    companyName:
+                        companyData.docs.first["company_name"].toString(),
+                    username: companyData.docs.first["user_name"].toString(),
+                    email: companyData.docs.first["user_login_id"].toString(),
+                    password: companyData.docs.first["password"].toString(),
+                    route: const Signin(),
+                  ),
                 ),
               );
-            });
-          } else {
-            if (companyData.docs.first["device.device_id"] != null &&
-                companyData.docs.first["device.model_name"] != null &&
-                companyData.docs.first["device.device_name"] != null) {
-              Navigator.pop(context);
-              snackBarCustom(
-                context,
-                false,
-                "You're already logged with another device",
-              );
             } else {
-              // register New Device
-              await fireStoreProvider
-                  .registerNewDevice(
+              DeviceModel? deviceInfo =
+                  await DeviceInformation().getDeviceInfo();
+              DeviceModel deviceDetails = DeviceModel();
+
+              deviceDetails.deviceId = deviceInfo!.deviceId;
+              deviceDetails.modelName = deviceInfo.modelName;
+              deviceDetails.deviceName = deviceInfo.deviceName;
+              deviceDetails.lastlogin = DateTime.now();
+
+              var deviceAccessResult =
+                  await fireStoreProvider.checkLoginDeviceInfo(
                 context,
-                type: UserType.accountHolder,
-                docid: companyData.docs.first.id,
+                uid: credential.user!.uid.toString(),
                 deviceData: deviceDetails,
-              )
-                  .then((value) async {
-                await LocalService.updateOpened(uid: companyData.docs.first.id)
-                    .then((value) {
-                  accountHolderLoginFn();
+                type: UserType.accountHolder,
+              );
+
+              if (deviceAccessResult!.docs.isNotEmpty) {
+                await LocalDB.createNewUser(
+                  username: companyData.docs.first["user_name"].toString(),
+                  loginEmail:
+                      companyData.docs.first["user_login_id"].toString(),
+                  uID: companyData.docs.first["uid"].toString(),
+                  companyID: companyData.docs.first.id.toString(),
+                  companyUniqueId:
+                      companyData.docs.first["company_unique_id"].toString(),
+                  companyAddress: companyData.docs.first["address"].toString(),
+                  companyName:
+                      companyData.docs.first["company_name"].toString(),
+                  isAdmin: true,
+                  prCategory: true,
+                  prCustomer: true,
+                  prEstimate: true,
+                  prOrder: true,
+                  prProduct: true,
+                  prBillofSupply: true,
+                ).then((value) {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserHome(),
+                    ),
+                  );
                 });
-              });
+              } else {
+                if (companyData.docs.first["device.device_id"] != null &&
+                    companyData.docs.first["device.model_name"] != null &&
+                    companyData.docs.first["device.device_name"] != null) {
+                  Navigator.pop(context);
+                  snackBarCustom(
+                    context,
+                    false,
+                    "You're already logged with another device",
+                  );
+                } else {
+                  // register New Device
+                  await fireStoreProvider
+                      .registerNewDevice(
+                    context,
+                    type: UserType.accountHolder,
+                    docid: companyData.docs.first.id,
+                    deviceData: deviceDetails,
+                  )
+                      .then((value) async {
+                    await LocalService.updateOpened(
+                            uid: companyData.docs.first.id)
+                        .then((value) {
+                      accountHolderLoginFn();
+                    });
+                  });
+                }
+              }
             }
+          } else {
+            Navigator.pop(context);
+            snackbar(context, false, "Company Expired. Please renew your plan");
           }
-        }
+        });
       } else {
         Navigator.pop(context);
         snackBarCustom(
@@ -160,71 +164,85 @@ class _SigninState extends State<Signin> {
         if (value != null && value.docs.isNotEmpty) {
           var tmpData = email.text.split('@');
 
-          DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
+          FireStoreProvider()
+              .checkExpiry(
+                  uid: value.docs.first["company_id"], type: UserType.staff)
+              .then((result) async {
+            if (result) {
+              DeviceModel? deviceInfo =
+                  await DeviceInformation().getDeviceInfo();
 
-          DeviceModel deviceDetails = DeviceModel();
-          deviceDetails.deviceId = deviceInfo!.deviceId;
-          deviceDetails.modelName = deviceInfo.modelName;
-          deviceDetails.deviceName = deviceInfo.deviceName;
-          deviceDetails.lastlogin = DateTime.now();
+              DeviceModel deviceDetails = DeviceModel();
+              deviceDetails.deviceId = deviceInfo!.deviceId;
+              deviceDetails.modelName = deviceInfo.modelName;
+              deviceDetails.deviceName = deviceInfo.deviceName;
+              deviceDetails.lastlogin = DateTime.now();
 
-          FireStoreProvider fireStoreProvider = FireStoreProvider();
-          var deviceAccessResult = await fireStoreProvider.checkLoginDeviceInfo(
-            context,
-            uid: value.docs.first["user_login_id"],
-            deviceData: deviceDetails,
-            type: UserType.staff,
-          );
-
-          if (deviceAccessResult!.docs.isNotEmpty) {
-            await LocalDB.createNewUser(
-              username: value.docs.first["staff_name"],
-              loginEmail: value.docs.first["user_login_id"],
-              uID: value.docs.first.id,
-              companyID: value.docs.first["company_id"],
-              companyAddress: value.docs.first["address"].toString(),
-              companyName: value.docs.first["company_name"].toString(),
-              companyUniqueId: tmpData[1],
-              isAdmin: false,
-              prCategory: value.docs.first["permission"]["category"],
-              prCustomer: value.docs.first["permission"]["customer"],
-              prEstimate: value.docs.first["permission"]["estimate"],
-              prOrder: value.docs.first["permission"]["orders"],
-              prProduct: value.docs.first["permission"]["product"],
-              prBillofSupply: value.docs.first["permission"]["billofsupply"],
-            ).then((value) {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
+              FireStoreProvider fireStoreProvider = FireStoreProvider();
+              var deviceAccessResult =
+                  await fireStoreProvider.checkLoginDeviceInfo(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const UserHome(),
-                ),
-              );
-            });
-          } else {
-            if (value.docs.first["device.device_id"] != null &&
-                value.docs.first["device.model_name"] != null &&
-                value.docs.first["device.device_name"] != null) {
-              Navigator.pop(context);
-              snackBarCustom(
-                context,
-                false,
-                "You're already logged with another device",
-              );
-            } else {
-              await fireStoreProvider
-                  .registerNewDevice(
-                context,
-                type: UserType.staff,
-                docid: value.docs.first.id,
+                uid: value.docs.first["user_login_id"],
                 deviceData: deviceDetails,
-              )
-                  .then((value) {
-                Navigator.pop(context);
-                staffLoginFn();
-              });
+                type: UserType.staff,
+              );
+
+              if (deviceAccessResult!.docs.isNotEmpty) {
+                await LocalDB.createNewUser(
+                  username: value.docs.first["staff_name"],
+                  loginEmail: value.docs.first["user_login_id"],
+                  uID: value.docs.first.id,
+                  companyID: value.docs.first["company_id"],
+                  companyAddress: value.docs.first["address"].toString(),
+                  companyName: value.docs.first["company_name"].toString(),
+                  companyUniqueId: tmpData[1],
+                  isAdmin: false,
+                  prCategory: value.docs.first["permission"]["category"],
+                  prCustomer: value.docs.first["permission"]["customer"],
+                  prEstimate: value.docs.first["permission"]["estimate"],
+                  prOrder: value.docs.first["permission"]["orders"],
+                  prProduct: value.docs.first["permission"]["product"],
+                  prBillofSupply: value.docs.first["permission"]
+                      ["billofsupply"],
+                ).then((value) {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserHome(),
+                    ),
+                  );
+                });
+              } else {
+                if (value.docs.first["device.device_id"] != null &&
+                    value.docs.first["device.model_name"] != null &&
+                    value.docs.first["device.device_name"] != null) {
+                  Navigator.pop(context);
+                  snackBarCustom(
+                    context,
+                    false,
+                    "You're already logged with another device",
+                  );
+                } else {
+                  await fireStoreProvider
+                      .registerNewDevice(
+                    context,
+                    type: UserType.staff,
+                    docid: value.docs.first.id,
+                    deviceData: deviceDetails,
+                  )
+                      .then((value) {
+                    Navigator.pop(context);
+                    staffLoginFn();
+                  });
+                }
+              }
+            } else {
+              Navigator.pop(context);
+              snackbar(
+                  context, false, "Company Expired. Please renew your plan");
             }
-          }
+          });
         } else {
           adminLoginFn();
         }
@@ -253,73 +271,86 @@ class _SigninState extends State<Signin> {
           .adminLogin(email: email.text, password: password.text)
           .then((value) async {
         if (value != null && value.docs.isNotEmpty) {
-          var tmpData = email.text.split('@');
+          FireStoreProvider()
+              .checkExpiry(
+                  uid: value.docs.first["company_id"], type: UserType.staff)
+              .then((result) async {
+            if (result) {
+              var tmpData = email.text.split('@');
 
-          DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
+              DeviceModel? deviceInfo =
+                  await DeviceInformation().getDeviceInfo();
 
-          DeviceModel deviceDetails = DeviceModel();
-          deviceDetails.deviceId = deviceInfo!.deviceId;
-          deviceDetails.modelName = deviceInfo.modelName;
-          deviceDetails.deviceName = deviceInfo.deviceName;
-          deviceDetails.lastlogin = DateTime.now();
+              DeviceModel deviceDetails = DeviceModel();
+              deviceDetails.deviceId = deviceInfo!.deviceId;
+              deviceDetails.modelName = deviceInfo.modelName;
+              deviceDetails.deviceName = deviceInfo.deviceName;
+              deviceDetails.lastlogin = DateTime.now();
 
-          FireStoreProvider fireStoreProvider = FireStoreProvider();
-          var deviceAccessResult = await fireStoreProvider.checkLoginDeviceInfo(
-            context,
-            uid: value.docs.first["user_login_id"],
-            deviceData: deviceDetails,
-            type: UserType.admin,
-          );
-
-          if (deviceAccessResult!.docs.isNotEmpty) {
-            await LocalDB.createNewUser(
-              username: value.docs.first["admin_name"],
-              loginEmail: value.docs.first["user_login_id"],
-              uID: value.docs.first.id,
-              companyID: value.docs.first["company_id"],
-              companyUniqueId: tmpData[1],
-              companyAddress: value.docs.first["address"].toString(),
-              companyName: value.docs.first["company_name"].toString(),
-              isAdmin: false,
-              prCategory: true,
-              prCustomer: true,
-              prEstimate: true,
-              prOrder: true,
-              prProduct: true,
-              prBillofSupply: true,
-            ).then((value) {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
+              FireStoreProvider fireStoreProvider = FireStoreProvider();
+              var deviceAccessResult =
+                  await fireStoreProvider.checkLoginDeviceInfo(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const UserHome(),
-                ),
-              );
-            });
-          } else {
-            if (value.docs.first["device.device_id"] != null &&
-                value.docs.first["device.model_name"] != null &&
-                value.docs.first["device.device_name"] != null) {
-              Navigator.pop(context);
-              snackBarCustom(
-                context,
-                false,
-                "You're already logged with another device",
-              );
-            } else {
-              await fireStoreProvider
-                  .registerNewDevice(
-                context,
-                type: UserType.admin,
-                docid: value.docs.first.id,
+                uid: value.docs.first["user_login_id"],
                 deviceData: deviceDetails,
-              )
-                  .then((value) {
-                Navigator.pop(context);
-                adminLoginFn();
-              });
+                type: UserType.admin,
+              );
+
+              if (deviceAccessResult!.docs.isNotEmpty) {
+                await LocalDB.createNewUser(
+                  username: value.docs.first["admin_name"],
+                  loginEmail: value.docs.first["user_login_id"],
+                  uID: value.docs.first.id,
+                  companyID: value.docs.first["company_id"],
+                  companyUniqueId: tmpData[1],
+                  companyAddress: value.docs.first["address"].toString(),
+                  companyName: value.docs.first["company_name"].toString(),
+                  isAdmin: false,
+                  prCategory: true,
+                  prCustomer: true,
+                  prEstimate: true,
+                  prOrder: true,
+                  prProduct: true,
+                  prBillofSupply: true,
+                ).then((value) {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserHome(),
+                    ),
+                  );
+                });
+              } else {
+                if (value.docs.first["device.device_id"] != null &&
+                    value.docs.first["device.model_name"] != null &&
+                    value.docs.first["device.device_name"] != null) {
+                  Navigator.pop(context);
+                  snackBarCustom(
+                    context,
+                    false,
+                    "You're already logged with another device",
+                  );
+                } else {
+                  await fireStoreProvider
+                      .registerNewDevice(
+                    context,
+                    type: UserType.admin,
+                    docid: value.docs.first.id,
+                    deviceData: deviceDetails,
+                  )
+                      .then((value) {
+                    Navigator.pop(context);
+                    adminLoginFn();
+                  });
+                }
+              }
+            } else {
+              Navigator.pop(context);
+              snackbar(
+                  context, false, "Company Expired. Please renew your plan");
             }
-          }
+          });
         } else {
           Navigator.pop(context);
           snackBarCustom(context, false, "User Details Not Found");

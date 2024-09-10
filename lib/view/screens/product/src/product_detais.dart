@@ -406,6 +406,10 @@ class _ProductDetailsState extends State<ProductDetails> {
   AppBar appbar() {
     return AppBar(
       title: Text(widget.title),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       actions: [
         widget.edit
             ? IconButton(
@@ -472,7 +476,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             ? ""
             : widget.productData!.price.toString();
         videoUrl.text = widget.productData!.videoUrl ?? "";
-        imageUrl = widget.productData!.productImg ?? "";
+        imageUrl = widget.productData!.productImg;
         // imageUrl = path.join(
         //   directory.path,
         //   'product',
@@ -600,6 +604,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             productData.name =
                 productName.text.replaceAll(' ', '').trim().toLowerCase();
             productData.createdDateTime = DateTime.now();
+            productData.postion = 0;
 
             if (productImage != null) {
               var downloadLink = await FireStorageProvider().uploadImage(

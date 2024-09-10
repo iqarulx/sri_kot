@@ -24,6 +24,8 @@ Future<void> main() async {
   var login = result[0];
   var isSuperAdmin = result[1] == 1 ? true : false;
 
+  final appUpdate = await UpdateService.isUpdateAvailable();
+
   runApp(
     MultiProvider(
       providers: [
@@ -34,6 +36,7 @@ Future<void> main() async {
       child: MyApp(
         login: login,
         isSuperAdmin: isSuperAdmin,
+        appUpdate: appUpdate,
       ),
     ),
   );

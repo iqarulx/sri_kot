@@ -105,7 +105,7 @@ class _RegisterCompanyState extends State<RegisterCompany> {
         Navigator.pop(context);
         Navigator.pop(context);
         snackBarCustom(context, true, "Successfully company registred");
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => widget.route,

@@ -674,6 +674,7 @@ class _BillingTwoState extends State<BillingTwo> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
         billingHandler = getProductList();
         billPageProvider.addListener(pageRefrce);
         setState(() {
@@ -694,6 +695,7 @@ class _BillingTwoState extends State<BillingTwo> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
           billingHandler = getProductList();
           billPageProvider.addListener(pageRefrce);
           setState(() {

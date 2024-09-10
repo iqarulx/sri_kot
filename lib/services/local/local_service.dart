@@ -265,6 +265,12 @@ class LocalService {
     }
   }
 
+  // static Future insertCustomer(Map<String, dynamic> data) async {
+  //   await Firebase.customer.add(data).then((value) {
+  //     print("Data added");
+  //   });
+  // }
+
   static Future newEnquiry({
     required List<CartDataModel> productList,
     CustomerDataModel? customerInfo,
@@ -804,6 +810,20 @@ class LocalService {
           .get();
       result.add(estimate);
       return result;
+    } on Exception catch (e) {
+      print(e);
+      rethrow;
+    }
+  }
+
+  static Future<QuerySnapshot<Map<String, dynamic>>> getAppversion() async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await Firebase.appVersion
+          .orderBy('created', descending: true)
+          .limit(1)
+          .get();
+
+      return snapshot;
     } on Exception catch (e) {
       print(e);
       rethrow;

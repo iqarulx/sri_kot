@@ -789,9 +789,10 @@ class _EmptyListPageState extends State<EmptyListPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: AspectRatio(
-              aspectRatio: (1 / 0.7),
-              child: SvgPicture.asset(widget.assetsPath),
+            child: SvgPicture.asset(
+              widget.assetsPath,
+              height: 200,
+              width: 200,
             ),
           ),
           const SizedBox(

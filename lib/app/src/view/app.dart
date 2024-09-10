@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '/services/services.dart';
 import '/app/src/life_cycle/app_lifecycle.dart';
 import '/view/screens/screens.dart';
 import '/view/admin/admin.dart';
@@ -8,10 +9,12 @@ import '/view/auth/src/auth.dart';
 class MyApp extends StatelessWidget {
   final bool login;
   final bool isSuperAdmin;
+  final bool appUpdate;
   const MyApp({
     super.key,
     required this.login,
     required this.isSuperAdmin,
+    required this.appUpdate,
   });
 
   @override
@@ -40,11 +43,13 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: login
-            ? isSuperAdmin
-                ? const AdminHome()
-                : const UserHome()
-            : const Auth(),
+        home: appUpdate
+            ? login
+                ? isSuperAdmin
+                    ? const AdminHome()
+                    : const UserHome()
+                : const Auth()
+            : const AppUpdateScreen(),
       ),
     );
   }

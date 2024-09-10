@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:sri_kot/constants/src/enum.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/src/logger.dart';
@@ -214,7 +215,6 @@ class FireStoreProvider {
   }) async {
     QuerySnapshot? resultData;
     try {
-      print(uid);
       if (type == UserType.accountHolder) {
         resultData = await _profile
             .where('uid', isEqualTo: uid)
@@ -247,7 +247,6 @@ class FireStoreProvider {
                 .where('device.model_name', isEqualTo: deviceData.modelName)
                 .where('device.device_name', isEqualTo: deviceData.deviceName)
                 .get();
-            print(resultData!.docs.length);
           } else {
             throw "Login Credential Not Match";
           }
@@ -259,6 +258,36 @@ class FireStoreProvider {
       rethrow;
     }
     return resultData;
+  }
+
+  Future<bool> checkExpiry(
+      {required String uid, required UserType type}) async {
+    try {
+      if (type == UserType.accountHolder) {
+        var result = await _profile.where('uid', isEqualTo: uid).get();
+        if (result.docs.isNotEmpty) {
+          var expiryDate = result.docs.first["expiry_date"].toDate();
+          var now = DateTime.now();
+
+          return expiryDate.isAfter(now);
+        } else {
+          return false;
+        }
+      } else {
+        var result = await _profile.doc(uid).get();
+        if (result.exists) {
+          var expiryDate = result["expiry_date"].toDate();
+          var now = DateTime.now();
+
+          return expiryDate.isAfter(now);
+        } else {
+          return false;
+        }
+      }
+    } on Exception catch (e) {
+      print(e);
+      return false;
+    }
   }
 
   Future<QuerySnapshot?> userListing({required String cid}) async {
@@ -1581,13 +1610,13 @@ class FireStoreProvider {
   }
 
   Map<String, String> getFinancialYear() {
-    DateTime currentDate = DateTime(2024, 03, 31);
+    DateTime currentDate = DateTime.now();
     var currentYearTwo = DateFormat("yy").format(currentDate);
     var currentYearFull = DateFormat("yyyy").format(currentDate);
 
     var nextyearTwo = (int.parse(currentYearTwo) + 1).toString();
 
-    var shortYear = "$currentYearTwo - $nextyearTwo";
+    var shortYear = "$currentYearTwo-$nextyearTwo";
 
     String month = DateFormat("MM").format(currentDate);
     if (month == "01" || month == "02" || month == "03") {
@@ -1601,6 +1630,7 @@ class FireStoreProvider {
       "currentYearFull": currentYearFull,
       "fnYr": shortYear,
     };
+
     return result;
   }
 
@@ -1748,6 +1778,7 @@ class FireStoreProvider {
       String option = "new";
 
       var currentFinType = await getCurrentFinType(finYear: result["fnYr"]!);
+
       if (currentFinType.id.isNotEmpty) {
         option = currentFinType["bill_type"];
       }
@@ -1786,6 +1817,7 @@ class FireStoreProvider {
     required List<InvoiceProductModel> cartDataList,
   }) async {
     try {
+      var invoiceNumber = await findLastID(orderTime: invoiceData.createdDate!);
       invoiceData.createdDate = DateTime.now();
       invoiceData.biilDate = DateTime.now();
 

@@ -178,6 +178,16 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           model.totalBillAmount = cartTotal();
           model.deliveryaddress = deliveryAddress.text;
 
+          CustomerDataModel customerDataModel = CustomerDataModel();
+          customerDataModel.customerName = partyName.text;
+          customerDataModel.address = address.text;
+          customerDataModel.mobileNo = phone.text;
+          customerDataModel.city = null;
+          customerDataModel.email = null;
+          customerDataModel.state = null;
+          customerDataModel.companyID =
+              await LocalDB.fetchInfo(type: LocalData.companyid);
+
           var calcul = BillingCalCulationModel();
           calcul.discount = discountInput;
           calcul.discountValue = double.parse(discount());
@@ -203,10 +213,15 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
             await FireStoreProvider()
                 .createNewInvoice(
                     invoiceData: model, cartDataList: cartProductList)
-                .then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Created New Invoice");
+                .then((value) async {
+              await FireStoreProvider()
+                  .registerCustomer(customerData: customerDataModel)
+                  .then((value) {
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+                snackBarCustom(
+                    context, true, "Successfully Created New Invoice");
+              });
             });
           } else {
             await FireStoreProvider()
@@ -421,6 +436,11 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
       child: Scaffold(
         backgroundColor: const Color(0xffEEEEEE),
         appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
           title: Text("${widget.invoice != null ? "Edit" : "New"} Invoice"),
         ),
         body: ListView(

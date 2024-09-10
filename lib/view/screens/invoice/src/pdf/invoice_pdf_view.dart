@@ -10,6 +10,7 @@ import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/screens/screens.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class InvoicePdfView extends StatefulWidget {
   final String title;
@@ -46,12 +47,20 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
                 "phone": result["contact"]["phone_no"].toString(),
               };
               model.gstno = result["gst_no"] ?? "";
-              model.companyLogo = result["company_logo"].toString();
+              model.companyLogo = result["company_logo"] ?? Strings.productImg;
+
+              var pdfType = await LocalDB.getPdfType() != null
+                  ? await LocalDB.getPdfType() == 1
+                      ? false
+                      : true
+                  : false;
+
               await InvoicePDFService(
                 title: widget.title,
                 invoice: widget.invoice,
                 total: lastAmount.toStringAsFixed(2),
                 companyDoc: model,
+                pdfType: pdfType,
               ).showA4PDf().then((value) {
                 setState(() {
                   pdfData = value;
@@ -73,20 +82,11 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
           .storagePermission()
           .then((permissionResult) async {
         if (permissionResult != null && permissionResult) {
-          await DownloadFileOffline(
-            fileData: pdfData!,
-            fileName: "Invoie ${widget.invoice.billNo!.replaceAll("/", "-")}",
-            fileext: "pdf",
-          ).startDownload().then((value) {
-            Navigator.pop(context);
-            if (value != null && value.isNotEmpty) {
-              downloadFileSnackBarCustom(context,
-                  isSuccess: true, msg: "Download Invoice", path: value);
-              // snackBarCustom(context, true, "Download Enquiry 3 inch ${widget.estimateData.enquiryid}");
-            } else {
-              snackBarCustom(context, false, "Failed to Download");
-            }
-          });
+          Navigator.pop(context);
+          if (pdfData != null) {
+            await helper.saveAndLaunchFile(pdfData!,
+                'Invoie ${widget.invoice.billNo!.replaceAll("/", "-")}.pdf');
+          }
         }
       });
     } catch (e) {
@@ -105,6 +105,11 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
     return Scaffold(
       backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         titleSpacing: 0,
         title: const Text("PDF Bill of Supply"),
         actions: [

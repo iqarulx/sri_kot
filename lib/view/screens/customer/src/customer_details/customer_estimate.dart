@@ -10,6 +10,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class CustomerEstimate extends StatefulWidget {
   final String? customerID;
@@ -128,18 +129,8 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
-          await DownloadFileOffline(
-            fileData: fileData,
-            fileName: "Estimate Excel",
-            fileext: 'xlsx',
-          ).startDownload().then((value) {
-            Navigator.pop(context);
-            snackBarCustom(
-                context, true, "Estimate Excel Download Successfully");
-          }).catchError((onError) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, onError.toString());
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(fileData, 'Customer Estimate.xlsx');
         } else {
           Navigator.pop(context);
         }

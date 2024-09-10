@@ -554,14 +554,15 @@ class DatabaseHelper {
 
   Future saveLog(String query) async {
     try {
-      const downloadsDirectoryPath = '/storage/emulated/0/Download/';
+      const downloadsDirectoryPath =
+          '/storage/emulated/0/Download/Srisoftwarez/';
       final downloadsDirectory = Directory(downloadsDirectoryPath);
 
       if (!await downloadsDirectory.exists()) {
         await downloadsDirectory.create(recursive: true);
       }
 
-      const filePath = '$downloadsDirectoryPath/Srisoftwarez/backup.txt';
+      const filePath = '$downloadsDirectoryPath/backup.txt';
       final file = File(filePath);
       final sink = file.openWrite(mode: FileMode.append);
 

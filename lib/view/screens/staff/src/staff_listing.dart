@@ -184,11 +184,10 @@ class _StaffListingState extends State<StaffListing> {
         children: [
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: AspectRatio(
-              aspectRatio: (1 / 0.7),
-              child: SvgPicture.asset(
-                Assets.emptyList3,
-              ),
+            child: SvgPicture.asset(
+              Assets.emptyList3,
+              height: 200,
+              width: 200,
             ),
           ),
           const SizedBox(
@@ -367,6 +366,8 @@ class _StaffListingState extends State<StaffListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
+
         staffHandler = getStaffInfo();
         staffListingPageProvider.addListener(changeState);
       }
@@ -377,6 +378,8 @@ class _StaffListingState extends State<StaffListing> {
           Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
+          AccountValid.accountValid(context);
+
           staffHandler = getStaffInfo();
           staffListingPageProvider.addListener(changeState);
         }

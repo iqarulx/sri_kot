@@ -228,11 +228,10 @@ class _UserListingState extends State<UserListing> {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.all(10.0),
-                                child: AspectRatio(
-                                  aspectRatio: (1 / 0.7),
-                                  child: SvgPicture.asset(
-                                    Assets.emptyList3,
-                                  ),
+                                child: SvgPicture.asset(
+                                  Assets.emptyList3,
+                                  height: 200,
+                                  width: 200,
                                 ),
                               ),
                               const SizedBox(
@@ -343,6 +342,8 @@ class _UserListingState extends State<UserListing> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        AccountValid.accountValid(context);
+
         userlistingHandler = getUserInfo();
       }
     });

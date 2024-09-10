@@ -11,6 +11,7 @@ import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
+import '/provider/src/file_open.dart' as helper;
 
 class CustomerEnquiry extends StatefulWidget {
   final String? customerID;
@@ -131,18 +132,8 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
-          await DownloadFileOffline(
-            fileData: fileData,
-            fileName: "Enquiry Excel",
-            fileext: 'xlsx',
-          ).startDownload().then((value) {
-            Navigator.pop(context);
-            snackBarCustom(
-                context, true, "Enquiry Excel Download Successfully");
-          }).catchError((onError) {
-            Navigator.pop(context);
-            snackBarCustom(context, false, onError.toString());
-          });
+          Navigator.pop(context);
+          await helper.saveAndLaunchFile(fileData, 'Customer Enquiry.xlsx');
         } else {
           Navigator.pop(context);
         }
