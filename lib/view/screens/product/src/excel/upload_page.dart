@@ -259,7 +259,6 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
               .readExcelData(file: value)
               .then((excelResult) {
             if (excelResult != null) {
-              print(excelResult);
               // Navigator.pop(context);
               setState(() {
                 excelData.clear();
