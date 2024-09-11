@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:sri_kot/constants/src/enum.dart';
+import 'package:sri_kot/services/database/localdb.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/src/logger.dart';
@@ -1648,6 +1649,8 @@ class FireStoreProvider {
   Future<QuerySnapshot<Map<String, dynamic>>> getInvoiceListing() async {
     try {
       return await _invoice
+          .where('company_id',
+              isEqualTo: await LocalDB.fetchInfo(type: LocalData.companyid))
           .where("delete_at", isEqualTo: false)
           .orderBy('bill_date', descending: true)
           .get();
