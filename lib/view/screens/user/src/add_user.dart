@@ -1,6 +1,4 @@
 import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -8,7 +6,6 @@ import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
-import '/view/screens/screens.dart';
 
 class AddUser extends StatefulWidget {
   const AddUser({super.key});
@@ -79,8 +76,7 @@ class _AddUserState extends State<AddUser> {
                 Center(
                   child: GestureDetector(
                     onTap: () async {
-                      var imageResult =
-                          await FilePickerProvider().showFileDialog(context);
+                      var imageResult = await FilePickerProvider().showFileDialog(context);
                       if (imageResult != null) {
                         setState(() {
                           profileImage = imageResult;
@@ -308,8 +304,7 @@ class _AddUserState extends State<AddUser> {
 
         await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
-            await LocalService.checkCount(type: ProfileType.admin)
-                .then((value) async {
+            await LocalService.checkCount(type: ProfileType.admin).then((value) async {
               if (value) {
                 var userData = UserAdminModel();
                 userData.adminLoginId = "${userId.text}@$unqiueId";
@@ -318,10 +313,8 @@ class _AddUserState extends State<AddUser> {
                 userData.password = password.text;
                 userData.phoneNo = phoneNo.text;
                 userData.createdDateTime = DateTime.now();
-                userData.companyAddress =
-                    await LocalDB.fetchInfo(type: LocalData.companyAddress);
-                userData.companyName =
-                    await LocalDB.fetchInfo(type: LocalData.companyName);
+                userData.companyAddress = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+                userData.companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
                 String? downloadLink;
                 if (profileImage != null) {
                   downloadLink = await FireStorageProvider().uploadImage(
@@ -340,9 +333,7 @@ class _AddUserState extends State<AddUser> {
                 deviceData.deviceType = null;
                 userData.deviceModel = deviceData;
 
-                await FireStoreProvider()
-                    .registerUserAdmin(userData: userData)
-                    .then((userValue) {
+                await FireStoreProvider().registerUserAdmin(userData: userData).then((userValue) {
                   Navigator.pop(context);
                   if (userValue.id.isNotEmpty) {
                     setState(() {
@@ -365,19 +356,18 @@ class _AddUserState extends State<AddUser> {
                   context: context,
                   builder: (context) => const Modal(
                     title: "User Limit Reached",
-                    content:
-                        "You need to buy a plan to add users! Click confirm to see plans",
+                    content: "You need to buy a plan to add users! Click confirm to see plans",
                     type: ModalType.danger,
                   ),
                 ).then((value) async {
                   if (value != null) {
                     if (value) {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (context) => const PlanDetails(),
-                        ),
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   CupertinoPageRoute(
+                      //     builder: (context) => const Plans(),
+                      //   ),
+                      // );
                     }
                   }
                 });

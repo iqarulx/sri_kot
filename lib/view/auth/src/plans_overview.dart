@@ -1,7 +1,7 @@
 // import 'package:flutter/cupertino.dart';
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
-// import 'package:purchases_flutter/purchases_flutter.dart';
+// // import 'package:purchases_flutter/purchases_flutter.dart';
 
 // import '../../../in_app_purchase/purchase.dart';
 // import '../../../in_app_purchase/revenuecat.dart';
@@ -15,16 +15,16 @@
 // }
 
 // class _PlansOverviewState extends State<PlansOverview> {
-//   List<Package> packages = [];
+//   // List<Package> packages = [];
 //   Future? packageHanlder;
 
 //   Future fetchOffersIds() async {
 //     final offerings = await Purchase.fetchOffersByIds(YearlyPlan.allPlan);
 
-//     packages = offerings
-//         .map((offer) => offer.availablePackages)
-//         .expand((pair) => pair)
-//         .toList();
+//     // packages = offerings
+//     //     .map((offer) => offer.availablePackages)
+//     //     .expand((pair) => pair)
+//     //     .toList();
 //   }
 
 //   @override
@@ -153,8 +153,7 @@
 //                                               color: Colors.white60,
 //                                               fontWeight: FontWeight.bold,
 //                                               fontSize: 25,
-//                                               decoration:
-//                                                   TextDecoration.lineThrough,
+//                                               decoration: TextDecoration.lineThrough,
 //                                             ),
 //                                           ),
 //                                           TextSpan(
@@ -174,21 +173,18 @@
 //                                     ),
 //                                     GestureDetector(
 //                                       onTap: () async {
-//                                         Purchase.purchasePackage(
-//                                             packages[index]);
+//                                         Purchase.purchasePackage(packages[index]);
 //                                       },
 //                                       child: Container(
 //                                         width: 120,
 //                                         decoration: BoxDecoration(
 //                                           color: const Color(0xffFF7777),
-//                                           borderRadius:
-//                                               BorderRadius.circular(10),
+//                                           borderRadius: BorderRadius.circular(10),
 //                                         ),
 //                                         child: const Padding(
 //                                           padding: EdgeInsets.all(8.0),
 //                                           child: Row(
-//                                             mainAxisAlignment:
-//                                                 MainAxisAlignment.center,
+//                                             mainAxisAlignment: MainAxisAlignment.center,
 //                                             children: [
 //                                               Text(
 //                                                 "Buy Now",

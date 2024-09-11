@@ -45,8 +45,6 @@ class StaffDataModel {
     mapping["password"] = password;
     mapping["profile_img"] = profileImg;
     mapping["company_id"] = companyID;
-    mapping["company_name"] = companyName;
-    mapping["address"] = companyAddress;
     if (permission != null) {
       mapping["permission"] = permission!.toMap();
     }
