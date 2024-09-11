@@ -375,7 +375,7 @@ class _AddUserState extends State<AddUser> {
                       Navigator.push(
                         context,
                         CupertinoPageRoute(
-                          builder: (context) => const Plans(),
+                          builder: (context) => const PlanDetails(),
                         ),
                       );
                     }

@@ -1,4 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
+// import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1579,8 +1579,8 @@ class _BillingOneState extends State<BillingOne>
       ).then((barcodeScanRes) async {
         loading(context);
         barcodeScanRes = barcodeScanRes.replaceFirst(RegExp(r']C1'), '');
-        final player = AudioPlayer();
-        await player.play(AssetSource('audio/store-scanner.mp3'), volume: 1);
+        // final player = AudioPlayer();
+        // await player.play(AssetSource('audio/store-scanner.mp3'), volume: 1);
         if (barcodeScanRes.isNotEmpty) {
           int productIndex = -1;
           int count = 0;

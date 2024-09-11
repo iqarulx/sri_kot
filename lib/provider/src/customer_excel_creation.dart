@@ -11,17 +11,17 @@ class CustomerExcel {
     var sheet = excel['Sheet1'];
 
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).value =
-        const TextCellValue('Name');
+        TextCellValue('Name');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).value =
-        const TextCellValue('Mobile');
+        TextCellValue('Mobile');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 0)).value =
-        const TextCellValue('Email');
+        TextCellValue('Email');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0)).value =
-        const TextCellValue('City');
+        TextCellValue('City');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 0)).value =
-        const TextCellValue('State');
+        TextCellValue('State');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: 0)).value =
-        const TextCellValue('Address');
+        TextCellValue('Address');
 
     for (var i = 0; i < customerDataList.length; i++) {
       sheet

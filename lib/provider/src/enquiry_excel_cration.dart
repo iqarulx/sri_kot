@@ -15,25 +15,25 @@ class EnquiryExcel {
     var sheet = excel['Sheet1'];
 
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).value =
-        const TextCellValue('S.No');
+        TextCellValue('S.No');
     if (isEstimate) {
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0))
-          .value = const TextCellValue('Estimate ID');
+          .value = TextCellValue('Estimate ID');
     } else {
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0))
-          .value = const TextCellValue('Enquiry ID');
+          .value = TextCellValue('Enquiry ID');
     }
 
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 0)).value =
-        const TextCellValue('Customer Name');
+        TextCellValue('Customer Name');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0)).value =
-        const TextCellValue('Customer Address');
+        TextCellValue('Customer Address');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 0)).value =
-        const TextCellValue('Enquiry Date');
+        TextCellValue('Enquiry Date');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: 0)).value =
-        const TextCellValue('Total Amount');
+        TextCellValue('Total Amount');
 
     for (var i = 0; i < enquiryData.length; i++) {
       sheet
