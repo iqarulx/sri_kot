@@ -5,7 +5,7 @@ publish_to: 'none'
 
 # Previous test version 0.0.1
 # Mention correctly for future release
-version: 0.0.3
+version: 0.0.1
 
 environment:
   sdk: '>=3.4.3 <4.0.0'
