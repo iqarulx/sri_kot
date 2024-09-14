@@ -1,4 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
+// import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,8 +29,7 @@ class BillingOne extends StatefulWidget {
   State<BillingOne> createState() => _BillingOneState();
 }
 
-class _BillingOneState extends State<BillingOne>
-    with SingleTickerProviderStateMixin {
+class _BillingOneState extends State<BillingOne> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -43,8 +42,7 @@ class _BillingOneState extends State<BillingOne>
         backgroundColor: const Color(0xffEEEEEE),
         endDrawer: cartDrawer(),
         appBar: appbar(context),
-        floatingActionButton:
-            isLoading == false ? floatingButton(context) : null,
+        floatingActionButton: isLoading == false ? floatingButton(context) : null,
         body: Consumer<ConnectionProvider>(
           builder: (context, connectionProvider, child) {
             return connectionProvider.isConnected
@@ -95,14 +93,12 @@ class _BillingOneState extends State<BillingOne>
                       mainAxisSpacing: 5,
                       childAspectRatio: (1 / 1.35),
                     ),
-                    itemCount: keyboardValue.isEmpty
-                        ? billingProductList[crttab].products!.length
-                        : tmpProductDataList.length,
+                    itemCount:
+                        keyboardValue.isEmpty ? billingProductList[crttab].products!.length : tmpProductDataList.length,
                     itemBuilder: (context, index) {
                       ProductDataModel? tmpProductDetails;
                       if (keyboardValue.isEmpty) {
-                        tmpProductDetails =
-                            billingProductList[crttab].products![index];
+                        tmpProductDetails = billingProductList[crttab].products![index];
                       } else {
                         tmpProductDetails = tmpProductDataList[index];
                       }
@@ -111,9 +107,7 @@ class _BillingOneState extends State<BillingOne>
                         onTap: () {
                           tapQty(
                             index,
-                            proData: keyboardValue.isNotEmpty
-                                ? tmpProductDetails
-                                : null,
+                            proData: keyboardValue.isNotEmpty ? tmpProductDetails : null,
                           );
                         },
                         child: Container(
@@ -136,12 +130,8 @@ class _BillingOneState extends State<BillingOne>
                                     child: isConnected
                                         ? CachedNetworkImage(
                                             placeholder: (context, url) =>
-                                                const Center(
-                                                    child:
-                                                        CircularProgressIndicator()),
-                                            imageUrl:
-                                                tmpProductDetails.productImg ??
-                                                    Strings.productImg,
+                                                const Center(child: CircularProgressIndicator()),
+                                            imageUrl: tmpProductDetails.productImg ?? Strings.productImg,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                           )
@@ -155,8 +145,7 @@ class _BillingOneState extends State<BillingOne>
                                 const SizedBox(
                                   height: 5,
                                 ),
-                                productBottomButtons(
-                                    tmpProductDetails, index, context),
+                                productBottomButtons(tmpProductDetails, index, context),
                               ],
                             ),
                           ),
@@ -448,8 +437,7 @@ class _BillingOneState extends State<BillingOne>
     );
   }
 
-  GestureDetector productBottomButtons(
-      ProductDataModel? tmpProductDetails, int index, BuildContext context) {
+  GestureDetector productBottomButtons(ProductDataModel? tmpProductDetails, int index, BuildContext context) {
     return GestureDetector(
       onTap: () {
         if (tmpProductDetails.qty == 0) {
@@ -470,9 +458,7 @@ class _BillingOneState extends State<BillingOne>
             color: Colors.grey.shade300,
           ),
         ),
-        child: tmpProductDetails!.qty == 0
-            ? addToCartButton(context)
-            : quantityEditButton(index, tmpProductDetails),
+        child: tmpProductDetails!.qty == 0 ? addToCartButton(context) : quantityEditButton(index, tmpProductDetails),
       ),
     );
   }
@@ -584,8 +570,7 @@ class _BillingOneState extends State<BillingOne>
       elevation: 0,
       leading: widget.isEdit == null || widget.isEdit == false
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
               onPressed: () async {
                 await dialogBox();
               },
@@ -757,9 +742,7 @@ class _BillingOneState extends State<BillingOne>
               height: 15,
             ),
             Text(
-              snapshot.error.toString() == "null"
-                  ? "Something went Wrong"
-                  : snapshot.error.toString(),
+              snapshot.error.toString() == "null" ? "Something went Wrong" : snapshot.error.toString(),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.black54,
@@ -799,10 +782,7 @@ class _BillingOneState extends State<BillingOne>
       if (cid != null) {
         var categoryAPI = await storeProvider.categoryListing(cid: cid);
         var productAPI = await storeProvider.productListing(cid: cid);
-        if (categoryAPI != null &&
-            categoryAPI.docs.isNotEmpty &&
-            productAPI != null &&
-            productAPI.docs.isNotEmpty) {
+        if (categoryAPI != null && categoryAPI.docs.isNotEmpty && productAPI != null && productAPI.docs.isNotEmpty) {
           for (var category in categoryAPI.docs) {
             CategoryDataModel model = CategoryDataModel();
             model.categoryName = category["category_name"].toString();
@@ -828,8 +808,7 @@ class _BillingOneState extends State<BillingOne>
             productInfo.price = double.parse(product["price"].toString());
             productInfo.productId = product.id;
             productInfo.qty = 0;
-            productInfo.qtyForm =
-                TextEditingController(text: productInfo.qty.toString());
+            productInfo.qtyForm = TextEditingController(text: productInfo.qty.toString());
 
             setState(() {
               productDataList.add(productInfo);
@@ -840,8 +819,8 @@ class _BillingOneState extends State<BillingOne>
 
           // Category & Product Merge
           for (var category in categoryList) {
-            Iterable<ProductDataModel> products = productDataList
-                .where((element) => element.categoryid == category.tmpcatid);
+            Iterable<ProductDataModel> products =
+                productDataList.where((element) => element.categoryid == category.tmpcatid);
             for (var element in products) {
               setState(() {
                 element.categoryName = category.categoryName;
@@ -867,22 +846,20 @@ class _BillingOneState extends State<BillingOne>
           if (widget.isEdit != null && widget.isEdit! == true) {
             if (widget.enquiryData != null) {
               for (var elements in widget.enquiryData!.products!) {
-                int catId = billingProductList.indexWhere((element) =>
-                    element.category!.tmpcatid == elements.categoryid);
+                int catId =
+                    billingProductList.indexWhere((element) => element.category!.tmpcatid == elements.categoryid);
                 int proId = -1;
                 if (catId != -1) {
-                  proId = billingProductList[catId].products!.indexWhere(
-                      (element) => element.productId == elements.productId);
+                  proId = billingProductList[catId]
+                      .products!
+                      .indexWhere((element) => element.productId == elements.productId);
                 }
 
                 if (catId != -1 && proId != -1) {
                   setState(() {
-                    elements.discount =
-                        billingProductList[catId].products![proId].discount;
-                    billingProductList[catId].products![proId].qty =
-                        elements.qty;
-                    billingProductList[catId].products![proId].qtyForm!.text =
-                        elements.qty.toString();
+                    elements.discount = billingProductList[catId].products![proId].discount;
+                    billingProductList[catId].products![proId].qty = elements.qty;
+                    billingProductList[catId].products![proId].qtyForm!.text = elements.qty.toString();
                   });
 
                   editaddtoCart(elements);
@@ -907,33 +884,29 @@ class _BillingOneState extends State<BillingOne>
               // Update Discount & Packing Charges
               setState(() {
                 discountSys = widget.enquiryData!.price!.discountsys ?? "%";
-                extraDiscountSys =
-                    widget.enquiryData!.price!.extraDiscountsys ?? "%";
+                extraDiscountSys = widget.enquiryData!.price!.extraDiscountsys ?? "%";
                 packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
                 discountInput = widget.enquiryData!.price!.discount ?? 0;
-                extraDiscountInput =
-                    widget.enquiryData!.price!.extraDiscount ?? 0;
+                extraDiscountInput = widget.enquiryData!.price!.extraDiscount ?? 0;
                 packingChargeInput = widget.enquiryData!.price!.package ?? 0;
 
                 customerInfo = widget.enquiryData!.customer;
               });
             } else if (widget.estimateData != null) {
               for (var elements in widget.estimateData!.products!) {
-                int catId = billingProductList.indexWhere((element) =>
-                    element.category!.tmpcatid == elements.categoryid);
+                int catId =
+                    billingProductList.indexWhere((element) => element.category!.tmpcatid == elements.categoryid);
                 int proId = -1;
                 if (catId != -1) {
-                  proId = billingProductList[catId].products!.indexWhere(
-                      (element) => element.productId == elements.productId);
+                  proId = billingProductList[catId]
+                      .products!
+                      .indexWhere((element) => element.productId == elements.productId);
                 }
                 if (catId != -1 && proId != -1) {
                   setState(() {
-                    elements.discount =
-                        billingProductList[catId].products![proId].discount;
-                    billingProductList[catId].products![proId].qty =
-                        elements.qty;
-                    billingProductList[catId].products![proId].qtyForm!.text =
-                        elements.qty.toString();
+                    elements.discount = billingProductList[catId].products![proId].discount;
+                    billingProductList[catId].products![proId].qty = elements.qty;
+                    billingProductList[catId].products![proId].qtyForm!.text = elements.qty.toString();
                   });
 
                   editaddtoCart(elements);
@@ -956,13 +929,10 @@ class _BillingOneState extends State<BillingOne>
               // Update Discount & Packing Charges
               setState(() {
                 discountSys = widget.estimateData!.price!.discountsys ?? "%";
-                extraDiscountSys =
-                    widget.estimateData!.price!.extraDiscountsys ?? "%";
-                packingChargeSys =
-                    widget.estimateData!.price!.packagesys ?? "%";
+                extraDiscountSys = widget.estimateData!.price!.extraDiscountsys ?? "%";
+                packingChargeSys = widget.estimateData!.price!.packagesys ?? "%";
                 discountInput = widget.estimateData!.price!.discount ?? 0;
-                extraDiscountInput =
-                    widget.estimateData!.price!.extraDiscount ?? 0;
+                extraDiscountInput = widget.estimateData!.price!.extraDiscount ?? 0;
                 packingChargeInput = widget.estimateData!.price!.package ?? 0;
 
                 customerInfo = widget.estimateData!.customer;
@@ -1004,13 +974,10 @@ class _BillingOneState extends State<BillingOne>
       if (localCategories.isNotEmpty && localProducts.isNotEmpty) {
         for (var i = 0; i < localCategories.length; i++) {
           CategoryDataModel model = CategoryDataModel();
-          model.categoryName =
-              localCategories[i]["category_name"]?.toString() ?? "";
+          model.categoryName = localCategories[i]["category_name"]?.toString() ?? "";
           model.postion = int.parse(localCategories[i]["postion"]);
           model.tmpcatid = localCategories[i]["category_id"];
-          model.discount =
-              int.tryParse(localCategories[i]["discount"]?.toString() ?? "0") ??
-                  0;
+          model.discount = int.tryParse(localCategories[i]["discount"]?.toString() ?? "0") ?? 0;
           setState(() {
             categoryList.add(model);
           });
@@ -1020,8 +987,7 @@ class _BillingOneState extends State<BillingOne>
           ProductDataModel productInfo = ProductDataModel();
           productInfo.categoryName = "";
           productInfo.categoryid = product["category_id"];
-          productInfo.discountLock =
-              product["discount_lock"] == 1 ? false : true;
+          productInfo.discountLock = product["discount_lock"] == 1 ? false : true;
           productInfo.name = product["name"] ?? "";
           productInfo.productCode = product["product_code"] ?? "";
           productInfo.productContent = product["product_content"] ?? "";
@@ -1029,12 +995,10 @@ class _BillingOneState extends State<BillingOne>
           productInfo.videoUrl = product["video_url"] ?? "";
           productInfo.productName = product["product_name"] ?? "";
           productInfo.productImg = product["product_img"] ?? "";
-          productInfo.price =
-              double.tryParse(product["price"]?.toString() ?? "0.0") ?? 0.0;
+          productInfo.price = double.tryParse(product["price"]?.toString() ?? "0.0") ?? 0.0;
           productInfo.productId = product["product_id"] ?? 0;
           productInfo.qty = 0;
-          productInfo.qtyForm =
-              TextEditingController(text: productInfo.qty.toString());
+          productInfo.qtyForm = TextEditingController(text: productInfo.qty.toString());
 
           setState(() {
             productDataList.add(productInfo);
@@ -1045,8 +1009,8 @@ class _BillingOneState extends State<BillingOne>
 
         // Category & Product Merge
         for (var category in categoryList) {
-          Iterable<ProductDataModel> products = productDataList
-              .where((element) => element.categoryid == category.tmpcatid);
+          Iterable<ProductDataModel> products =
+              productDataList.where((element) => element.categoryid == category.tmpcatid);
           for (var element in products) {
             setState(() {
               element.categoryName = category.categoryName;
@@ -1072,21 +1036,19 @@ class _BillingOneState extends State<BillingOne>
         if (widget.isEdit != null && widget.isEdit! == true) {
           if (widget.enquiryData != null) {
             for (var elements in widget.enquiryData!.products!) {
-              int catId = billingProductList.indexWhere((element) =>
-                  element.category!.tmpcatid == elements.categoryid);
+              int catId = billingProductList.indexWhere((element) => element.category!.tmpcatid == elements.categoryid);
               int proId = -1;
               if (catId != -1) {
-                proId = billingProductList[catId].products!.indexWhere(
-                    (element) => element.productId == elements.productId);
+                proId = billingProductList[catId]
+                    .products!
+                    .indexWhere((element) => element.productId == elements.productId);
               }
 
               if (catId != -1 && proId != -1) {
                 setState(() {
-                  elements.discount =
-                      billingProductList[catId].products![proId].discount;
+                  elements.discount = billingProductList[catId].products![proId].discount;
                   billingProductList[catId].products![proId].qty = elements.qty;
-                  billingProductList[catId].products![proId].qtyForm!.text =
-                      elements.qty.toString();
+                  billingProductList[catId].products![proId].qtyForm!.text = elements.qty.toString();
                 });
 
                 editaddtoCart(elements);
@@ -1111,32 +1073,28 @@ class _BillingOneState extends State<BillingOne>
             // Update Discount & Packing Charges
             setState(() {
               discountSys = widget.enquiryData!.price!.discountsys ?? "%";
-              extraDiscountSys =
-                  widget.enquiryData!.price!.extraDiscountsys ?? "%";
+              extraDiscountSys = widget.enquiryData!.price!.extraDiscountsys ?? "%";
               packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
               discountInput = widget.enquiryData!.price!.discount ?? 0;
-              extraDiscountInput =
-                  widget.enquiryData!.price!.extraDiscount ?? 0;
+              extraDiscountInput = widget.enquiryData!.price!.extraDiscount ?? 0;
               packingChargeInput = widget.enquiryData!.price!.package ?? 0;
 
               customerInfo = widget.enquiryData!.customer;
             });
           } else if (widget.estimateData != null) {
             for (var elements in widget.estimateData!.products!) {
-              int catId = billingProductList.indexWhere((element) =>
-                  element.category!.tmpcatid == elements.categoryid);
+              int catId = billingProductList.indexWhere((element) => element.category!.tmpcatid == elements.categoryid);
               int proId = -1;
               if (catId != -1) {
-                proId = billingProductList[catId].products!.indexWhere(
-                    (element) => element.productId == elements.productId);
+                proId = billingProductList[catId]
+                    .products!
+                    .indexWhere((element) => element.productId == elements.productId);
               }
               if (catId != -1 && proId != -1) {
                 setState(() {
-                  elements.discount =
-                      billingProductList[catId].products![proId].discount;
+                  elements.discount = billingProductList[catId].products![proId].discount;
                   billingProductList[catId].products![proId].qty = elements.qty;
-                  billingProductList[catId].products![proId].qtyForm!.text =
-                      elements.qty.toString();
+                  billingProductList[catId].products![proId].qtyForm!.text = elements.qty.toString();
                 });
 
                 editaddtoCart(elements);
@@ -1159,12 +1117,10 @@ class _BillingOneState extends State<BillingOne>
             // Update Discount & Packing Charges
             setState(() {
               discountSys = widget.estimateData!.price!.discountsys ?? "%";
-              extraDiscountSys =
-                  widget.estimateData!.price!.extraDiscountsys ?? "%";
+              extraDiscountSys = widget.estimateData!.price!.extraDiscountsys ?? "%";
               packingChargeSys = widget.estimateData!.price!.packagesys ?? "%";
               discountInput = widget.estimateData!.price!.discount ?? 0;
-              extraDiscountInput =
-                  widget.estimateData!.price!.extraDiscount ?? 0;
+              extraDiscountInput = widget.estimateData!.price!.extraDiscount ?? 0;
               packingChargeInput = widget.estimateData!.price!.package ?? 0;
 
               customerInfo = widget.estimateData!.customer;
@@ -1188,9 +1144,7 @@ class _BillingOneState extends State<BillingOne>
   }
 
   tapQty(int index, {ProductDataModel? proData}) {
-    var tmpProductDetails = keyboardValue.isEmpty
-        ? billingProductList[crttab].products![index]
-        : proData!;
+    var tmpProductDetails = keyboardValue.isEmpty ? billingProductList[crttab].products![index] : proData!;
 
     int findCartIndex = cartDataList.indexWhere(
       (element) => element.productId == tmpProductDetails.productId,
@@ -1199,8 +1153,7 @@ class _BillingOneState extends State<BillingOne>
     if (findCartIndex != -1) {
       setState(() {
         cartDataList[findCartIndex].qty = cartDataList[findCartIndex].qty! + 1;
-        cartDataList[findCartIndex].qtyForm!.text =
-            cartDataList[findCartIndex].qty!.toString();
+        cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty!.toString();
         tmpProductDetails.qty = tmpProductDetails.qty! + 1;
         tmpProductDetails.qtyForm!.text = tmpProductDetails.qty.toString();
       });
@@ -1214,9 +1167,7 @@ class _BillingOneState extends State<BillingOne>
 
   addtoCart(int index, {ProductDataModel? proData}) {
     var cartDataInfo = CartDataModel();
-    var tmpProductDetails = keyboardValue.isEmpty
-        ? billingProductList[crttab].products![index]
-        : proData!;
+    var tmpProductDetails = keyboardValue.isEmpty ? billingProductList[crttab].products![index] : proData!;
     cartDataInfo.categoryId = tmpProductDetails.categoryid;
     cartDataInfo.categoryName = tmpProductDetails.categoryName;
     cartDataInfo.mrp = "500.00";
@@ -1266,9 +1217,7 @@ class _BillingOneState extends State<BillingOne>
   }
 
   addQty(int index, {ProductDataModel? proData}) {
-    var tmpProductDetails = keyboardValue.isEmpty
-        ? billingProductList[crttab].products![index]
-        : proData!;
+    var tmpProductDetails = keyboardValue.isEmpty ? billingProductList[crttab].products![index] : proData!;
     int findCartIndex = cartDataList.indexWhere(
       (element) => element.productId == tmpProductDetails.productId,
     );
@@ -1276,8 +1225,7 @@ class _BillingOneState extends State<BillingOne>
       setState(() {
         //Cart Product Qty Added
         cartDataList[findCartIndex].qty = cartDataList[findCartIndex].qty! + 1;
-        cartDataList[findCartIndex].qtyForm!.text =
-            cartDataList[findCartIndex].qty.toString();
+        cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
 
         // Product Qty Added
         tmpProductDetails.qty = tmpProductDetails.qty! + 1;
@@ -1287,9 +1235,7 @@ class _BillingOneState extends State<BillingOne>
   }
 
   lessQty(int index, {ProductDataModel? proData}) {
-    var tmpProductDetails = keyboardValue.isEmpty
-        ? billingProductList[crttab].products![index]
-        : proData!;
+    var tmpProductDetails = keyboardValue.isEmpty ? billingProductList[crttab].products![index] : proData!;
 
     int findCartIndex = cartDataList.indexWhere(
       (element) => element.productId == tmpProductDetails.productId,
@@ -1305,10 +1251,8 @@ class _BillingOneState extends State<BillingOne>
           tmpProductDetails.qtyForm!.text = tmpProductDetails.qty.toString();
         } else {
           // Less Qty in Cart Page
-          cartDataList[findCartIndex].qty =
-              cartDataList[findCartIndex].qty! - 1;
-          cartDataList[findCartIndex].qtyForm!.text =
-              cartDataList[findCartIndex].qty.toString();
+          cartDataList[findCartIndex].qty = cartDataList[findCartIndex].qty! - 1;
+          cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
 
           // Less Qty in Product Page
           tmpProductDetails.qty = tmpProductDetails.qty! - 1;
@@ -1335,8 +1279,7 @@ class _BillingOneState extends State<BillingOne>
 
           //qty Page Change
           cartDataList[findCartIndex].qty = int.parse(value);
-          cartDataList[findCartIndex].qtyForm!.text =
-              cartDataList[findCartIndex].qty.toString();
+          cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
 
           // billing Page Refrace
           billPageProvider.toggletab(true);
@@ -1348,10 +1291,8 @@ class _BillingOneState extends State<BillingOne>
           tmpProductDetails.qtyForm!.text = "1";
           //qty Page Change
           cartDataList[findCartIndex].qty = 1;
-          cartDataList[findCartIndex].qtyForm!.text =
-              cartDataList[findCartIndex].qty.toString();
-          cartDataList[findCartIndex].qtyForm!.text =
-              cartDataList[findCartIndex].qty.toString();
+          cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
+          cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
           FocusManager.instance.primaryFocus!.unfocus();
         });
       }
@@ -1370,16 +1311,14 @@ class _BillingOneState extends State<BillingOne>
         int productIndex = -1;
         int count = 0;
         for (var products in billingProductList) {
-          productIndex = products.products!
-              .indexWhere((element) => element.productId == value);
+          productIndex = products.products!.indexWhere((element) => element.productId == value);
           if (productIndex != -1) {
             break;
           }
           count += 1;
         }
         if (productIndex != -1) {
-          var tmpProductDetails =
-              billingProductList[count].products![productIndex];
+          var tmpProductDetails = billingProductList[count].products![productIndex];
 
           int findCartIndex = cartDataList.indexWhere(
             (element) => element.productId == tmpProductDetails.productId,
@@ -1390,13 +1329,10 @@ class _BillingOneState extends State<BillingOne>
               controller!.animateTo(crttab);
               scrollToPosition(findPostionRow(productIndex), 0);
               tmpProductDetails.qty = tmpProductDetails.qty! + 1;
-              tmpProductDetails.qtyForm!.text =
-                  tmpProductDetails.qty.toString();
+              tmpProductDetails.qtyForm!.text = tmpProductDetails.qty.toString();
               //qty Page Change
-              cartDataList[findCartIndex].qty =
-                  billingProductList[count].products![productIndex].qty;
-              cartDataList[findCartIndex].qtyForm!.text =
-                  cartDataList[findCartIndex].qty.toString();
+              cartDataList[findCartIndex].qty = billingProductList[count].products![productIndex].qty;
+              cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
             });
           } else {
             setState(() {
@@ -1441,11 +1377,9 @@ class _BillingOneState extends State<BillingOne>
 
   filterProductCrtTab() {
     if (isPrice) {
-      dataList = productDataList
-          .where((element) => element.price.toString().contains(keyboardValue));
+      dataList = productDataList.where((element) => element.price.toString().contains(keyboardValue));
     } else {
-      dataList = productDataList.where(
-          (element) => element.productCode.toString().contains(keyboardValue));
+      dataList = productDataList.where((element) => element.productCode.toString().contains(keyboardValue));
     }
 
     setState(() {
@@ -1477,8 +1411,7 @@ class _BillingOneState extends State<BillingOne>
     super.initState();
     // Check initial connection and perform actions
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final connectionProvider =
-          Provider.of<ConnectionProvider>(context, listen: false);
+      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
         AccountValid.accountValid(context);
         billingHandler = getProductList();
@@ -1497,8 +1430,7 @@ class _BillingOneState extends State<BillingOne>
 
     // Add listener to ConnectionProvider for connection changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final connectionProvider =
-          Provider.of<ConnectionProvider>(context, listen: false);
+      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
       connectionProvider.addListener(() {
         if (connectionProvider.isConnected) {
           AccountValid.accountValid(context);
@@ -1579,14 +1511,13 @@ class _BillingOneState extends State<BillingOne>
       ).then((barcodeScanRes) async {
         loading(context);
         barcodeScanRes = barcodeScanRes.replaceFirst(RegExp(r']C1'), '');
-        final player = AudioPlayer();
-        await player.play(AssetSource('audio/store-scanner.mp3'), volume: 1);
+        // final player = AudioPlayer();
+        // await player.play(AssetSource('audio/store-scanner.mp3'), volume: 1);
         if (barcodeScanRes.isNotEmpty) {
           int productIndex = -1;
           int count = 0;
           for (var products in billingProductList) {
-            productIndex = products.products!
-                .indexWhere((element) => element.qrCode == barcodeScanRes);
+            productIndex = products.products!.indexWhere((element) => element.qrCode == barcodeScanRes);
             if (productIndex != -1) {
               break;
             }
@@ -1594,8 +1525,7 @@ class _BillingOneState extends State<BillingOne>
           }
           Navigator.pop(context);
           if (productIndex != -1) {
-            var tmpProductDetails =
-                billingProductList[count].products![productIndex];
+            var tmpProductDetails = billingProductList[count].products![productIndex];
 
             int findCartIndex = cartDataList.indexWhere(
               (element) => element.productId == tmpProductDetails.productId,
@@ -1604,13 +1534,10 @@ class _BillingOneState extends State<BillingOne>
               setState(() {
                 crttab = count;
                 tmpProductDetails.qty = tmpProductDetails.qty! + 1;
-                tmpProductDetails.qtyForm!.text =
-                    tmpProductDetails.qty.toString();
+                tmpProductDetails.qtyForm!.text = tmpProductDetails.qty.toString();
                 //qty Page Change
-                cartDataList[findCartIndex].qty =
-                    billingProductList[count].products![productIndex].qty;
-                cartDataList[findCartIndex].qtyForm!.text =
-                    cartDataList[findCartIndex].qty.toString();
+                cartDataList[findCartIndex].qty = billingProductList[count].products![productIndex].qty;
+                cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
               });
             } else {
               setState(() {
@@ -1691,8 +1618,7 @@ class _BillingOneState extends State<BillingOne>
 
   scrollToPosition(int row, int column) {
     final itemIndex = row * 2 + column;
-    final itemExtent = MediaQuery.of(context).size.width /
-        3.02; // Replace with your item's height or width
+    final itemExtent = MediaQuery.of(context).size.width / 3.02; // Replace with your item's height or width
 
     scrollController.animateTo(
       itemIndex * itemExtent,
@@ -1704,11 +1630,9 @@ class _BillingOneState extends State<BillingOne>
   bool showcart() {
     bool result = false;
     if (cartDataList.isNotEmpty) {
-      if (MediaQuery.of(context).size.width > 700 &&
-          orientation == Orientation.portrait) {
+      if (MediaQuery.of(context).size.width > 700 && orientation == Orientation.portrait) {
         result = true;
-      } else if (MediaQuery.of(context).size.width > 600 &&
-          orientation == Orientation.landscape) {
+      } else if (MediaQuery.of(context).size.width > 600 && orientation == Orientation.landscape) {
         result = true;
       }
     }
@@ -1746,13 +1670,10 @@ class _QRAlertProductState extends State<QRAlertProduct> {
   TextEditingController qtyForm = TextEditingController();
   addProduct() {
     FocusManager.instance.primaryFocus!.unfocus();
-    var tmpProductDetails =
-        billingProductList[widget.count].products![widget.index];
+    var tmpProductDetails = billingProductList[widget.count].products![widget.index];
     try {
       loading(context);
-      if (qtyForm.text.isNotEmpty &&
-          qtyForm.text != "0" &&
-          qtyForm.text.toLowerCase() != "null") {
+      if (qtyForm.text.isNotEmpty && qtyForm.text != "0" && qtyForm.text.toLowerCase() != "null") {
         setState(() {
           tmpProductDetails.qty = int.parse(qtyForm.text);
           tmpProductDetails.qtyForm = qtyForm;
@@ -1764,8 +1685,7 @@ class _QRAlertProductState extends State<QRAlertProduct> {
           setState(() {
             //qty Page Change
             cartDataList[findCartIndex].qty = int.parse(qtyForm.text);
-            cartDataList[findCartIndex].qtyForm!.text =
-                cartDataList[findCartIndex].qty.toString();
+            cartDataList[findCartIndex].qtyForm!.text = cartDataList[findCartIndex].qty.toString();
           });
         } else {
           addtoCart();
@@ -1784,8 +1704,7 @@ class _QRAlertProductState extends State<QRAlertProduct> {
   addtoCart() {
     var cartDataInfo = CartDataModel();
 
-    var tmpProductDetails =
-        billingProductList[widget.count].products![widget.index];
+    var tmpProductDetails = billingProductList[widget.count].products![widget.index];
     cartDataInfo.categoryId = tmpProductDetails.categoryid;
     cartDataInfo.categoryName = tmpProductDetails.categoryName;
     cartDataInfo.mrp = "500.00";
@@ -1807,8 +1726,7 @@ class _QRAlertProductState extends State<QRAlertProduct> {
   }
 
   initfun() async {
-    var tmpProductDetails =
-        billingProductList[widget.count].products![widget.index];
+    var tmpProductDetails = billingProductList[widget.count].products![widget.index];
     if (tmpProductDetails.qty != null && tmpProductDetails.qty! >= 1) {
       setState(() {
         qtyForm.text = tmpProductDetails.qty.toString();
@@ -1824,12 +1742,10 @@ class _QRAlertProductState extends State<QRAlertProduct> {
 
   @override
   Widget build(BuildContext context) {
-    var tmpProductDetails =
-        billingProductList[widget.count].products![widget.index];
+    var tmpProductDetails = billingProductList[widget.count].products![widget.index];
     return Center(
       child: Container(
-        margin:
-            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        margin: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         padding: const EdgeInsets.all(10),
         constraints: const BoxConstraints(maxWidth: 500),
         decoration: BoxDecoration(
