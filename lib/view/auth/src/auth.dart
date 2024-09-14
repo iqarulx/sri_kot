@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'admin.dart';
 import 'sign.dart';
 
 PageController authPage = PageController();
@@ -52,32 +51,32 @@ class _AuthState extends State<Auth> {
             statusBarColor: Colors.transparent,
             statusBarIconBrightness: Brightness.dark,
           ),
-          actions: [
-            TextButton(
-                onPressed: () async {
-                  if (crtTab == 1) {
-                    setState(() {
-                      authPage.animateToPage(
-                        0,
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeIn,
-                      );
-                    });
-                  } else if (crtTab == 0) {
-                    setState(() {
-                      authPage.animateToPage(
-                        1,
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeIn,
-                      );
-                    });
-                  }
-                },
-                child: crtTab != 0
-                    ? const Text(
-                        "Login",
-                      )
-                    : const Icon(CupertinoIcons.person)),
+          actions: const [
+            // TextButton(
+            //     onPressed: () async {
+            //       if (crtTab == 1) {
+            //         setState(() {
+            //           authPage.animateToPage(
+            //             0,
+            //             duration: const Duration(milliseconds: 600),
+            //             curve: Curves.easeIn,
+            //           );
+            //         });
+            //       } else if (crtTab == 0) {
+            //         setState(() {
+            //           authPage.animateToPage(
+            //             1,
+            //             duration: const Duration(milliseconds: 600),
+            //             curve: Curves.easeIn,
+            //           );
+            //         });
+            //       }
+            //     },
+            //     child: crtTab != 0
+            //         ? const Text(
+            //             "Login",
+            //           )
+            //         : const Icon(CupertinoIcons.person)),
           ],
         ),
         backgroundColor: Colors.white,
@@ -86,7 +85,6 @@ class _AuthState extends State<Auth> {
           physics: const NeverScrollableScrollPhysics(),
           children: const [
             Signin(),
-            Admin(),
           ],
           onPageChanged: (value) {
             setState(() {

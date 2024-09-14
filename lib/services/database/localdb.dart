@@ -49,15 +49,10 @@ class LocalDB {
     return true;
   }
 
-  static Future<List> checklogin() async {
+  static Future<bool> checklogin() async {
     var db = await _connect();
     var result = db.getBool('login') ?? false;
-    if (result) {
-      return [result, 0];
-    } else {
-      result = db.getBool('super_login') ?? false;
-      return [result, 1];
-    }
+    return result;
   }
 
   static Future<bool> changeBilling(int value) async {

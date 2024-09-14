@@ -1,4 +1,3 @@
-export 'src/admin.dart';
 export 'src/auth.dart';
 export 'src/forgot_pass.dart';
 export 'src/plans_overview.dart';

@@ -9,7 +9,7 @@ import 'firebase_options.dart';
 import 'provider/provider.dart';
 import 'services/services.dart';
 
-Future<List> checklogin() async {
+Future<bool> checklogin() async {
   return LocalDB.checklogin();
 }
 
@@ -21,9 +21,7 @@ Future<void> main() async {
   );
 
   var result = await checklogin();
-  var login = result[0];
-  var isSuperAdmin = result[1] == 1 ? true : false;
-
+  var login = result;
   final appUpdate = await UpdateService.isUpdateAvailable();
 
   runApp(
@@ -35,7 +33,6 @@ Future<void> main() async {
       ],
       child: MyApp(
         login: login,
-        isSuperAdmin: isSuperAdmin,
         appUpdate: appUpdate,
       ),
     ),
