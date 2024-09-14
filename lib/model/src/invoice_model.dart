@@ -8,6 +8,7 @@ part 'invoice_model.g.dart';
 
 @JsonSerializable()
 class InvoiceModel {
+  String? companyId;
   String? partyName;
   String? address;
   String? deliveryaddress;
@@ -47,6 +48,7 @@ class InvoiceModel {
 
   Map<String, dynamic> toCreationMap() {
     var mapping = <String, dynamic>{};
+    mapping["company_id"] = companyId;
     mapping["bill_no"] = billNo;
     mapping["party_name"] = partyName;
     mapping["address"] = address;

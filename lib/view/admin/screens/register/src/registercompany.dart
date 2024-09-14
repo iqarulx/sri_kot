@@ -100,7 +100,8 @@ class _RegisterCompanyState extends State<RegisterCompany> {
         "free_trial": {"opened": null, "ends_in": null},
         "max_user_count": 1,
         "max_staff_count": 1,
-        "plan": PlanTypes.free.name
+        "plan": PlanTypes.free.name,
+        "expiry_date": DateTime.now().add(const Duration(days: 365))
       }).then((value) {
         Navigator.pop(context);
         Navigator.pop(context);

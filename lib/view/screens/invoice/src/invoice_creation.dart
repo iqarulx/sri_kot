@@ -206,6 +206,8 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           model.listingProducts = [];
 
           model.listingProducts!.addAll(cartProductList);
+          model.companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
+
           if (widget.invoice == null || widget.invoice!.docID == null) {
             model.biilDate = DateTime.now();
             model.createdDate = DateTime.now();
