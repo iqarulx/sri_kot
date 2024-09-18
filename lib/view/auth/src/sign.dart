@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '/view/admin/admin.dart';
 import '/view/auth/auth.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -9,6 +8,8 @@ import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/screens/screens.dart';
+import 'register.dart';
+import 'registercompany.dart';
 
 class Signin extends StatefulWidget {
   const Signin({super.key});

@@ -46,7 +46,7 @@ class UserAdminModel {
     mapping["created_date_time"] = createdDateTime;
     mapping["device"] = deviceModel!.toMap();
     mapping["company_name"] = companyName;
-    mapping["company_address"] = companyAddress;
+    mapping["address"] = companyAddress;
 
     return mapping;
   }
