@@ -25,11 +25,11 @@ class _ForgotPassState extends State<ForgotPass> {
         await FirebaseAuth.instance
             .sendPasswordResetEmail(email: email.text)
             .then((value) {
-          snackBarCustom(context, true, "Password reset mail send");
+          snackbar(context, true, "Password reset mail send");
         });
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "User not found");
+        snackbar(context, false, "User not found");
       }
     }
   }

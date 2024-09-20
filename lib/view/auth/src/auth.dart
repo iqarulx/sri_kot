@@ -36,6 +36,7 @@ class _AuthState extends State<Auth> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: false,
+          automaticallyImplyLeading: false,
           elevation: 0,
           backgroundColor: Colors.white,
           title: const Text(

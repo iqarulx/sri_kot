@@ -81,7 +81,7 @@ class _CustomerListingState extends State<CustomerListing> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -146,7 +146,6 @@ class _CustomerListingState extends State<CustomerListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {

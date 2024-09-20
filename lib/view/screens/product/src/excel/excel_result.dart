@@ -77,16 +77,16 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
             .then((value) {
           if (value != null && value) {
             Navigator.pop(context);
-            snackBarCustom(context, true, "Successfully Uploaded Products");
+            snackbar(context, true, "Successfully Uploaded Products");
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Failed to Upload Products");
+            snackbar(context, false, "Failed to Upload Products");
           }
         });
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -209,7 +209,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
                                 print("Product Created");
                                 Navigator.pop(context);
                                 Navigator.pop(context, true);
-                                snackBarCustom(context, true,
+                                snackbar(context, true,
                                     "Product Upload Successfully");
                               }).catchError((error) =>
                                   throw ('Failed to execute batch write: $error'));
@@ -232,9 +232,8 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
         }
       });
     } catch (e) {
-      print(e.toString());
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -419,7 +418,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
               print("Product Created");
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Product Upload Successfully");
+              snackbar(context, true, "Product Upload Successfully");
             }).catchError(
                 (error) => throw ('Failed to execute batch write: $error'));
           }).catchError(
@@ -427,9 +426,8 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
         }
       });
     } catch (e) {
-      print(e.toString());
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

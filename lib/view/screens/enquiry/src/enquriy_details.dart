@@ -115,7 +115,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -187,7 +187,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -203,7 +203,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
             .then((value) {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(context, true, "Successfully Deleted");
+          snackbar(context, true, "Successfully Deleted");
         });
       } else {
         await LocalService.deleteEnquiry(
@@ -211,12 +211,12 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
             .then((value) {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(context, true, "Successfully Deleted");
+          snackbar(context, true, "Successfully Deleted");
         });
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -244,7 +244,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     .then((value) {
                   Navigator.pop(context);
                   Navigator.pop(context, true);
-                  snackBarCustom(
+                  snackbar(
                     context,
                     true,
                     "Successfully Enquiry Converted to Estimate",
@@ -256,7 +256,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
         } else {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(
+          snackbar(
             context,
             true,
             "Successfully Enquiry Converted to Estimate",
@@ -323,8 +323,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
       }
     } catch (e) {
       // Navigator.pop(context);
-      print(e);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -342,7 +341,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 .then((value) {
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Enqiry Duplicated");
+              snackbar(context, true, "Successfully Enqiry Duplicated");
             });
           }
         });
@@ -352,7 +351,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
             .then((value) {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(context, true, "Successfully Enqiry Duplicated");
+          snackbar(context, true, "Successfully Enqiry Duplicated");
         });
       }
     } catch (e) {
@@ -478,7 +477,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -493,7 +492,6 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
     return Scaffold(
       appBar: appbar(),
       floatingActionButton: floatingButton(context),
-      backgroundColor: const Color(0xffEEEEEE),
       body: ListView(
         padding: const EdgeInsets.all(10),
         children: [

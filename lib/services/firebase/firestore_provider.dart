@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:sri_kot/constants/src/enum.dart';
 import 'package:sri_kot/services/database/localdb.dart';
+import '../../log/log.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
-import '/provider/src/logger.dart';
 import '/utils/src/utilities.dart';
 
 final _instances = FirebaseFirestore.instance;
@@ -64,7 +64,7 @@ class FireStoreProvider {
         return value.id;
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -76,7 +76,7 @@ class FireStoreProvider {
         return value.id;
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -177,7 +177,7 @@ class FireStoreProvider {
         });
         return true;
       } catch (e) {
-        log.e("Error updating document: $e");
+        Log.addLog("${DateTime.now()} : Error updating document: $e");
         return false;
       }
     } else if (type == UserType.staff) {
@@ -189,7 +189,7 @@ class FireStoreProvider {
         });
         return true;
       } catch (e) {
-        log.e("Error updating document: $e");
+        Log.addLog("${DateTime.now()} : Error updating document: $e");
         return false;
       }
     } else if (type == UserType.admin) {
@@ -201,7 +201,7 @@ class FireStoreProvider {
         });
         return true;
       } catch (e) {
-        log.e("Error updating document: $e");
+        Log.addLog("${DateTime.now()} : Error updating document: $e");
         return false;
       }
     }
@@ -286,7 +286,8 @@ class FireStoreProvider {
         }
       }
     } on Exception catch (e) {
-      print(e);
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+
       return false;
     }
   }

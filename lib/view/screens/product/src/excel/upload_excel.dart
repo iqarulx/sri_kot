@@ -25,7 +25,6 @@ class _UploadExcelState extends State<UploadExcel>
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xffEEEEEE),
         appBar: appbar(),
         body: body(),
       ),

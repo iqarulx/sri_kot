@@ -25,7 +25,6 @@ class _BackupState extends State<Backup> {
         topRight: Radius.circular(30),
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xffEEEEEE),
         appBar: appbar(context),
         bottomNavigationBar: bottomAppbar(context),
         body: ListView(

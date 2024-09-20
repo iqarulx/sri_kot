@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:sri_kot/log/log.dart';
 
 Future saveFileToLocal(
   File file,
@@ -61,6 +62,6 @@ Future saveFileToLocal(
 
     print('File saved and metadata updated.');
   } catch (e) {
-    print('Error saving file: $e');
+    Log.addLog("${DateTime.now()} : Error saving file: $e");
   }
 }

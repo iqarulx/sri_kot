@@ -96,7 +96,6 @@ class _DeletedItemsState extends State<DeletedItems> {
         topRight: Radius.circular(30),
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xffEEEEEE),
         appBar: appbar(context),
         body: FutureBuilder(
           future: itemsHanlder,

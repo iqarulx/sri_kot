@@ -25,7 +25,6 @@ class _ProductListingState extends State<ProductListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {
@@ -642,7 +641,7 @@ class _ProductListingState extends State<ProductListing> {
       }
       return null;
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -657,7 +656,7 @@ class _ProductListingState extends State<ProductListing> {
       helper.saveAndLaunchFile(response, "Product Template.xlsx");
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

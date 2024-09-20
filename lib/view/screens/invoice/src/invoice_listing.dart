@@ -108,7 +108,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
         return invoiceList;
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       throw e.toString();
     }
   }
@@ -154,7 +154,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Something went Wrong");
+            snackbar(context, false, "Something went Wrong");
           }
         });
       } else {
@@ -176,7 +176,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -245,7 +245,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -382,7 +382,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -440,7 +440,6 @@ class _InvoiceListingState extends State<InvoiceListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
           icon:

@@ -19,7 +19,6 @@ class _HelpState extends State<Help> {
         ),
         title: const Text("Help"),
       ),
-      backgroundColor: const Color(0xffEEEEEE),
       body: ListView(
         children: [
           Padding(

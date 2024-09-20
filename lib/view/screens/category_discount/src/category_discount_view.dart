@@ -68,7 +68,7 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
       }
       return null;
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -102,7 +102,6 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {

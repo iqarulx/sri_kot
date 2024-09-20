@@ -319,26 +319,24 @@ class _UserDetailsState extends State<UserDetails> {
               // )
               //     .then((value) {
               Navigator.pop(context);
-              snackBarCustom(context, true, "Successfully User Data Updated");
+              snackbar(context, true, "Successfully User Data Updated");
               // }).catchError((onError) {
-              //   snackBarCustom(
+              //   snackbar(
               //       context, false, "Something Went wrong Please try again");
               // });
             } else {
-              snackBarCustom(
-                  context, false, "Something Went wrong Please try again");
+              snackbar(context, false, "Something Went wrong Please try again");
             }
           });
         }).catchError((onError) {
-          snackBarCustom(
-              context, false, "Something Went wrong Please try again");
+          snackbar(context, false, "Something Went wrong Please try again");
         });
       } else {
         Navigator.pop(context);
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -364,7 +362,7 @@ class _UserDetailsState extends State<UserDetails> {
                   curve: Curves.easeIn,
                 );
               });
-              snackBarCustom(
+              snackbar(
                 context,
                 false,
                 "Successfully Delete the user",
@@ -377,7 +375,7 @@ class _UserDetailsState extends State<UserDetails> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

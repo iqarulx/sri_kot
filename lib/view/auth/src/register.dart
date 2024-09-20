@@ -65,14 +65,14 @@ class _RegisterState extends State<Register> {
           }
         }).catchError((onError) {
           Navigator.pop(context);
-          snackBarCustom(context, false, onError.toString());
+          snackbar(context, false, onError.toString());
         });
       } catch (e) {
         Navigator.pop(context);
-        snackBarCustom(context, false, e.toString());
+        snackbar(context, false, e.toString());
       }
     } else {
-      snackBarCustom(context, false, "Fill Correct Form Details");
+      snackbar(context, false, "Fill Correct Form Details");
     }
   }
 

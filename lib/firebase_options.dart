@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -63,6 +54,40 @@ class DefaultFirebaseOptions {
     messagingSenderId: '565962941142',
     projectId: 'sri-kot',
     storageBucket: 'sri-kot.appspot.com',
+    androidClientId: '565962941142-2e8a60qj2ram8kq7gtlaed34n1iaiev8.apps.googleusercontent.com',
+    iosClientId: '565962941142-f0p2sldc374ujvr5g9vrdjj3bunbi495.apps.googleusercontent.com',
     iosBundleId: 'com.srisoftwarez.sriKot',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAGcLGZZapYB92-9t_0OM8sPdM9cXzdxC4',
+    appId: '1:565962941142:web:4c6ded4efbbdcf39cf9f77',
+    messagingSenderId: '565962941142',
+    projectId: 'sri-kot',
+    authDomain: 'sri-kot.firebaseapp.com',
+    storageBucket: 'sri-kot.appspot.com',
+    measurementId: 'G-72Q28QXLJB',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyC_nyloj_eR2-S4lpwmbbqbG1RCIrTA5DU',
+    appId: '1:565962941142:ios:e25d1bf2792fdfb9cf9f77',
+    messagingSenderId: '565962941142',
+    projectId: 'sri-kot',
+    storageBucket: 'sri-kot.appspot.com',
+    androidClientId: '565962941142-2e8a60qj2ram8kq7gtlaed34n1iaiev8.apps.googleusercontent.com',
+    iosClientId: '565962941142-f0p2sldc374ujvr5g9vrdjj3bunbi495.apps.googleusercontent.com',
+    iosBundleId: 'com.srisoftwarez.sriKot',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAGcLGZZapYB92-9t_0OM8sPdM9cXzdxC4',
+    appId: '1:565962941142:web:9f741eb253a9028ecf9f77',
+    messagingSenderId: '565962941142',
+    projectId: 'sri-kot',
+    authDomain: 'sri-kot.firebaseapp.com',
+    storageBucket: 'sri-kot.appspot.com',
+    measurementId: 'G-ZSNZPS0SCS',
+  );
+
 }

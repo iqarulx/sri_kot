@@ -13,7 +13,6 @@ class _SupportState extends State<Support> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         title: const Text("Support"),
         leading: IconButton(

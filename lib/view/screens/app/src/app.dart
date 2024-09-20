@@ -303,7 +303,7 @@ class _UserHomeState extends State<UserHome> {
         });
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -323,7 +323,7 @@ class _UserHomeState extends State<UserHome> {
         });
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -343,7 +343,7 @@ class _UserHomeState extends State<UserHome> {
         });
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -363,7 +363,7 @@ class _UserHomeState extends State<UserHome> {
         });
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

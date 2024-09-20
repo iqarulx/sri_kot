@@ -142,7 +142,6 @@ class _CustomerSearchState extends State<CustomerSearch> {
                   ),
                 ),
               ),
-              backgroundColor: const Color(0xffEEEEEE),
               body: FutureBuilder(
                 future: customerHandler,
                 builder: (context, snapshot) {

@@ -25,7 +25,6 @@ class _StaffListingState extends State<StaffListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {
@@ -336,8 +335,7 @@ class _StaffListingState extends State<StaffListing> {
         return null;
       }
     } catch (e) {
-      log.e(e.toString());
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }

@@ -28,10 +28,7 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: appbar(),
-        backgroundColor: const Color(0xffEEEEEE),
-        body: body());
+    return Scaffold(appBar: appbar(), body: body());
   }
 
   FutureBuilder<dynamic> body() {
@@ -299,11 +296,11 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
         await helper.saveAndLaunchFile(data!, 'Pricelist.pdf');
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "No Product Avliable");
+        snackbar(context, false, "No Product Avliable");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -313,11 +310,11 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
         await Printing.sharePdf(bytes: data!);
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "No Product Avliable");
+        snackbar(context, false, "No Product Avliable");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -329,11 +326,11 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
         );
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "No Product Avliable");
+        snackbar(context, false, "No Product Avliable");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

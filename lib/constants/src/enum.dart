@@ -30,7 +30,8 @@ enum LocalData {
   companyid,
   companyUniqueId,
   companyName,
-  companyAddress
+  companyAddress,
+  isAdmin
 }
 
 enum PasswordError {

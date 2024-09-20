@@ -94,15 +94,14 @@ class _AddCustomerState extends State<AddCustomer> {
                   city = null;
                   cityMenuList.clear();
                 });
-                snackBarCustom(
-                    context, true, "Successfully Created New Customer");
+                snackbar(context, true, "Successfully Created New Customer");
               } else {
-                snackBarCustom(context, false, "Failed to Create New Customer");
+                snackbar(context, false, "Failed to Create New Customer");
               }
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Company Details Not Fetch");
+            snackbar(context, false, "Company Details Not Fetch");
           }
         });
       } else {
@@ -110,7 +109,7 @@ class _AddCustomerState extends State<AddCustomer> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

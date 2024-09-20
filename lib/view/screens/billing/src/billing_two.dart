@@ -221,7 +221,7 @@ class _BillingTwoState extends State<BillingTwo> {
       setState(() {
         isLoading = false;
       });
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -394,7 +394,7 @@ class _BillingTwoState extends State<BillingTwo> {
       setState(() {
         isLoading = false;
       });
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -814,12 +814,12 @@ class _BillingTwoState extends State<BillingTwo> {
             //   }
             // });
           } else {
-            snackBarCustom(context, false, "No Product Available");
+            snackbar(context, false, "No Product Available");
           }
         }
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -838,7 +838,6 @@ class _BillingTwoState extends State<BillingTwo> {
   Widget build(BuildContext context) {
     return Scaffold(
         key: billingTwoKey,
-        backgroundColor: const Color(0xffEEEEEE),
         endDrawer: CartDrawer(
           isEdit: widget.isEdit ?? false,
           enquiryDocId: widget.enquiryData?.docID ?? '',

@@ -47,7 +47,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
       }
       return null;
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -121,7 +121,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
               )
                   .then((value) {
                 Navigator.pop(context);
-                snackBarCustom(context, true, "Successfully Updated");
+                snackbar(context, true, "Successfully Updated");
               });
             } else {
               Navigator.pop(context);
@@ -133,7 +133,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
       // await FireStoreProvider().
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -148,7 +148,6 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         title: Text(widget.categoryName),
       ),

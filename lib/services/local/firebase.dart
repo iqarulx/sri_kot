@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../log/log.dart';
+
 final _instances = FirebaseFirestore.instance;
 
 class Firebase {
@@ -11,6 +13,9 @@ class Firebase {
   static final product = _instances.collection('product');
   static final customer = _instances.collection('customer');
   static final appVersion = _instances.collection('app_version');
+  static final purchases = _instances.collection('purchases');
+  static final redeemCode = _instances.collection('redeem_code');
+  static final admin = _instances.collection('admin');
 
   static Future<List<QueryDocumentSnapshot>?> get({
     required CollectionReference collection,
@@ -21,7 +26,7 @@ class Firebase {
         return result.docs;
       }
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
     return null;
   }
@@ -36,7 +41,7 @@ class Firebase {
         return result;
       }
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
     return null;
   }
@@ -52,7 +57,7 @@ class Firebase {
         return result.docs;
       }
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
     return null;
   }
@@ -67,7 +72,7 @@ class Firebase {
         return result.id;
       }
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
     return null;
   }
@@ -81,7 +86,7 @@ class Firebase {
       var result = await collection.doc(docId).update(data);
       return true;
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
       return false;
     }
   }

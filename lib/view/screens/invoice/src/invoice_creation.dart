@@ -84,12 +84,12 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
               });
             }
           } else {
-            snackBarCustom(context, false, "Product Not Avaliable");
+            snackbar(context, false, "Product Not Avaliable");
           }
         });
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -133,10 +133,10 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           rate.clear();
         });
       } else {
-        snackBarCustom(context, false, "This Product Already in Cart");
+        snackbar(context, false, "This Product Already in Cart");
       }
     } else {
-      snackBarCustom(context, false, "Fill the All Form");
+      snackbar(context, false, "Fill the All Form");
     }
   }
 
@@ -221,8 +221,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                   .then((value) {
                 Navigator.pop(context);
                 Navigator.pop(context, true);
-                snackBarCustom(
-                    context, true, "Successfully Created New Invoice");
+                snackbar(context, true, "Successfully Created New Invoice");
               });
             });
           } else {
@@ -235,17 +234,17 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
               Navigator.pop(context);
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Updated Invoice");
+              snackbar(context, true, "Successfully Updated Invoice");
             });
           }
         } else {
           Navigator.pop(context);
-          snackBarCustom(context, false, "Check the All form");
+          snackbar(context, false, "Check the All form");
         }
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -436,7 +435,6 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xffEEEEEE),
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded,

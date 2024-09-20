@@ -107,7 +107,6 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
           icon:

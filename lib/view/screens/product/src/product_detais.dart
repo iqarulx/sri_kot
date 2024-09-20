@@ -29,7 +29,6 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(),
       body: FutureBuilder(
         future: productDetails,
@@ -502,11 +501,11 @@ class _ProductDetailsState extends State<ProductDetails> {
               .then((value) {
             Navigator.pop(context);
             Navigator.pop(context);
-            snackBarCustom(context, true, "Product Delete Successfully");
+            snackbar(context, true, "Product Delete Successfully");
           });
         } catch (e) {
           Navigator.pop(context);
-          snackBarCustom(context, false, e.toString());
+          snackbar(context, false, e.toString());
         }
       }
     });
@@ -559,24 +558,24 @@ class _ProductDetailsState extends State<ProductDetails> {
                   //     .then((value) {
                   Navigator.pop(context);
                   Navigator.pop(context, true);
-                  snackBarCustom(context, true, "Product Update Successfully");
+                  snackbar(context, true, "Product Update Successfully");
                   // });
                 });
               } else {
                 Navigator.pop(context);
                 Navigator.pop(context, true);
-                snackBarCustom(context, true, "Product Update Successfully");
+                snackbar(context, true, "Product Update Successfully");
               }
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Something went Wrong");
+            snackbar(context, false, "Something went Wrong");
           }
         });
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -631,18 +630,18 @@ class _ProductDetailsState extends State<ProductDetails> {
                   productImage = null;
                 });
                 Navigator.pop(context, true);
-                snackBarCustom(
+                snackbar(
                   context,
                   true,
                   "Successfully Created New Product",
                 );
               } else {
-                snackBarCustom(context, false, "Failed to Create New Product");
+                snackbar(context, false, "Failed to Create New Product");
               }
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Company Details Not Fetch");
+            snackbar(context, false, "Company Details Not Fetch");
           }
         });
       } else {
@@ -650,7 +649,7 @@ class _ProductDetailsState extends State<ProductDetails> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

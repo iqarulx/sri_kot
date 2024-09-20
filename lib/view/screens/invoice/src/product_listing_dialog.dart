@@ -58,7 +58,6 @@ class _ProductListingDialogState extends State<ProductListingDialog> {
         },
         decoration: const InputDecoration(
           filled: true,
-          fillColor: Color(0xffEEEEEE),
           border: OutlineInputBorder(
             borderSide: BorderSide.none,
           ),

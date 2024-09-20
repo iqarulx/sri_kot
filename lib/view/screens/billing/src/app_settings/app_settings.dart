@@ -321,7 +321,7 @@ class _AppSettingsState extends State<AppSettings> {
                 //   child: GestureDetector(
                 //     onTap: () async {
                 //       await FastCachedImageConfig.clearAllCachedImages();
-                //       snackBarCustom(context, true, "Cache cleared");
+                //       snackbar(context, true, "Cache cleared");
                 //     },
                 //     child: Container(
                 //       height: 40,

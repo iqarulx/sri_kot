@@ -142,6 +142,8 @@ class LocalDB {
       return db.getString('company_name');
     } else if (type == LocalData.companyAddress) {
       return db.getString('company_address');
+    } else if (type == LocalData.isAdmin) {
+      return db.getBool('isAdmin');
     } else if (type == LocalData.all) {
       var data = {
         "login": db.getBool('login'),

@@ -126,7 +126,7 @@ class _CompanyListingState extends State<CompanyListing> {
                         // )
                         //     .then((value) {
                         Navigator.pop(context);
-                        snackBarCustom(
+                        snackbar(
                           context,
                           true,
                           "Successfully Updated Company Information",
@@ -136,12 +136,12 @@ class _CompanyListingState extends State<CompanyListing> {
                     } else {
                       // exit Loading Progroccess
                       Navigator.pop(context);
-                      snackBarCustom(context, false, "Something went Wrong");
+                      snackbar(context, false, "Something went Wrong");
                     }
                   });
                 } else {
                   Navigator.pop(context);
-                  snackBarCustom(
+                  snackbar(
                     context,
                     true,
                     "Successfully Updated Company Information",
@@ -151,16 +151,16 @@ class _CompanyListingState extends State<CompanyListing> {
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Something went Wrong");
+            snackbar(context, false, "Something went Wrong");
           }
         });
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "Fill the All Required Form");
+        snackbar(context, false, "Fill the All Required Form");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -193,7 +193,6 @@ class _CompanyListingState extends State<CompanyListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
           icon:

@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../log/log.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/constants/constants.dart';
@@ -13,47 +14,6 @@ import 'firebase.dart';
 final _instances = FirebaseFirestore.instance;
 
 class LocalService {
-  static Future<Map> checkTrialEnd({required String uid}) async {
-    try {
-      var result = await Firebase.profile.doc(uid).get();
-
-      if (result.exists) {
-        var data = result.data();
-        if (data != null) {
-          var freeTrial = data["free_trial"];
-          if (freeTrial != null) {
-            var endsInTimestamp = freeTrial["ends_in"];
-            if (endsInTimestamp != null) {
-              DateTime endsInDateTime = (endsInTimestamp as Timestamp).toDate();
-              DateTime now = DateTime.now();
-              if (endsInDateTime.isBefore(now)) {
-                return {
-                  "ends_in": endsInTimestamp,
-                  "is_end": true,
-                };
-              } else {
-                return {
-                  "ends_in": endsInTimestamp,
-                  "is_end": false,
-                };
-              }
-            }
-          }
-        }
-      }
-      return {
-        "ends_in": "",
-        "is_end": false,
-      };
-    } catch (e) {
-      print('Error: $e');
-      return {
-        "ends_in": "",
-        "is_end": false,
-      };
-    }
-  }
-
   static Future<bool> checkFileAvailable() async {
     try {
       final storage = FirebaseStorage.instance.ref();
@@ -62,7 +22,8 @@ class LocalService {
       final result = await folderRef.listAll();
       return result.items.isNotEmpty || result.prefixes.isNotEmpty;
     } catch (e) {
-      print('Error checking file availability: $e');
+      Log.addLog("${DateTime.now()} : Error checking file availability: $e");
+
       return false;
     }
   }
@@ -90,7 +51,7 @@ class LocalService {
         result[folderName] = fileDetails;
       }
     } catch (e) {
-      print('Error fetching files: $e');
+      Log.addLog("${DateTime.now()} : Error fetching files: $e");
     }
 
     return result;
@@ -178,7 +139,8 @@ class LocalService {
 
       return false;
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+
       return false;
     }
   }
@@ -192,7 +154,7 @@ class LocalService {
 
       return snapshot.size;
     } catch (e) {
-      print('Error getting count for $collection: $e');
+      Log.addLog("${DateTime.now()} : Error getting count for $collection: $e");
       return 0;
     }
   }
@@ -242,7 +204,7 @@ class LocalService {
         return true;
       }
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
       return false;
     }
   }
@@ -260,7 +222,8 @@ class LocalService {
 
       return true;
     } catch (e) {
-      print('Error: $e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+
       return false;
     }
   }
@@ -335,7 +298,8 @@ class LocalService {
       await dbHelper.checkAndCreateTable('enquiry');
       await dbHelper.updateEnquiry(orderData: data, referenceId: referenceId);
     } catch (e) {
-      print('Error updating enquiry: $e');
+      Log.addLog("${DateTime.now()} : Error updating enquiry: $e");
+
       rethrow;
     }
   }
@@ -402,7 +366,7 @@ class LocalService {
       await dbHelper.checkAndCreateTable('estimate');
       await dbHelper.updateEstimate(orderData: data, referenceId: referenceId);
     } catch (e) {
-      print('Error updating estimate: $e');
+      Log.addLog("${DateTime.now()} : Error updating estimate: $e");
       rethrow;
     }
   }
@@ -626,7 +590,8 @@ class LocalService {
 
       return true;
     } on Exception catch (e) {
-      print(e);
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+
       return false;
     }
   }
@@ -700,7 +665,6 @@ class LocalService {
         });
       });
     } catch (e) {
-      print(e);
       throw e.toString();
     }
   }
@@ -734,7 +698,6 @@ class LocalService {
         });
       });
     } catch (e) {
-      print(e);
       throw e.toString();
     }
   }
@@ -769,7 +732,6 @@ class LocalService {
         });
       });
     } catch (e) {
-      print(e);
       throw e.toString();
     }
   }
@@ -811,7 +773,8 @@ class LocalService {
       result.add(estimate);
       return result;
     } on Exception catch (e) {
-      print(e);
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+
       rethrow;
     }
   }
@@ -825,7 +788,95 @@ class LocalService {
 
       return snapshot;
     } on Exception catch (e) {
-      print(e);
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      rethrow;
+    }
+  }
+
+  static Future<bool> checkTrialEnd({required String uid}) async {
+    try {
+      var result = await Firebase.profile.doc(uid).get();
+
+      if (result.exists) {
+        var data = result.data();
+
+        if (data != null) {
+          var plan = data["plan"];
+          if (plan == "free") {
+            var freeTrial = data["free_trial"];
+            if (freeTrial != null) {
+              var endsInTimestamp = freeTrial["ends_in"];
+              if (endsInTimestamp != null) {
+                DateTime endsInDateTime =
+                    (endsInTimestamp as Timestamp).toDate();
+                DateTime now = DateTime.now();
+                if (endsInDateTime.isBefore(now)) {
+                  return true;
+                } else {
+                  return false;
+                }
+              }
+            }
+          } else {
+            return false;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      return false;
+    }
+  }
+
+  static Future updateExpiryDate() async {
+    try {
+      var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
+      await Firebase.profile.doc(companyId).update({
+        "expiry_date": DateTime.now().add(const Duration(days: 365)),
+        "plan": PlanTypes.premium.name
+      });
+    } on Exception catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+    }
+  }
+
+  static Future addStaffCount() async {
+    try {
+      var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
+      var result = await Firebase.profile.doc(companyId).get();
+      var previousCount = result["max_staff_count"];
+      await Firebase.profile.doc(companyId).update({
+        "max_staff_count": previousCount + 1,
+      });
+    } on Exception catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+    }
+  }
+
+  static Future addUserCount() async {
+    try {
+      var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
+      var result = await Firebase.profile.doc(companyId).get();
+      var previousCount = result["max_user_count"];
+      await Firebase.profile.doc(companyId).update({
+        "max_user_count": previousCount + 1,
+      });
+    } on Exception catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
+    }
+  }
+
+  static Future<QuerySnapshot<Map<String, dynamic>>>
+      getPurchaseHistory() async {
+    try {
+      var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
+      var result = await Firebase.purchases
+          .where('company_id', isEqualTo: companyId)
+          .get();
+      return result;
+    } on Exception catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
       rethrow;
     }
   }

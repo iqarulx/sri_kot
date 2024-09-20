@@ -1246,7 +1246,7 @@ class _CartDrawerState extends State<CartDrawer> {
               Navigator.pop(context);
               Navigator.of(context).pop();
               Navigator.of(context).pop();
-              snackBarCustom(context, true, "SuccessFully Place the Order");
+              snackbar(context, true, "SuccessFully Place the Order");
               setState(() {
                 cartDataList.clear();
               });
@@ -1260,7 +1260,7 @@ class _CartDrawerState extends State<CartDrawer> {
           });
         } else {
           Navigator.pop(context);
-          snackBarCustom(
+          snackbar(
             context,
             false,
             "Something went Wrong Please try again",
@@ -1277,7 +1277,7 @@ class _CartDrawerState extends State<CartDrawer> {
         Navigator.pop(context);
         Navigator.of(context).pop();
         Navigator.of(context).pop();
-        snackBarCustom(context, true, "SuccessFully Order Placed");
+        snackbar(context, true, "SuccessFully Order Placed");
         setState(() {
           cartDataList.clear();
         });
@@ -1299,7 +1299,7 @@ class _CartDrawerState extends State<CartDrawer> {
     ).then((value) async {
       if (value != null) {
         if (value == true && customerInfo == null) {
-          snackBarCustom(context, false, "Customer is Must");
+          snackbar(context, false, "Customer is Must");
         } else {
           try {
             loading(context);
@@ -1342,7 +1342,7 @@ class _CartDrawerState extends State<CartDrawer> {
                             Navigator.pop(context);
                             Navigator.of(context).pop();
                             Navigator.of(context).pop();
-                            snackBarCustom(
+                            snackbar(
                                 context, true, "Successfully order placed");
                             setState(() {
                               cartDataList.clear();
@@ -1358,7 +1358,7 @@ class _CartDrawerState extends State<CartDrawer> {
                         });
                       } else {
                         Navigator.pop(context);
-                        snackBarCustom(
+                        snackbar(
                           context,
                           false,
                           "Something went Wrong Please try again",
@@ -1372,8 +1372,7 @@ class _CartDrawerState extends State<CartDrawer> {
                             productList: cartDataList,
                             customerInfo: customerInfo)
                         .then((value) {
-                      snackBarCustom(
-                          context, true, "Successfully order placed");
+                      snackbar(context, true, "Successfully order placed");
                       setState(() {
                         cartDataList.clear();
                       });
@@ -1392,7 +1391,7 @@ class _CartDrawerState extends State<CartDrawer> {
                 }
               } else {
                 Navigator.pop(context);
-                snackBarCustom(
+                snackbar(
                   context,
                   false,
                   "Something went Wrong Please try again",
@@ -1401,7 +1400,7 @@ class _CartDrawerState extends State<CartDrawer> {
             });
           } catch (e) {
             Navigator.pop(context);
-            snackBarCustom(context, false, e.toString());
+            snackbar(context, false, e.toString());
           }
         }
       }
@@ -1493,7 +1492,7 @@ class _CartDrawerState extends State<CartDrawer> {
               Navigator.pop(context);
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Order Updated");
+              snackbar(context, true, "Successfully Order Updated");
             });
           } else {
             // print(widget.enquiryReferenceId);
@@ -1507,12 +1506,12 @@ class _CartDrawerState extends State<CartDrawer> {
               Navigator.pop(context);
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Order Updated");
+              snackbar(context, true, "Successfully Order Updated");
             });
           }
         } else {
           Navigator.pop(context);
-          snackBarCustom(
+          snackbar(
             context,
             false,
             "Something went Wrong Please try again",
@@ -1521,7 +1520,7 @@ class _CartDrawerState extends State<CartDrawer> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -1557,7 +1556,7 @@ class _CartDrawerState extends State<CartDrawer> {
               Navigator.pop(context);
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "SuccessFully Estimate Updated");
+              snackbar(context, true, "SuccessFully Estimate Updated");
             });
           } else {
             await LocalService.updateEstimate(
@@ -1570,12 +1569,12 @@ class _CartDrawerState extends State<CartDrawer> {
               Navigator.pop(context);
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Estimate Updated");
+              snackbar(context, true, "Successfully Estimate Updated");
             });
           }
         } else {
           Navigator.pop(context);
-          snackBarCustom(
+          snackbar(
             context,
             false,
             "Something went Wrong Please try again",
@@ -1584,7 +1583,7 @@ class _CartDrawerState extends State<CartDrawer> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

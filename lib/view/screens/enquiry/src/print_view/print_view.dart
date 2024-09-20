@@ -136,11 +136,11 @@ class _PrintViewState extends State<PrintView>
         // );
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "Pdf Not Available");
+        snackbar(context, false, "Pdf Not Available");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -224,7 +224,6 @@ class _PrintViewState extends State<PrintView>
           ],
         ),
       ),
-      backgroundColor: const Color(0xffEEEEEE),
       body: TabBarView(
         controller: _controller,
         physics: const NeverScrollableScrollPhysics(),

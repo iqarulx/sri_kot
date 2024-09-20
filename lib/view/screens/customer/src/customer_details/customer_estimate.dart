@@ -116,7 +116,7 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
       setState(() {
         tmpLoading = false;
       });
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -137,7 +137,7 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

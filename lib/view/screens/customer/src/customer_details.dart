@@ -16,7 +16,6 @@ class _CustomerDetailsState extends State<CustomerDetails> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xffEEEEEE),
         appBar: AppBar(
           title: const Text("Customer Name"),
           bottom: const TabBar(

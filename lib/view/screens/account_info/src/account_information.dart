@@ -21,7 +21,6 @@ class _AccountInformationState extends State<AccountInformation> {
 
   @override
   void initState() {
-    AccountValid.accountValid(context);
     userHandler = getUserInfo();
     super.initState();
   }
@@ -61,7 +60,6 @@ class _AccountInformationState extends State<AccountInformation> {
         ),
         title: const Text("Account Information"),
       ),
-      backgroundColor: const Color(0xffEEEEEE),
       body: FutureBuilder(
         future: userHandler,
         builder: (context, snapshot) {

@@ -69,10 +69,10 @@ class _CustomerEditState extends State<CustomerEdit> {
         )
             .catchError((onError) {
           Navigator.pop(context);
-          snackBarCustom(context, false, onError.toString());
+          snackbar(context, false, onError.toString());
         }).then((value) {
           Navigator.pop(context);
-          snackBarCustom(
+          snackbar(
             context,
             true,
             "Successfully Update Customer Information",
@@ -80,11 +80,11 @@ class _CustomerEditState extends State<CustomerEdit> {
         });
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "Fill the All Form");
+        snackbar(context, false, "Fill the All Form");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

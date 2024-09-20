@@ -101,12 +101,12 @@ class _AddCustomProductState extends State<AddCustomProduct> {
           billPageProvider2.toggletab(true);
         });
         Navigator.pop(context);
-        snackBarCustom(context, true, "Successfully added to Cart");
+        snackbar(context, true, "Successfully added to Cart");
       } else {
-        snackBarCustom(context, false, "Fill all the form");
+        snackbar(context, false, "Fill all the form");
       }
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -161,7 +161,6 @@ class _AddCustomProductState extends State<AddCustomProduct> {
                   ),
                 ),
                 backgroundColor: Colors.white,
-                // backgroundColor: const Color(0xffEEEEEE),
                 body: ListView(
                   padding: const EdgeInsets.all(10),
                   children: [

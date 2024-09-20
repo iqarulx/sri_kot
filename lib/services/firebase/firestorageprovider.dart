@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../log/log.dart';
 import '/constants/constants.dart';
 import '/services/services.dart';
 
@@ -63,7 +64,7 @@ class FireStorageProvider {
       await uploadDir.putFile(fileData);
       downloadLink = await uploadDir.getDownloadURL();
     } catch (e) {
-      print(e);
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
     return downloadLink;
   }
@@ -97,7 +98,7 @@ class FireStorageProvider {
       print(filePath);
       return false;
     } catch (e) {
-      print(e);
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
       return false;
     }
   }

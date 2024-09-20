@@ -490,7 +490,7 @@ class _AddStaffState extends State<AddStaff> {
           setState(() {
             permissionError = "Permission is Must";
           });
-          snackBarCustom(context, false, "Permission is Must");
+          snackbar(context, false, "Permission is Must");
         } else {
           setState(() {
             imageError = null;
@@ -568,19 +568,17 @@ class _AddStaffState extends State<AddStaff> {
                         billofSupply = false;
                       });
                       Navigator.pop(context, true);
-                      snackBarCustom(
-                          context, true, "Successfully Created New Staff");
+                      snackbar(context, true, "Successfully Created New Staff");
                     } else {
                       Navigator.pop(context);
-                      snackBarCustom(
-                          context, false, "Failed to Create New Staff");
+                      snackbar(context, false, "Failed to Create New Staff");
                     }
                     // }
                     // });
                   });
                 } else {
                   Navigator.pop(context);
-                  snackBarCustom(
+                  snackbar(
                     context,
                     false,
                     "Staff Login ID Already Exists",
@@ -589,7 +587,7 @@ class _AddStaffState extends State<AddStaff> {
               });
             } else {
               Navigator.pop(context);
-              snackBarCustom(context, false, "Company Details Not Fetch");
+              snackbar(context, false, "Company Details Not Fetch");
             }
           });
         }
@@ -599,12 +597,12 @@ class _AddStaffState extends State<AddStaff> {
           setState(() {
             imageError = "Profile Image is Must";
           });
-          snackBarCustom(context, false, "Profile Image is Must");
+          snackbar(context, false, "Profile Image is Must");
         }
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 }

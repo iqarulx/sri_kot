@@ -96,15 +96,15 @@ class _EnquiryFilterState extends State<EnquiryFilter> {
           ),
         ),
       );
-      // snackBarCustom(context, false, "Choose any one Form");
+      // snackbar(context, false, "Choose any one Form");
     } else {
       if (fromDate.text.isNotEmpty) {
         if (toDate.text.isEmpty) {
-          snackBarCustom(context, false, "Choose To Date is Must");
+          snackbar(context, false, "Choose To Date is Must");
         }
       } else if (toDate.text.isNotEmpty) {
         if (fromDate.text.isEmpty) {
-          snackBarCustom(context, false, "Choose From Date is Must");
+          snackbar(context, false, "Choose From Date is Must");
         }
       } else {
         Navigator.pop(context, {

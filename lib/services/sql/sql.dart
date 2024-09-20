@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
+import '../../log/log.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
@@ -259,7 +261,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? (result.first['count'] as int) : 0;
     } catch (e) {
       // Log the error (optional)
-      print('Error counting enquiries: $e');
+      Log.addLog("${DateTime.now()} : Error counting enquiries: $e");
 
       // Return 0 if there is an error (e.g., table does not exist)
       return 0;
@@ -278,7 +280,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? result.first : {};
     } catch (e) {
       // Log the error (optional)
-      print('Error counting enquiries: $e');
+      Log.addLog("${DateTime.now()} : Error counting enquiries: $e");
       return {};
     }
   }
@@ -295,7 +297,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? result.first : {};
     } catch (e) {
       // Log the error (optional)
-      print('Error counting enquiries: $e');
+      Log.addLog("${DateTime.now()} : Error counting enquiries: $e");
       return {};
     }
   }
@@ -311,7 +313,7 @@ class DatabaseHelper {
     ''', [customerInfo, referenceId]);
     } catch (e) {
       // Log the error (optional)
-      print('Error updating enquiry customer: $e');
+      Log.addLog("${DateTime.now()} : Error updating enquiry customer: $e");
     }
   }
 
@@ -341,7 +343,7 @@ class DatabaseHelper {
       DELETE FROM enquiry WHERE reference_id = ?
     ''', [referenceId]);
     } catch (e) {
-      print('$e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
   }
 
@@ -353,7 +355,7 @@ class DatabaseHelper {
       DELETE FROM estimate WHERE reference_id = ?
     ''', [referenceId]);
     } catch (e) {
-      print('$e');
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
     }
   }
 
@@ -369,7 +371,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? (result.first['count'] as int) : 0;
     } catch (e) {
       // Log the error (optional)
-      print('Error counting estimate: $e');
+      Log.addLog("${DateTime.now()} : Error counting estimate: $e");
 
       // Return 0 if there is an error (e.g., table does not exist)
       return 0;
@@ -544,7 +546,7 @@ class DatabaseHelper {
 
       print('SQL queries executed successfully.');
     } catch (e) {
-      print('Error importing queries: $e');
+      Log.addLog("${DateTime.now()} : Error importing queries: $e");
     }
   }
 
@@ -572,7 +574,7 @@ class DatabaseHelper {
 
       print('Query saved to $filePath');
     } catch (e) {
-      print('Error saving query: $e');
+      Log.addLog("${DateTime.now()} : Error saving query: $e");
     }
   }
 }

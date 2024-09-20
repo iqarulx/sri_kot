@@ -51,7 +51,7 @@ class _CategoryListingState extends State<CategoryListing> {
       }
       return null;
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -108,7 +108,7 @@ class _CategoryListingState extends State<CategoryListing> {
   //     // await FireStoreProvider().
   //   } catch (e) {
   //     Navigator.pop(context);
-  //     snackBarCustom(context, false, e.toString());
+  //     snackbar(context, false, e.toString());
   //   }
   // }
 
@@ -189,7 +189,7 @@ class _CategoryListingState extends State<CategoryListing> {
               )
                   .then((value) {
                 Navigator.pop(context);
-                snackBarCustom(context, true, "Successfully Updated");
+                snackbar(context, true, "Successfully Updated");
               });
             } else {
               Navigator.pop(context);
@@ -201,7 +201,7 @@ class _CategoryListingState extends State<CategoryListing> {
       // await FireStoreProvider().
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -283,7 +283,6 @@ class _CategoryListingState extends State<CategoryListing> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appbar(context),
-      backgroundColor: const Color(0xffEEEEEE),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {
           return connectionProvider.isConnected

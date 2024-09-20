@@ -119,7 +119,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
       setState(() {
         tmpLoading = false;
       });
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -140,7 +140,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

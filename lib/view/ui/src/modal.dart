@@ -109,7 +109,7 @@ class _ModalState extends State<Modal> {
                   height: 55,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: Colors.black,
+                    color: Theme.of(context).primaryColor,
                   ),
                   child: const Center(
                     child: Text(

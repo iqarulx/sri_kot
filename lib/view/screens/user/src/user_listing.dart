@@ -24,7 +24,6 @@ class _UserListingState extends State<UserListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
           icon:
@@ -47,8 +46,7 @@ class _UserListingState extends State<UserListing> {
                           }
                         });
                       } else {
-                        snackBarCustom(
-                            context, false, "Reached max user count");
+                        snackbar(context, false, "Reached max user count");
                       }
                     });
                   },

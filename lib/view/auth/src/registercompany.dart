@@ -105,7 +105,7 @@ class _RegisterCompanyState extends State<RegisterCompany> {
       }).then((value) {
         Navigator.pop(context);
         Navigator.pop(context);
-        snackBarCustom(context, true, "Successfully company registred");
+        snackbar(context, true, "Successfully company registred");
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -130,7 +130,7 @@ class _RegisterCompanyState extends State<RegisterCompany> {
       //   ).then((value) async {
       //     Navigator.pop(context);
       //     Navigator.pop(context);
-      //     snackBarCustom(context, true, "Successfully company registred");
+      //     snackbar(context, true, "Successfully company registred");
       //     Navigator.push(
       //       context,
       //       MaterialPageRoute(
@@ -144,11 +144,11 @@ class _RegisterCompanyState extends State<RegisterCompany> {
       // }
       // } else {
       //   Navigator.pop(context);
-      //   snackBarCustom(context, false, "Company Profile Logo is Must");
+      //   snackbar(context, false, "Company Profile Logo is Must");
       // }
     } else {
       // throw Error Form not Valid
-      snackBarCustom(context, false, "Fill Correct Form Details");
+      snackbar(context, false, "Fill Correct Form Details");
     }
   }
 

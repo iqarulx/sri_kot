@@ -111,7 +111,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -177,7 +177,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -193,7 +193,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
             .then((value) {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(context, true, "Successfully Deleted");
+          snackbar(context, true, "Successfully Deleted");
         });
       } else {
         await LocalService.deleteEstimate(
@@ -201,12 +201,12 @@ class _EstimateDetailsState extends State<EstimateDetails> {
             .then((value) {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(context, true, "Successfully Deleted");
+          snackbar(context, true, "Successfully Deleted");
         });
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -223,7 +223,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                 .then((value) {
               Navigator.pop(context);
               Navigator.pop(context, true);
-              snackBarCustom(context, true, "Successfully Estimate Duplicated");
+              snackbar(context, true, "Successfully Estimate Duplicated");
             });
           }
         });
@@ -233,7 +233,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
             .then((value) {
           Navigator.pop(context);
           Navigator.pop(context, true);
-          snackBarCustom(context, true, "Successfully Estimate Duplicated");
+          snackbar(context, true, "Successfully Estimate Duplicated");
         });
       }
     } catch (e) {
@@ -449,7 +449,6 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           ],
         ),
       ),
-      backgroundColor: const Color(0xffEEEEEE),
       body: ListView(
         padding: const EdgeInsets.all(10),
         children: [

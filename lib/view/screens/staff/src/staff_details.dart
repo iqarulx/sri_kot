@@ -526,7 +526,7 @@ class _StaffDetailsState extends State<StaffDetails> {
           setState(() {
             permissionError = "Permission is Must";
           });
-          snackBarCustom(context, false, "Permission is Must");
+          snackbar(context, false, "Permission is Must");
         } else {
           await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
             if (cid != null) {
@@ -554,8 +554,7 @@ class _StaffDetailsState extends State<StaffDetails> {
                             staffData: model, docID: crtStaffData!.docID!)
                         .then((value) {
                       Navigator.pop(context);
-                      snackBarCustom(
-                          context, true, "Successfully Update Staff");
+                      snackbar(context, true, "Successfully Update Staff");
                     });
                   } else if (staffCheck.docs.isNotEmpty &&
                       staffCheck.docs.first.id == crtStaffData!.docID) {
@@ -564,13 +563,11 @@ class _StaffDetailsState extends State<StaffDetails> {
                             staffData: model, docID: crtStaffData!.docID!)
                         .then((value) {
                       Navigator.pop(context);
-                      snackBarCustom(
-                          context, true, "Successfully Update Staff");
+                      snackbar(context, true, "Successfully Update Staff");
                     });
                   } else {
                     Navigator.pop(context);
-                    snackBarCustom(
-                        context, false, "Staff Login ID Already Exists");
+                    snackbar(context, false, "Staff Login ID Already Exists");
                   }
                 } else {
                   Navigator.pop(context);
@@ -578,14 +575,14 @@ class _StaffDetailsState extends State<StaffDetails> {
               });
             } else {
               Navigator.pop(context);
-              snackBarCustom(context, false, "Company Details Not Fetch");
+              snackbar(context, false, "Company Details Not Fetch");
             }
           });
         }
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -615,12 +612,12 @@ class _StaffDetailsState extends State<StaffDetails> {
         });
 
         Navigator.pop(context);
-        snackBarCustom(context, true, "Successfully Update Staff");
+        snackbar(context, true, "Successfully Update Staff");
         // });
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -639,11 +636,11 @@ class _StaffDetailsState extends State<StaffDetails> {
           );
           staffListingPageProvider.toggletab(true);
         });
-        snackBarCustom(context, true, "Successfully Deleted");
+        snackbar(context, true, "Successfully Deleted");
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

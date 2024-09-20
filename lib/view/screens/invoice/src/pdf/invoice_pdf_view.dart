@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
+import '../../../../../log/log.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -71,7 +72,7 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
         });
       });
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -90,6 +91,7 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
         }
       });
     } catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
       Navigator.pop(context);
     }
   }
@@ -103,7 +105,6 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         leading: IconButton(
           icon:

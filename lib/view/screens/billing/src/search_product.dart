@@ -84,7 +84,7 @@ class _SearchProductBillingState extends State<SearchProductBilling> {
       }
       return null;
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -185,7 +185,7 @@ class _SearchProductBillingState extends State<SearchProductBilling> {
       // setState(() {
       //   isLoading = false;
       // });
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -249,7 +249,6 @@ class _SearchProductBillingState extends State<SearchProductBilling> {
                   },
                 ),
               ),
-              backgroundColor: const Color(0xffEEEEEE),
               body: FutureBuilder(
                 future: productHandler,
                 builder: (context, snapshot) {

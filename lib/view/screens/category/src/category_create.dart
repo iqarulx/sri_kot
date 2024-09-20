@@ -77,20 +77,19 @@ class _CategoryCreateState extends State<CategoryCreate> {
                     setState(() {
                       categoryName.clear();
                     });
-                    snackBarCustom(
+                    snackbar(
                         context, true, "Successfully Created New Category");
                   } else {
-                    snackBarCustom(
-                        context, false, "Failed to Create New Category");
+                    snackbar(context, false, "Failed to Create New Category");
                   }
                 });
               } else {
-                snackBarCustom(context, false, "Category Name Already Exists");
+                snackbar(context, false, "Category Name Already Exists");
               }
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Company Details Not Fetch");
+            snackbar(context, false, "Company Details Not Fetch");
           }
         });
       } else {
@@ -98,7 +97,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -121,18 +120,18 @@ class _CategoryCreateState extends State<CategoryCreate> {
                 .then((value) {
               Navigator.pop(context);
               Navigator.pop(context);
-              snackBarCustom(context, true, "Category Update Successfully");
+              snackbar(context, true, "Category Update Successfully");
               // if (value.id.isNotEmpty) {
               //   setState(() {
               //     categoryName.clear();
               //   });
               // } else {
-              //   snackBarCustom(context, false, "Failed to Create New Category");
+              //   snackbar(context, false, "Failed to Create New Category");
               // }
             });
           } else {
             Navigator.pop(context);
-            snackBarCustom(context, false, "Company Details Not Fetch");
+            snackbar(context, false, "Company Details Not Fetch");
           }
         });
       } else {
@@ -140,7 +139,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -152,11 +151,11 @@ class _CategoryCreateState extends State<CategoryCreate> {
           .then((value) {
         Navigator.pop(context);
         Navigator.pop(context, true);
-        snackBarCustom(context, true, "Successfully Deleted");
+        snackbar(context, true, "Successfully Deleted");
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 

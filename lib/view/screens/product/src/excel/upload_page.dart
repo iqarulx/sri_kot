@@ -1,6 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../../../../log/log.dart';
 import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/provider/provider.dart';
@@ -273,14 +274,16 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
             } else {
               Navigator.pop(context);
             }
-          }).catchError((onError) {});
+          }).catchError((onError) {
+            Log.addLog("${DateTime.now()} : ${onError.toString()}");
+          });
         } else {
           Navigator.pop(context);
         }
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, "e.toString()");
+      snackbar(context, false, "e.toString()");
     }
   }
 
@@ -294,7 +297,7 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
       helper.saveAndLaunchFile(response, "Product Template.xlsx");
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 }

@@ -58,13 +58,13 @@ class _InvoiceFilterState extends State<InvoiceFilter> {
           ),
         ),
       );
-      // snackBarCustom(context, false, "Choose any one Form");
+      // snackbar(context, false, "Choose any one Form");
     } else {
       if (fromDate.text.isNotEmpty && toDate.text.isEmpty) {
-        snackBarCustom(context, false, "Choose To Date is Must");
+        snackbar(context, false, "Choose To Date is Must");
       } else if (fromDate.text.isEmpty && toDate.text.isNotEmpty) {
         if (fromDate.text.isEmpty) {
-          snackBarCustom(context, false, "Choose From Date is Must");
+          snackbar(context, false, "Choose From Date is Must");
         }
       } else {
         Navigator.pop(context, {

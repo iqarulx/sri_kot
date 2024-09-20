@@ -1,10 +1,11 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sri_kot/log/show_log.dart';
+import 'package:sri_kot/purchase/purchase.dart';
 import '/provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/services/services.dart';
@@ -84,21 +85,21 @@ class _SideBarState extends State<SideBar> {
       await LocalService.updateLogin(
           uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '');
 
-      await LocalService.checkTrialEnd(
-        uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '',
-      ).then((value) {
-        if (value.isNotEmpty) {
-          var valueEndsIn = value["ends_in"];
+      // await LocalService.checkTrialEnd(
+      //   uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '',
+      // ).then((value) {
+      //   if (value.isNotEmpty) {
+      //     var valueEndsIn = value["ends_in"];
 
-          if (valueEndsIn != null) {
-            if (valueEndsIn is Timestamp) {
-              setState(() {
-                endsIn = (valueEndsIn).toDate();
-              });
-            }
-          }
-        }
-      });
+      //     if (valueEndsIn != null) {
+      //       if (valueEndsIn is Timestamp) {
+      //         setState(() {
+      //           endsIn = (valueEndsIn).toDate();
+      //         });
+      //       }
+      //     }
+      //   }
+      // });
     }
 
     // profileImg = File(
@@ -419,12 +420,25 @@ class _SideBarState extends State<SideBar> {
                                 lable: "Account Information",
                                 index: 14,
                               ),
-                              //               menuView(
-                              //                 context,
-                              //                 icon: Icons.credit_card,
-                              //                 lable: "Payment History",
-                              //                 index: 16,
-                              //               ),
+                              menuView(
+                                context,
+                                icon: Icons.shopping_bag_outlined,
+                                lable: "Purchase",
+                                index: 15,
+                              ),
+                              menuView(
+                                context,
+                                icon: Icons.credit_card,
+                                lable: "Payment History",
+                                index: 16,
+                              ),
+                              menuView(
+                                context,
+                                icon: Icons.support_agent,
+                                lable: "Support",
+                                index: 17,
+                              ),
+
                               //               menuView(
                               //                 context,
                               //                 icon: Icons.card_giftcard,
@@ -437,24 +451,11 @@ class _SideBarState extends State<SideBar> {
                               //   lable: "Help",
                               //   index: 13,
                               // ),
-                              menuView(
-                                context,
-                                icon: Icons.support_agent,
-                                lable: "Support",
-                                index: 15,
-                              ),
+
                               // planUpgrade(context),
                             ],
                           )
                         : Container(),
-
-                    // endsIn != null
-                    //     ? freeTrial(
-                    //         context,
-                    //         DateFormat('dd-MM-yyyy').format(endsIn!),
-                    //       )
-                    //     : Container(),
-
                     GestureDetector(
                       onTap: () async {
                         await confirmationDialog(context,
@@ -554,19 +555,26 @@ class _SideBarState extends State<SideBar> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(5),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Text(
-                  "App Version - $currentVersion",
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 10,
+          GestureDetector(
+            onDoubleTap: () {
+              Navigator.push(context, CupertinoPageRoute(builder: (builder) {
+                return const ShowLog();
+              }));
+            },
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Text(
+                    "App Version - $currentVersion",
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 10,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -642,6 +650,10 @@ class _SideBarState extends State<SideBar> {
       case 14:
         route = const AccountInformation();
       case 15:
+        route = const Purchase();
+      case 16:
+        route = const PurchaseHistory();
+      case 17:
         route = const Support();
       default:
         route = const UserHome();

@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../log/log.dart';
+
 class PermissionHandler {
   Future<bool?> storagePermission() async {
     bool? result;
@@ -60,6 +62,7 @@ class PermissionHandler {
         }
       }
     } catch (e) {
+      Log.addLog("${DateTime.now()} : ${e.toString()}");
       throw e.toString();
     }
     return result;

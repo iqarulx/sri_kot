@@ -54,17 +54,6 @@ loading(context) {
   );
 }
 
-snackBarCustom(context, bool isSuccess, String msg) {
-  return ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      backgroundColor: isSuccess ? Colors.green : Colors.red,
-      content: Text(
-        msg.toString(),
-      ),
-    ),
-  );
-}
-
 snackbar(context, bool isSuccess, String msg) {
   return ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(

@@ -64,15 +64,15 @@ class _CategoryDiscountDetailsViewState
           });
         } else {
           Navigator.pop(context);
-          snackBarCustom(context, false, "Please Choose Category");
+          snackbar(context, false, "Please Choose Category");
         }
       } else {
         Navigator.pop(context);
-        snackBarCustom(context, false, "Discount is Must");
+        snackbar(context, false, "Discount is Must");
       }
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -97,7 +97,6 @@ class _CategoryDiscountDetailsViewState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: AppBar(
         title: const Text('Discount'),
         leading: IconButton(

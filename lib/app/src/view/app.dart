@@ -39,6 +39,7 @@ class MyApp extends StatelessWidget {
               borderSide: BorderSide.none,
             ),
           ),
+          scaffoldBackgroundColor: const Color(0xffEEEEEE),
         ),
         home: appUpdate
             ? login

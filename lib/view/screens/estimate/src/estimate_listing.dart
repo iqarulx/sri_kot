@@ -128,7 +128,7 @@ class _EstimateListingState extends State<EstimateListing> {
         return enquiry;
       }
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -214,7 +214,7 @@ class _EstimateListingState extends State<EstimateListing> {
         );
       }
     } catch (e) {
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
       return null;
     }
   }
@@ -296,7 +296,7 @@ class _EstimateListingState extends State<EstimateListing> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackBarCustom(context, false, e.toString());
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -335,7 +335,6 @@ class _EstimateListingState extends State<EstimateListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEEEEEE),
       appBar: appbar(context),
       // floatingActionButton: floatingButton(context),
       body: Consumer<ConnectionProvider>(
@@ -426,7 +425,7 @@ class _EstimateListingState extends State<EstimateListing> {
                                             });
                                           });
                                           // } else {
-                                          //   snackBarCustom(context, false,
+                                          //   snackbar(context, false,
                                           //       "Please upload the data to view details");
                                           // }
                                         },
