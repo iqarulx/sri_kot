@@ -30,7 +30,7 @@ class _CustomerListingState extends State<CustomerListing> {
 
   Future getCustomerInfo() async {
     try {
-      FireStoreProvider provider = FireStoreProvider();
+      FireStore provider = FireStore();
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 
       if (cid != null) {
@@ -42,12 +42,12 @@ class _CustomerListingState extends State<CustomerListing> {
           });
           for (var element in result.docs) {
             CustomerDataModel model = CustomerDataModel();
-            model.address = element["address"].toString();
-            model.mobileNo = element["mobile_no"].toString();
-            model.city = element["city"].toString();
-            model.customerName = element["customer_name"].toString();
-            model.email = element["email"].toString();
-            model.state = element["state"]?.toString();
+            model.address = element["address"] ?? '';
+            model.mobileNo = element["mobile_no"] ?? '';
+            model.city = element["city"] ?? '';
+            model.customerName = element["customer_name"] ?? '';
+            model.email = element["email"] ?? '';
+            model.state = element["state"] ?? '';
             model.docID = element.id;
             setState(() {
               customerDataList.add(model);
@@ -255,8 +255,8 @@ class _CustomerListingState extends State<CustomerListing> {
                                   children: [
                                     ListTile(
                                       contentPadding: const EdgeInsets.all(0),
-                                      onTap: () {
-                                        Navigator.push(
+                                      onTap: () async {
+                                        var result = await Navigator.push(
                                           context,
                                           CupertinoPageRoute(
                                             builder: (context) =>
@@ -266,6 +266,15 @@ class _CustomerListingState extends State<CustomerListing> {
                                             ),
                                           ),
                                         );
+
+                                        if (result != null) {
+                                          if (result) {
+                                            setState(() {
+                                              customerHandler =
+                                                  getCustomerInfo();
+                                            });
+                                          }
+                                        }
                                       },
                                       leading: Container(
                                         height: 50,
@@ -344,6 +353,30 @@ class _CustomerListingState extends State<CustomerListing> {
       ),
       title: const Text("Customer"),
       actions: [
+        IconButton(
+          onPressed: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              if (connectionProvider.isConnected) {
+                AccountValid.accountValid(context);
+                customerHandler = getCustomerInfo();
+              }
+            });
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              connectionProvider.addListener(() {
+                if (connectionProvider.isConnected) {
+                  AccountValid.accountValid(context);
+                  customerHandler = getCustomerInfo();
+                }
+              });
+            });
+          },
+          icon: const Icon(Icons.refresh),
+        ),
         Provider.of<ConnectionProvider>(context, listen: false).isConnected
             ? IconButton(
                 onPressed: () {

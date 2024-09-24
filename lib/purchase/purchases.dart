@@ -2,12 +2,13 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:sri_kot/constants/constants.dart';
-import 'package:sri_kot/purchase/products.dart';
-import 'package:sri_kot/services/services.dart';
-import 'package:sri_kot/utils/src/utilities.dart';
-import '../log/log.dart';
-import '../services/local/firebase.dart';
+import '/constants/constants.dart';
+import '/purchase/products.dart';
+import '/services/local/messaging.dart';
+import '/services/services.dart';
+import '/utils/src/utilities.dart';
+import '/log/log.dart';
+import '/services/local/firebase.dart';
 
 class Purchases extends Firebase {
   static final InAppPurchase _inAppPurchase = InAppPurchase.instance;
@@ -91,11 +92,11 @@ class Purchases extends Firebase {
     }
   }
 
-  static Future<void> _storePurchaseInFirebase(PurchaseDetails purchaseDetails,
+  static Future _storePurchaseInFirebase(PurchaseDetails purchaseDetails,
       {required bool isConsumable,
       required ProductDetails productDetails}) async {
     try {
-      await Firebase.purchases.add({
+      DocumentReference ref = await Firebase.purchases.add({
         'product_id': purchaseDetails.productID,
         'transaction_date': purchaseDetails.transactionDate,
         'purchase_id': purchaseDetails.purchaseID,
@@ -111,6 +112,11 @@ class Purchases extends Firebase {
         'company_name': await LocalDB.fetchInfo(type: LocalData.companyName),
         'created_at': DateTime.now(),
       });
+
+      await Messaging.sendPaymentToAdmin(
+          amount: productDetails.price,
+          product: productDetails.title,
+          docId: ref.id);
     } catch (e) {
       Log.addLog("${DateTime.now()} : Error storing purchase in Firebase: $e");
     }

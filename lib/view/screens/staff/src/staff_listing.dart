@@ -133,7 +133,6 @@ class _StaffListingState extends State<StaffListing> {
         return Column(
           children: [
             ListTile(
-              contentPadding: const EdgeInsets.all(0),
               onTap: () {
                 setState(() {
                   crtStaffData = staffDataList[index];
@@ -144,26 +143,32 @@ class _StaffListingState extends State<StaffListing> {
                   );
                 });
               },
-              leading: ClipRRect(
-                clipBehavior: Clip.hardEdge,
-                borderRadius: BorderRadius.circular(25.0),
+              leading: ClipOval(
                 child: CachedNetworkImage(
-                  placeholder: (context, url) =>
-                      const CircularProgressIndicator(),
                   imageUrl:
                       staffDataList[index].profileImg ?? Strings.productImg,
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
                   fit: BoxFit.cover,
+                  width: 45.0,
+                  height: 45.0,
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               ),
-              title: Text(staffDataList[index].userName ?? ""),
+              title: Text(
+                staffDataList[index].userName ?? "",
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
               subtitle: Text(
-                "${staffDataList[index].userid}",
+                staffDataList[index].userid ?? '',
                 style: TextStyle(
                   color: Colors.grey.shade400,
                   fontSize: 13,
                 ),
               ),
-              trailing: const Icon(Icons.chevron_right_outlined),
+              trailing: const Icon(Icons.keyboard_arrow_right_outlined),
             ),
             Divider(
               height: 0,
@@ -258,16 +263,30 @@ class _StaffListingState extends State<StaffListing> {
         Provider.of<ConnectionProvider>(context, listen: false).isConnected
             ? IconButton(
                 onPressed: () async {
-                  await addStaffForm(
-                    context,
-                    companyID: companyUniqueID ?? "",
-                  ).then((value) {
-                    if (value != null && value == true) {
-                      setState(() {
-                        staffHandler = getStaffInfo();
-                      });
-                    }
-                  });
+                  try {
+                    loading(context);
+                    await LocalService.checkCount(type: ProfileType.staff)
+                        .then((value) async {
+                      Navigator.pop(context);
+                      if (value) {
+                        await addStaffForm(
+                          context,
+                          companyID: companyUniqueID ?? "",
+                        ).then((value) {
+                          if (value != null && value == true) {
+                            setState(() {
+                              staffHandler = getStaffInfo();
+                            });
+                          }
+                        });
+                      } else {
+                        snackbar(context, false, "Reached max staff count");
+                      }
+                    });
+                  } on Exception catch (e) {
+                    Navigator.pop(context);
+                    snackbar(context, false, e.toString());
+                  }
                 },
                 splashRadius: 20,
                 icon: const Icon(
@@ -281,10 +300,10 @@ class _StaffListingState extends State<StaffListing> {
 
   Future getStaffInfo() async {
     try {
-      FireStoreProvider provider = FireStoreProvider();
+      FireStore provider = FireStore();
 
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
-      await FireStoreProvider().getCompanyDocInfo(cid: cid).then((companyInfo) {
+      await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) {
         if (companyInfo != null && companyInfo.exists) {
           setState(() {
             companyUniqueID = companyInfo['company_unique_id'];
@@ -307,12 +326,6 @@ class _StaffListingState extends State<StaffListing> {
             model.userid = element["user_login_id"] ?? "";
             model.password = element["password"] ?? "";
             model.profileImg = element["profile_img"] ?? "";
-            // var directory = await getApplicationDocumentsDirectory();
-            // model.profileImg = path.join(
-            //   directory.path,
-            //   'staff',
-            //   element.id,
-            // );
 
             model.docID = element.id;
             StaffPermissionModel permissionModel = StaffPermissionModel();

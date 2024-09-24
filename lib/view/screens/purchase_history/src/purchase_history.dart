@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sri_kot/services/services.dart';
-import 'package:sri_kot/utils/src/utilities.dart';
-import 'package:sri_kot/view/screens/purchase_history/src/purchase_details_view.dart';
-import 'package:sri_kot/view/ui/ui.dart';
-import '../../../../model/model.dart';
+
+import '/model/model.dart';
+import '/services/services.dart';
+import '/utils/utils.dart';
+import '/view/ui/ui.dart';
+import 'purchase_details_view.dart';
 
 class PurchaseHistory extends StatefulWidget {
   const PurchaseHistory({super.key});
@@ -131,19 +132,23 @@ class _PurchaseHistoryState extends State<PurchaseHistory> {
             );
           } else {
             return ListView.builder(
+              padding: const EdgeInsets.all(10),
               itemCount: purchaseHistory.length,
               itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(context,
-                        CupertinoPageRoute(builder: (builder) {
-                      return PurchaseDetailsView(model: purchaseHistory[index]);
-                    }));
-                  },
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      Container(
+                return Column(
+                  children: [
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(context,
+                            CupertinoPageRoute(builder: (builder) {
+                          return PurchaseDetailsView(
+                              model: purchaseHistory[index]);
+                        }));
+                      },
+                      child: Container(
                         padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -165,7 +170,7 @@ class _PurchaseHistoryState extends State<PurchaseHistory> {
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    DateFormat('dd-MM-yyyy h:m s').format(
+                                    DateFormat('dd-MM-yyyy h:m a').format(
                                         purchaseHistory[index].createdAt ??
                                             DateTime.now()),
                                     style: const TextStyle(
@@ -201,8 +206,8 @@ class _PurchaseHistoryState extends State<PurchaseHistory> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               },
             );

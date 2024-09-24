@@ -51,7 +51,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
   getProductsList() async {
     try {
       await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-        await FireStoreProvider().categoryListing(cid: cid).then((value) {
+        await FireStore().categoryListing(cid: cid).then((value) {
           if (value != null && value.docs.isNotEmpty) {
             for (var categorylist in value.docs) {
               CategoryDataModel model = CategoryDataModel();
@@ -65,14 +65,13 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
             }
           }
         });
-        await FireStoreProvider()
-            .productListing(cid: cid)
-            .then((productDataResult) {
+        await FireStore().productListing(cid: cid).then((productDataResult) {
           if (productDataResult != null && productDataResult.docs.isNotEmpty) {
             for (var element in productDataResult.docs) {
               InvoiceProductModel productModel = InvoiceProductModel();
               productModel.productID = element.id;
               productModel.productName = element["product_name"] ?? "";
+              productModel.unit = element["product_content"] ?? "";
               productModel.rate = double.parse(element["price"].toString());
               productModel.discountLock = element["discount_lock"];
               var getCategoryid = categoryList.indexWhere(
@@ -106,6 +105,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           currentProduct = value;
           productName.text = values.productName ?? "";
           rate.text = values.rate.toString();
+          unit.text = values.unit.toString();
         });
       }
     });
@@ -175,7 +175,9 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           model.phoneNumber = phone.text;
           model.transportName = transportName.text;
           model.transportNumber = transportNumber.text;
-          model.totalBillAmount = cartTotal();
+          model.totalBillAmount =
+              (double.parse(cartTotal()) - double.parse(roundOff()))
+                  .toStringAsFixed(2);
           model.deliveryaddress = deliveryAddress.text;
 
           CustomerDataModel customerDataModel = CustomerDataModel();
@@ -199,24 +201,22 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           calcul.packageValue = double.parse(packingChareges());
           calcul.packagesys = packingChargeSys;
           calcul.subTotal = double.parse(subtotal());
-          calcul.total = double.parse(cartTotal());
-
+          calcul.roundOff = double.parse(roundOff());
+          calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
           model.price = calcul;
 
           model.listingProducts = [];
-
           model.listingProducts!.addAll(cartProductList);
           model.companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
-
           if (widget.invoice == null || widget.invoice!.docID == null) {
             model.biilDate = DateTime.now();
             model.createdDate = DateTime.now();
 
-            await FireStoreProvider()
+            await FireStore()
                 .createNewInvoice(
                     invoiceData: model, cartDataList: cartProductList)
                 .then((value) async {
-              await FireStoreProvider()
+              await FireStore()
                   .registerCustomer(customerData: customerDataModel)
                   .then((value) {
                 Navigator.pop(context);
@@ -225,13 +225,12 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
               });
             });
           } else {
-            await FireStoreProvider()
+            await FireStore()
                 .updateInvoice(
                     docID: widget.invoice!.docID!,
                     invoiceData: model,
                     cartDataList: cartProductList)
                 .then((value) {
-              Navigator.pop(context);
               Navigator.pop(context);
               Navigator.pop(context, true);
               snackbar(context, true, "Successfully Updated Invoice");
@@ -335,28 +334,20 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
 
   String discount() {
     String result = "0.00";
-    double tmpSubTotal = 0.00;
-    for (var element in cartProductList) {
-      if (element.discountLock == false && element.discount != null) {
-        double total = element.rate! * element.qty!;
-        tmpSubTotal += (total * (element.discount!.toDouble() / 100));
-      }
+    double subTotalValue = double.parse(subtotal());
+    double tmpDiscount = 0.00;
+
+    if (discountSys == "%") {
+      double tmpsubtotal = subTotalValue;
+      tmpDiscount = tmpsubtotal * (discountInput / 100);
+    } else {
+      tmpDiscount = discountInput;
     }
 
-    // if (tmpSubTotal > discountInput) {
-    //   if (discountSys == "%") {
-    //     tmpDiscount = (tmpSubTotal * (discountInput / 100));
-    //   } else {
-    //     tmpDiscount = discountInput;
-    //   }
-    // }
-
-    if (tmpSubTotal.isNaN) {
-      tmpSubTotal = 0.00;
+    if (tmpDiscount.isNaN) {
+      tmpDiscount = 0.00;
     }
-
-    result = tmpSubTotal.toStringAsFixed(2);
-
+    result = tmpDiscount.toStringAsFixed(2);
     return result;
   }
 
@@ -415,6 +406,13 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
     }
     result = tmptotal.toStringAsFixed(2);
     return result;
+  }
+
+  String roundOff() {
+    var result = cartTotal();
+    double value = double.parse(result);
+    double decimalPart = value - value.toInt();
+    return decimalPart.toStringAsFixed(2);
   }
 
   @override
@@ -1059,7 +1057,11 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                                         setState(() {});
                                       });
                                     },
-                                    icon: const Icon(Icons.edit, size: 18),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 18,
+                                      color: Colors.green,
+                                    ),
                                   ),
                                   IconButton(
                                     onPressed: () async {
@@ -1075,7 +1077,11 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                                         }
                                       });
                                     },
-                                    icon: const Icon(Icons.delete, size: 18),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      size: 18,
+                                      color: Colors.red,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1128,14 +1134,19 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                       child: Row(
                         children: [
                           Text(
-                            "Discount",
+                            "Discount - ${discountSys.toUpperCase()} $discountInput",
                             textAlign: TextAlign.start,
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                           const SizedBox(width: 5),
+                          const Icon(
+                            Icons.edit,
+                            size: 15,
+                            color: Colors.green,
+                          ),
                           Expanded(
                             child: Text(
-                              "\u{20B9}${discount()}",
+                              "\u{20B9}${(discount())}",
                               textAlign: TextAlign.end,
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
@@ -1170,6 +1181,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                           const Icon(
                             Icons.edit,
                             size: 15,
+                            color: Colors.green,
                           ),
                           Expanded(
                             child: Text(
@@ -1207,6 +1219,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                           const SizedBox(width: 5),
                           const Icon(
                             Icons.edit,
+                            color: Colors.green,
                             size: 15,
                           ),
                           Expanded(
@@ -1218,6 +1231,24 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Text(
+                          "Round Off",
+                          textAlign: TextAlign.start,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            "\u{20B9}${roundOff()}",
+                            textAlign: TextAlign.end,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 5),
                     Divider(
@@ -1240,7 +1271,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                         Expanded(
                           flex: 3,
                           child: Text(
-                            "\u{20B9}${cartTotal()}",
+                            "\u{20B9}${(double.parse(cartTotal()) - double.parse(roundOff())).toStringAsFixed(2)}",
                             textAlign: TextAlign.end,
                             style: Theme.of(context)
                                 .textTheme

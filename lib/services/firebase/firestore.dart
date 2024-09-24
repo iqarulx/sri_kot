@@ -10,7 +10,7 @@ import '/utils/src/utilities.dart';
 
 final _instances = FirebaseFirestore.instance;
 
-class FireStoreProvider {
+class FireStore {
   final _users = _instances.collection('users');
   final _profile = _instances.collection('profile');
   final _admin = _instances.collection('users');
@@ -64,7 +64,7 @@ class FireStoreProvider {
         return value.id;
       });
     } catch (e) {
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Firestore: ${e.toString()}");
       return null;
     }
   }
@@ -76,7 +76,7 @@ class FireStoreProvider {
         return value.id;
       });
     } catch (e) {
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Firestore ${e.toString()}");
       return null;
     }
   }
@@ -107,10 +107,7 @@ class FireStoreProvider {
 
   Future<QuerySnapshot?> getStaffListing({required String cid}) async {
     try {
-      return await _staff
-          .where('company_id', isEqualTo: cid)
-          .where('deleted_at', isEqualTo: false)
-          .get();
+      return await _staff.where('company_id', isEqualTo: cid).get();
     } catch (e) {
       rethrow;
     }
@@ -136,6 +133,36 @@ class FireStoreProvider {
   }) async {
     try {
       return await _staff.doc(cid).get();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<DocumentSnapshot?> getEnquiryInfo({
+    required String cid,
+  }) async {
+    try {
+      return await _enquiry.doc(cid).get();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<DocumentSnapshot?> getEstimateInfo({
+    required String cid,
+  }) async {
+    try {
+      return await _estimate.doc(cid).get();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<DocumentSnapshot?> getInvoiceInfo({
+    required String cid,
+  }) async {
+    try {
+      return await _invoice.doc(cid).get();
     } catch (e) {
       rethrow;
     }
@@ -168,43 +195,49 @@ class FireStoreProvider {
     required UserType type,
     required String docid,
   }) async {
-    if (type == UserType.accountHolder) {
-      try {
-        final deviceDataMap = deviceData.toMap();
-        final documentRef = _profile.doc(docid);
-        await documentRef.update({
-          'device': deviceDataMap,
-        });
-        return true;
-      } catch (e) {
-        Log.addLog("${DateTime.now()} : Error updating document: $e");
-        return false;
+    var testMode = await LocalDB.checkTestMode();
+    if (!testMode) {
+      if (type == UserType.accountHolder) {
+        try {
+          final deviceDataMap = deviceData.toMap();
+          final documentRef = _profile.doc(docid);
+          await documentRef.update({
+            'device': deviceDataMap,
+          });
+          return true;
+        } catch (e) {
+          Log.addLog("${DateTime.now()} : Error updating document: $e");
+          return false;
+        }
+      } else if (type == UserType.staff) {
+        try {
+          final deviceDataMap = deviceData.toMap();
+          final documentRef = _staff.doc(docid);
+          await documentRef.update({
+            'device': deviceDataMap,
+          });
+          return true;
+        } catch (e) {
+          Log.addLog("${DateTime.now()} : Error updating document: $e");
+          return false;
+        }
+      } else if (type == UserType.admin) {
+        try {
+          final deviceDataMap = deviceData.toMap();
+          final documentRef = _admin.doc(docid);
+          await documentRef.update({
+            'device': deviceDataMap,
+          });
+          return true;
+        } catch (e) {
+          Log.addLog("${DateTime.now()} : Error updating document: $e");
+          return false;
+        }
       }
-    } else if (type == UserType.staff) {
-      try {
-        final deviceDataMap = deviceData.toMap();
-        final documentRef = _staff.doc(docid);
-        await documentRef.update({
-          'device': deviceDataMap,
-        });
-        return true;
-      } catch (e) {
-        Log.addLog("${DateTime.now()} : Error updating document: $e");
-        return false;
-      }
-    } else if (type == UserType.admin) {
-      try {
-        final deviceDataMap = deviceData.toMap();
-        final documentRef = _admin.doc(docid);
-        await documentRef.update({
-          'device': deviceDataMap,
-        });
-        return true;
-      } catch (e) {
-        Log.addLog("${DateTime.now()} : Error updating document: $e");
-        return false;
-      }
+    } else {
+      return true;
     }
+
     return false;
   }
 
@@ -420,14 +453,11 @@ class FireStoreProvider {
     return docRef;
   }
 
-  Future<QuerySnapshot?> checkStaffAlreadyExiest(
+  Future<QuerySnapshot?> checkStaffAlreadyExist(
       {required String loginID}) async {
     QuerySnapshot? docRef;
     try {
-      docRef = await _staff
-          .where('user_login_id', isEqualTo: loginID)
-          .where('delete_at', isEqualTo: false)
-          .get();
+      docRef = await _staff.where('user_login_id', isEqualTo: loginID).get();
     } catch (e) {
       throw e.toString();
     }
@@ -792,7 +822,17 @@ class FireStoreProvider {
     required String docID,
   }) async {
     try {
-      return await _staff.doc(docID).update({"delete_at": true});
+      return await _staff.doc(docID).delete();
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future deleteCustomer({
+    required String docID,
+  }) async {
+    try {
+      return await _customer.doc(docID).delete();
     } catch (e) {
       throw e.toString();
     }
@@ -1056,7 +1096,7 @@ class FireStoreProvider {
       };
       resultDocument = await _enquiry.add(data);
       if (resultDocument.id.isNotEmpty) {
-        await _insertEnquiryProduct(
+        await insertEnquiryProduct(
           productList: productList,
           docID: resultDocument.id,
         );
@@ -1067,7 +1107,7 @@ class FireStoreProvider {
     return resultDocument;
   }
 
-  Future _insertEnquiryProduct({
+  Future insertEnquiryProduct({
     required List<CartDataModel> productList,
     required String docID,
   }) async {
@@ -1142,7 +1182,7 @@ class FireStoreProvider {
       };
       resultDocument = await _estimate.add(data);
       if (resultDocument.id.isNotEmpty) {
-        await _insertEstimateProduct(
+        await insertEstimateProduct(
           productList: productList,
           docID: resultDocument.id,
         );
@@ -1153,7 +1193,7 @@ class FireStoreProvider {
     return resultDocument;
   }
 
-  Future _insertEstimateProduct({
+  Future insertEstimateProduct({
     required List<CartDataModel> productList,
     required String docID,
   }) async {
@@ -1174,7 +1214,7 @@ class FireStoreProvider {
   }) async {
     int? resultValue;
     try {
-      await _getLastEstimateId(cid: cid).then((count) async {
+      await getLastEstimateId(cid: cid).then((count) async {
         if (count != null) {
           resultValue = count.count;
           await _estimate.doc(docID).update(
@@ -1192,7 +1232,7 @@ class FireStoreProvider {
     return resultValue;
   }
 
-  Future<AggregateQuerySnapshot?> _getLastEstimateId(
+  Future<AggregateQuerySnapshot?> getLastEstimateId(
       {required String cid}) async {
     AggregateQuerySnapshot? resultData;
     try {
@@ -1423,7 +1463,7 @@ class FireStoreProvider {
           })
           .catchError((onError) => throw onError)
           .then((value) async {
-            return await _updateEnquryProduct(
+            return await updateEnquryProduct(
               productList: productList,
               docID: docID,
             );
@@ -1433,7 +1473,7 @@ class FireStoreProvider {
     }
   }
 
-  Future _updateEnquryProduct({
+  Future updateEnquryProduct({
     required List<CartDataModel> productList,
     required String docID,
   }) async {
@@ -1474,7 +1514,7 @@ class FireStoreProvider {
           })
           .catchError((onError) => throw onError)
           .then((value) async {
-            return await _updateEstimateProduct(
+            return await updateEstimateProduct(
               productList: productList,
               docID: docID,
             );
@@ -1484,7 +1524,7 @@ class FireStoreProvider {
     }
   }
 
-  Future _updateEstimateProduct({
+  Future updateEstimateProduct({
     required List<CartDataModel> productList,
     required String docID,
   }) async {
@@ -1778,6 +1818,7 @@ class FireStoreProvider {
 
   Future<String> findLastID({required DateTime orderTime}) async {
     try {
+      var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
       var result = getFinancialYear();
       String option = "new";
 
@@ -1792,6 +1833,7 @@ class FireStoreProvider {
           : int.parse(result["currentYearFull"]!) - 1;
 
       var querySnapshot = await _invoice
+          .where('company_id', isEqualTo: companyId)
           .where('bill_date', isLessThan: orderTime)
           .where('delete_at', isEqualTo: false)
           .orderBy('bill_date', descending: true)
@@ -1833,7 +1875,6 @@ class FireStoreProvider {
         await _invoice.doc(invoiceRef.id).update({"bill_no": invoiceNumber});
       }
     } catch (e) {
-      // Handle or log the exception
       print('Error creating invoice: $e');
       rethrow;
     }
@@ -1968,6 +2009,37 @@ class FireStoreProvider {
       // Handle or log the error as necessary
       print('Error fetching company details: $e');
       rethrow;
+    }
+  }
+
+  Future<bool> clearBillRecords() async {
+    try {
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+
+      var enquiry = await _enquiry.where('company_id', isEqualTo: cid).get();
+      if (enquiry.docs.isNotEmpty) {
+        for (var data in enquiry.docs) {
+          await _enquiry.doc(data.id).delete();
+        }
+      }
+
+      var estimate = await _estimate.where('company_id', isEqualTo: cid).get();
+      if (estimate.docs.isNotEmpty) {
+        for (var data in estimate.docs) {
+          await _estimate.doc(data.id).delete();
+        }
+      }
+
+      var invoice = await _invoice.where('company_id', isEqualTo: cid).get();
+      if (invoice.docs.isNotEmpty) {
+        for (var data in invoice.docs) {
+          await _invoice.doc(data.id).delete();
+        }
+      }
+      return true;
+    } on Exception catch (e) {
+      print(e);
+      return false;
     }
   }
 }

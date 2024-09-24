@@ -137,6 +137,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                                         child: CircularProgressIndicator()),
                                     imageUrl: imageUrl ?? Strings.productImg,
                                     fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.error),
                                   ))
                               : Container(
                                   width: double.infinity,
@@ -182,6 +184,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                 productNameOption(),
                 productCodeOption(),
                 qrCodeOption(),
+                hsnCodeOption(),
                 videoUrlOption(),
                 discountLockOption(context),
                 // DropDownForm(
@@ -334,6 +337,29 @@ class _ProductDetailsState extends State<ProductDetails> {
     );
   }
 
+  Row hsnCodeOption() {
+    return Row(
+      children: [
+        Expanded(
+          child: InputForm(
+            controller: hsnCode,
+            keyboardType: TextInputType.number,
+            formName: "HSN Code",
+            lableName: "HSN Code",
+            validation: (input) {
+              return FormValidation().commonValidation(
+                input: input,
+                isMandorty: false,
+                formName: 'HSN Code',
+                isOnlyCharter: false,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Row productCodeOption() {
     return Row(
       children: [
@@ -415,7 +441,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                 onPressed: () {
                   deleteProduct();
                 },
-                icon: const Icon(Icons.delete),
+                icon: const Icon(
+                  Icons.delete,
+                ),
               )
             : const SizedBox(),
       ],
@@ -427,6 +455,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   TextEditingController productCode = TextEditingController();
   TextEditingController productContent = TextEditingController();
   TextEditingController qrCode = TextEditingController();
+  TextEditingController hsnCode = TextEditingController();
   TextEditingController price = TextEditingController();
   TextEditingController videoUrl = TextEditingController();
 
@@ -439,7 +468,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   Future getCategory() async {
     await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-      await FireStoreProvider().categoryListing(cid: cid).then((value) {
+      await FireStore().categoryListing(cid: cid).then((value) {
         if (value!.docs.isNotEmpty) {
           setState(() {
             categoryList.clear();
@@ -463,7 +492,6 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   Future inifunc() async {
     if (widget.edit) {
-      // var directory = await getApplicationDocumentsDirectory();
       setState(() {
         categoryID = widget.productData!.categoryid ?? "";
         categoryName.text = widget.productData!.categoryName ?? "";
@@ -476,13 +504,9 @@ class _ProductDetailsState extends State<ProductDetails> {
             : widget.productData!.price.toString();
         videoUrl.text = widget.productData!.videoUrl ?? "";
         imageUrl = widget.productData!.productImg;
-        // imageUrl = path.join(
-        //   directory.path,
-        //   'product',
-        //   widget.productData!.productId,
-        // );
         discountLock = widget.productData!.discountLock ?? false;
         active = widget.productData!.active ?? false;
+        hsnCode.text = widget.productData!.hsnCode ?? '';
       });
     }
   }
@@ -496,12 +520,14 @@ class _ProductDetailsState extends State<ProductDetails> {
       if (result != null && result == true) {
         loading(context);
         try {
-          await FireStoreProvider()
-              .deleteProduct(docId: widget.productData!.productId!)
-              .then((value) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-            snackbar(context, true, "Product Delete Successfully");
+          await Storage().deleteImage(imageUrl ?? '').then((value) async {
+            await FireStore()
+                .deleteProduct(docId: widget.productData!.productId!)
+                .then((value) {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              snackbar(context, true, "Product Delete Successfully");
+            });
           });
         } catch (e) {
           Navigator.pop(context);
@@ -523,7 +549,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             productData.active = active;
             productData.categoryName = categoryName.text;
             productData.categoryid = categoryID;
-            productData.discountLock = discountLock; // Change Discount Lock
+            productData.discountLock = discountLock;
             productData.price = double.parse(price.text);
             productData.productCode = productCode.text;
             productData.productContent = productContent.text;
@@ -532,34 +558,29 @@ class _ProductDetailsState extends State<ProductDetails> {
             productData.videoUrl = videoUrl.text;
             productData.name =
                 productName.text.replaceAll(' ', '').trim().toLowerCase();
-            await FireStoreProvider()
+            productData.hsnCode = hsnCode.text;
+            await FireStore()
                 .updateProduct(
                     docid: widget.productData!.productId!, product: productData)
                 .then((value) async {
               if (productImage != null) {
-                var downloadLink = await FireStorageProvider().uploadImage(
-                  fileData: productImage!,
-                  fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-                  filePath: 'products',
-                );
+                await Storage().deleteImage(imageUrl ?? '').then((value) async {
+                  var downloadLink = await Storage().uploadImage(
+                    fileData: productImage!,
+                    fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+                    filePath: 'products',
+                  );
 
-                await FireStoreProvider()
-                    .updateProductPic(
-                  docId: widget.productData!.productId!,
-                  imageLink: downloadLink.toString(),
-                )
-                    .then((value) async {
-                  // await FireStorageProvider()
-                  //     .saveLocal(
-                  //   fileData: productImage!,
-                  //   id: widget.productData!.productId!,
-                  //   folder: 'product',
-                  // )
-                  //     .then((value) {
-                  Navigator.pop(context);
-                  Navigator.pop(context, true);
-                  snackbar(context, true, "Product Update Successfully");
-                  // });
+                  await FireStore()
+                      .updateProductPic(
+                    docId: widget.productData!.productId!,
+                    imageLink: downloadLink.toString(),
+                  )
+                      .then((value) async {
+                    Navigator.pop(context);
+                    Navigator.pop(context, true);
+                    snackbar(context, true, "Product Update Successfully");
+                  });
                 });
               } else {
                 Navigator.pop(context);
@@ -592,7 +613,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             productData.categoryid = categoryID;
             productData.categoryName = categoryName.text;
             productData.delete = false;
-            productData.discountLock = true; // Change Discount Lock
+            productData.discountLock = true;
             productData.price = double.parse(price.text);
             productData.productCode = productCode.text;
             productData.productContent = productContent.text;
@@ -604,9 +625,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                 productName.text.replaceAll(' ', '').trim().toLowerCase();
             productData.createdDateTime = DateTime.now();
             productData.postion = 0;
-
+            productData.hsnCode = hsnCode.text;
             if (productImage != null) {
-              var downloadLink = await FireStorageProvider().uploadImage(
+              var downloadLink = await Storage().uploadImage(
                 fileData: productImage!,
                 fileName: DateTime.now().millisecondsSinceEpoch.toString(),
                 filePath: 'products',
@@ -614,7 +635,7 @@ class _ProductDetailsState extends State<ProductDetails> {
               productData.productImg = downloadLink;
             }
 
-            await FireStoreProvider()
+            await FireStore()
                 .registerProduct(productsData: productData)
                 .then((value) {
               Navigator.pop(context);

@@ -171,6 +171,7 @@ class _AddCustomProductState extends State<AddCustomProduct> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           InputForm(
+                            autofocus: true,
                             controller: productName,
                             formName: "Product Name",
                             lableName: "Product Name",

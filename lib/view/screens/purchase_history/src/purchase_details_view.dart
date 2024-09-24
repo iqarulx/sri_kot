@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sri_kot/model/model.dart';
+import '/model/model.dart';
 
 class PurchaseDetailsView extends StatefulWidget {
   final PurchaseHistoryModel model;
@@ -73,7 +73,7 @@ class _PurchaseDetailsViewState extends State<PurchaseDetailsView> {
                     _buildTableRow(
                       context,
                       "Created at",
-                      DateFormat('dd-MM-yyyy h-m a')
+                      DateFormat('dd-MM-yyyy hh:mm a')
                           .format(widget.model.createdAt ?? DateTime.now()),
                     ),
                     _buildTableRow(

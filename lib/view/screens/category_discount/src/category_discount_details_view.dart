@@ -56,7 +56,7 @@ class _CategoryDiscountDetailsViewState
           }
         }
         if (count > 0) {
-          await FireStoreProvider()
+          await FireStore()
               .categoryDiscountCreate(uploadCategory: uploadCategory)
               .then((value) {
             Navigator.pop(context);

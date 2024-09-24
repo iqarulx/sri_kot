@@ -1,4 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sri_kot/services/services.dart';
+import 'package:sri_kot/utils/src/utilities.dart';
+import 'package:sri_kot/view/ui/ui.dart';
 import '/model/model.dart';
 import '/view/screens/screens.dart';
 
@@ -18,6 +22,35 @@ class _CustomerDetailsState extends State<CustomerDetails> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Customer Name"),
+          actions: [
+            IconButton(
+              onPressed: () {
+                confirmationDialog(
+                  context,
+                  title: "Delete Customer",
+                  message: "Are you sure want to delete customer",
+                ).then((value) async {
+                  if (value != null) {
+                    if (value) {
+                      loading(context);
+                      await FireStore()
+                          .deleteCustomer(docID: widget.customeData.docID ?? '')
+                          .then((value) {
+                        Navigator.pop(context);
+                        Navigator.pop(context, true);
+                        snackbar(
+                            context, true, "Successfully customer deleted");
+                      });
+                    }
+                  }
+                });
+              },
+              icon: const Icon(
+                CupertinoIcons.trash,
+                size: 18,
+              ),
+            )
+          ],
           bottom: const TabBar(
             indicatorColor: Colors.white,
             tabs: [

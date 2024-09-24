@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '/services/services.dart';
 import '/model/model.dart';
-import '/services/firebase/firestore_provider.dart';
 import '/utils/src/utilities.dart';
 import '/utils/src/validation.dart';
 import '/utils/src/variables.dart';
@@ -62,7 +62,7 @@ class _CustomerEditState extends State<CustomerEdit> {
         dataPack.state = state;
         dataPack.city = city;
         dataPack.email = email.text;
-        await FireStoreProvider()
+        await FireStore()
             .updateCustomer(
           docID: widget.customeData.docID!,
           customerData: dataPack,

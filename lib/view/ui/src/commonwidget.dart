@@ -2,58 +2,72 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import '/constants/constants.dart';
+import '/purchase/purchase.dart';
+import '/view/ui/src/modal.dart';
 import '/view/screens/screens.dart';
 
 Widget planUpgrade(context) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    decoration: BoxDecoration(
-      color: Colors.black12,
-      borderRadius: BorderRadius.circular(10),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-    child: Row(
-      children: [
-        const Text(
-          "Upgrade to",
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(
-          width: 5,
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: const Text(
-            "PRO",
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Container(
+      padding: const EdgeInsets.all(10),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Upgrade to",
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.grey,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ),
-        const Spacer(),
-        const SizedBox(
-          width: 10,
-        ),
-        Container(
-          padding: const EdgeInsets.all(5),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
+          const SizedBox(
+            width: 5,
           ),
-          child: const Icon(
-            Icons.north_east_outlined,
-            size: 20,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text(
+              "PRO",
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
-        ),
-      ],
+          const Spacer(),
+          const SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, CupertinoPageRoute(builder: (builder) {
+                return const Purchase();
+              }));
+            },
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: const Icon(
+                Icons.north_east_outlined,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -179,6 +193,7 @@ class DropDownForm extends StatefulWidget {
   final String? Function(String?)? validator;
   final void Function()? onTap;
   final String formName;
+  final bool? isMandorty;
   const DropDownForm({
     super.key,
     required this.onChange,
@@ -189,6 +204,7 @@ class DropDownForm extends StatefulWidget {
     this.validator,
     this.onTap,
     required this.formName,
+    this.isMandorty,
   });
 
   @override
@@ -234,8 +250,12 @@ class _DropDownFormState extends State<DropDownForm> {
                   : null,
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return "${widget.formName} is Must";
+              if (widget.isMandorty ?? true) {
+                if (value == null || value.isEmpty) {
+                  return "${widget.formName} is Must";
+                } else {
+                  return null;
+                }
               } else {
                 return null;
               }
@@ -259,6 +279,7 @@ class InputForm extends StatefulWidget {
   final List<TextInputFormatter>? inputFormaters;
   final bool? readOnly;
   final Function()? onTap;
+  final bool? autofocus;
 
   const InputForm({
     super.key,
@@ -273,6 +294,7 @@ class InputForm extends StatefulWidget {
     this.inputFormaters,
     this.readOnly,
     this.onTap,
+    this.autofocus,
   });
 
   @override
@@ -308,6 +330,7 @@ class _InputFormState extends State<InputForm> {
                   )
                 : const SizedBox(),
             TextFormField(
+              autofocus: widget.autofocus ?? false,
               readOnly: widget.readOnly ?? false,
               controller: widget.controller,
               cursorColor: const Color(0xff7099c2),
@@ -540,27 +563,7 @@ Future<bool?> confirmationDialog(
   return await showDialog(
     context: context,
     builder: (context) {
-      return WillPopScope(
-        onWillPop: () async => false,
-        child: CupertinoAlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            CupertinoButton(
-              child: const Text("Confirm"),
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-            ),
-            CupertinoButton(
-              child: const Text("Cancel"),
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-            ),
-          ],
-        ),
-      );
+      return Modal(title: title, content: message, type: ModalType.danger);
     },
   );
 }
@@ -643,12 +646,11 @@ Future<bool?> orderDialog(
   );
 }
 
-Future<Map<String, dynamic>?> formDialog(
-  context, {
-  required String title,
-  required String sysmbol,
-  required String value,
-}) async {
+Future<Map<String, dynamic>?> formDialog(context,
+    {required String title,
+    required String sysmbol,
+    required String value,
+    required}) async {
   return await showDialog(
     context: context,
     barrierDismissible: false,
@@ -696,7 +698,9 @@ class _CartFormAlertState extends State<CartFormAlert> {
   void initState() {
     super.initState();
     sys = widget.sysmbol;
-    value.text = widget.value;
+    if (widget.value != '0.0') {
+      value.text = widget.value;
+    }
   }
 
   @override
@@ -726,8 +730,8 @@ class _CartFormAlertState extends State<CartFormAlert> {
             Expanded(
               flex: 6,
               child: TextFormField(
-                autofocus: true,
                 controller: value,
+                keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   contentPadding: EdgeInsets.symmetric(horizontal: 10),
                 ),

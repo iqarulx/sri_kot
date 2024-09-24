@@ -27,183 +27,201 @@ class _UserHomeState extends State<UserHome> {
       drawer: const SideBar(),
       appBar: AppBar(
         title: const Text("Dashboard"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final connectionProvider =
+                    Provider.of<ConnectionProvider>(context, listen: false);
+                if (connectionProvider.isConnected) {
+                  dashboardHandler = initFunction();
+                }
+
+                connectionProvider.addListener(() {
+                  if (connectionProvider.isConnected) {
+                    dashboardHandler = initFunction();
+                  }
+                });
+              });
+            },
+            icon: const Icon(Icons.refresh_rounded),
+          )
+        ],
       ),
       body: isAdmin == true
-          ? ListView(
-              padding: const EdgeInsets.all(10),
-              children: [
-                GridView(
-                  primary: false,
-                  shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: getTabSize(),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: (1 / 1.12),
-                  ),
-                  children: [
-                    if (prCustomer)
-                      dashboardcard(
-                        title: "Customer",
-                        subtitle: customer,
-                        primaryColor: const Color(0xff4895ef),
-                        icon: Icons.person,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const CustomerListing(),
-                            ),
-                          );
-                        },
-                      ),
-                    if (prEnquiry)
-                      dashboardcard(
-                        title: "Enquiry",
-                        subtitle: enquriy,
-                        primaryColor: const Color(0xffB284BE),
-                        icon: Icons.business_outlined,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const EnquiryListing(),
-                            ),
-                          );
-                        },
-                      ),
-                    if (prEstimate)
-                      dashboardcard(
-                        title: "Estimate",
-                        subtitle: estimate,
-                        primaryColor: const Color(0xff3d348b),
-                        icon: Icons.business_outlined,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const EstimateListing(),
-                            ),
-                          );
-                        },
-                      ),
-                    if (prProduct)
-                      dashboardcard(
-                        title: "Product",
-                        subtitle: product,
-                        primaryColor: const Color(0xff6a994e),
-                        icon: Icons.category,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const ProductListing(),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-                if (prEnquiry || prEstimate)
-                  GestureDetector(
-                    onTap: () {
-                      bilingTab == 1
-                          ? Navigator.push(
+          ? RefreshIndicator(
+              onRefresh: () async {
+                IconButton(
+                  onPressed: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final connectionProvider =
+                          Provider.of<ConnectionProvider>(context,
+                              listen: false);
+                      if (connectionProvider.isConnected) {
+                        dashboardHandler = initFunction();
+                      }
+
+                      connectionProvider.addListener(() {
+                        if (connectionProvider.isConnected) {
+                          dashboardHandler = initFunction();
+                        }
+                      });
+                    });
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                );
+              },
+              child: ListView(
+                padding: const EdgeInsets.all(10),
+                children: [
+                  GridView(
+                    primary: false,
+                    shrinkWrap: true,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: getTabSize(),
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: (1 / 1.12),
+                    ),
+                    children: [
+                      if (prCustomer)
+                        dashboardcard(
+                          title: "Customer",
+                          subtitle: customer,
+                          primaryColor: const Color(0xff4895ef),
+                          icon: Icons.person,
+                          onTap: () {
+                            Navigator.push(
                               context,
                               CupertinoPageRoute(
-                                builder: (context) => const BillingOne(),
-                              ),
-                            )
-                          : Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                builder: (context) => const BillingTwo(),
+                                builder: (context) => const CustomerListing(),
                               ),
                             );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 10, top: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 10),
-                      child: Row(
-                        children: [
-                          const Text(
-                            "Quick Billing",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+                          },
+                        ),
+                      if (prEnquiry)
+                        dashboardcard(
+                          title: "Enquiry",
+                          subtitle: enquriy,
+                          primaryColor: const Color(0xffB284BE),
+                          icon: Icons.business_outlined,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const EnquiryListing(),
+                              ),
+                            );
+                          },
+                        ),
+                      if (prEstimate)
+                        dashboardcard(
+                          title: "Estimate",
+                          subtitle: estimate,
+                          primaryColor: const Color(0xff3d348b),
+                          icon: Icons.business_outlined,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const EstimateListing(),
+                              ),
+                            );
+                          },
+                        ),
+                      if (prProduct)
+                        dashboardcard(
+                          title: "Product",
+                          subtitle: product,
+                          primaryColor: const Color(0xff6a994e),
+                          icon: Icons.category,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const ProductListing(),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                  if (prEnquiry || prEstimate)
+                    GestureDetector(
+                      onTap: () {
+                        bilingTab == 1
+                            ? Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => const BillingOne(),
+                                ),
+                              )
+                            : Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => const BillingTwo(),
+                                ),
+                              );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 10, top: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        child: Row(
+                          children: [
+                            const Text(
+                              "Quick Billing",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          // Container(
-                          //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                          //   decoration: BoxDecoration(
-                          //     color: Theme.of(context).primaryColor,
-                          //     borderRadius: BorderRadius.circular(3),
-                          //   ),
-                          //   child: const Text(
-                          //     "PRO",
-                          //     style: TextStyle(
-                          //       color: Colors.white,
-                          //     ),
-                          //   ),
-                          // ),
-                          const Spacer(),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
+                            const SizedBox(
+                              width: 5,
                             ),
-                            child: const Icon(
-                              Icons.north_east_outlined,
-                              size: 20,
+                            // Container(
+                            //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            //   decoration: BoxDecoration(
+                            //     color: Theme.of(context).primaryColor,
+                            //     borderRadius: BorderRadius.circular(3),
+                            //   ),
+                            //   child: const Text(
+                            //     "PRO",
+                            //     style: TextStyle(
+                            //       color: Colors.white,
+                            //     ),
+                            //   ),
+                            // ),
+                            const Spacer(),
+                            const SizedBox(
+                              width: 10,
                             ),
-                          ),
-                        ],
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                              ),
+                              child: const Icon(
+                                Icons.north_east_outlined,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             )
           : adminInfo(context),
     );
   }
-
-  // FutureBuilder<dynamic> screenView() {
-  //   return FutureBuilder(
-  //     future: dashboardHandler,
-  //     builder: (context, snapshot) {
-  //       if (snapshot.connectionState == ConnectionState.waiting) {
-  //         return const Center(
-  //           child: CircularProgressIndicator(),
-  //         );
-  //       } else if (snapshot.hasError) {
-  //         return Center(
-  //           child: Text(snapshot.error.toString()),
-  //         );
-  //       } else {
-  //         return RefreshIndicator(
-  //           onRefresh: () async {
-  //             setState(() {
-  //               dashboardHandler = initFunction();
-  //             });
-  //           },
-  //           child: );
-  //       }
-  //     },
-  //   );
-  // }
 
   Center adminInfo(BuildContext context) {
     return Center(
@@ -289,81 +307,97 @@ class _UserHomeState extends State<UserHome> {
 
   Future getCustomerCount() async {
     try {
-      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-        await FireStoreProvider().getCustomerCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              customer = value.count.toString();
-            });
-          } else {
-            setState(() {
-              customer = "0";
-            });
-          }
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStore().getCustomerCount(cid: cid).then((value) {
+            if (value != null) {
+              setState(() {
+                customer = value.count.toString();
+              });
+            } else {
+              setState(() {
+                customer = "0";
+              });
+            }
+          });
         });
-      });
+      }
     } catch (e) {
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Main App ${e.toString()}");
     }
   }
 
   Future getEnquiryCount() async {
     try {
-      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-        await FireStoreProvider().getEnquiryCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              enquriy = value.count.toString();
-            });
-          } else {
-            setState(() {
-              enquriy = "0";
-            });
-          }
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStore().getEnquiryCount(cid: cid).then((value) {
+            if (value != null) {
+              setState(() {
+                enquriy = value.count.toString();
+              });
+            } else {
+              setState(() {
+                enquriy = "0";
+              });
+            }
+          });
         });
-      });
+      }
     } catch (e) {
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Main App ${e.toString()}");
     }
   }
 
   Future getEstimateCount() async {
     try {
-      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-        await FireStoreProvider().getEstimateCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              estimate = value.count.toString();
-            });
-          } else {
-            setState(() {
-              estimate = "0";
-            });
-          }
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStore().getEstimateCount(cid: cid).then((value) {
+            if (value != null) {
+              setState(() {
+                estimate = value.count.toString();
+              });
+            } else {
+              setState(() {
+                estimate = "0";
+              });
+            }
+          });
         });
-      });
+      }
     } catch (e) {
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Main App ${e.toString()}");
     }
   }
 
   Future getProductCount() async {
     try {
-      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-        await FireStoreProvider().getProductCount(cid: cid).then((value) {
-          if (value != null) {
-            setState(() {
-              product = value.count.toString();
-            });
-          } else {
-            setState(() {
-              product = "0";
-            });
-          }
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStore().getProductCount(cid: cid).then((value) {
+            if (value != null) {
+              setState(() {
+                product = value.count.toString();
+              });
+            } else {
+              setState(() {
+                product = "0";
+              });
+            }
+          });
         });
-      });
+      }
     } catch (e) {
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Main App ${e.toString()}");
     }
   }
 

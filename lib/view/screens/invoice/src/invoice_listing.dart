@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -34,9 +33,12 @@ class _InvoiceListingState extends State<InvoiceListing> {
 
   int countItems = 10;
   int currentPage = 1;
+  int? overallTotal;
 
   Future getInvoiceList() async {
     try {
+      overallTotal = 0;
+
       setState(() {
         countItems = 10;
         currentPage = 1;
@@ -44,7 +46,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
         fullInvoiceList.clear();
         tmpinvoiceList.clear();
       });
-      return await FireStoreProvider().getInvoiceListing().then((value) {
+      return await FireStore().getInvoiceListing().then((value) {
         if (value.docs.isNotEmpty) {
           for (var element in value.docs) {
             InvoiceModel model = InvoiceModel();
@@ -91,7 +93,11 @@ class _InvoiceListingState extends State<InvoiceListing> {
               calcula.packageValue = element["price"]["package_value"];
               calcula.packagesys = element["price"]["package_sys"];
               calcula.subTotal = element["price"]["sub_total"];
+              calcula.roundOff = element["price"]["round_off"];
               calcula.total = element["price"]["total"];
+              if (calcula.total != null) {
+                overallTotal = (overallTotal ?? 0) + calcula.total!.toInt();
+              }
               model.price = calcula;
             }
             setState(() {
@@ -117,7 +123,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
     try {
       loading(context);
       if (invoice.listingProducts!.isEmpty) {
-        await FireStoreProvider()
+        await FireStore()
             .getInvoiceProductListing(docID: invoice.docID!)
             .then((value) {
           if (value.docs.isNotEmpty) {
@@ -313,7 +319,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
         tmpinvoiceList.clear();
       });
       loading(context);
-      await FireStoreProvider()
+      await FireStore()
           .filterInvoice(fromDate: fromDate!, toDate: toDate!)
           .then((value) {
         if (value.docs.isNotEmpty) {
@@ -362,6 +368,7 @@ class _InvoiceListingState extends State<InvoiceListing> {
               calcula.packageValue = element["price"]["package_value"];
               calcula.packagesys = element["price"]["package_sys"];
               calcula.subTotal = element["price"]["sub_total"];
+              calcula.roundOff = element["price"]["round_off"];
               calcula.total = element["price"]["total"];
               model.price = calcula;
             }
@@ -446,8 +453,15 @@ class _InvoiceListingState extends State<InvoiceListing> {
               const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text("Bill of Supply (${invoiceList.length})"),
+        title: const Text("Bill of Supply"),
         actions: [
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  invoiceHandler = getInvoiceList();
+                });
+              },
+              icon: const Icon(Icons.refresh_rounded)),
           IconButton(
             splashRadius: 20,
             tooltip: "Download Excel File",
@@ -485,6 +499,30 @@ class _InvoiceListingState extends State<InvoiceListing> {
           return connectionProvider.isConnected ? body() : noInternet(context);
         },
       ),
+      floatingActionButton: floatingButtons(context),
+    );
+  }
+
+  FloatingActionButton floatingButtons(BuildContext context) {
+    return FloatingActionButton.extended(
+      backgroundColor: Theme.of(context).primaryColor,
+      shape: RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      onPressed: () async {
+        await showFilterSheet();
+      },
+      label: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.filter_list_outlined),
+          SizedBox(
+            width: 10,
+          ),
+          Text("Filter"),
+        ],
+      ),
     );
   }
 
@@ -508,23 +546,64 @@ class _InvoiceListingState extends State<InvoiceListing> {
                     padding: const EdgeInsets.all(10),
                     child: Column(
                       children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Overall Bill Total",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      "(${invoiceList.length} Bills)",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                "\u{20B9}${overallTotal ?? 0}",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              )
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
                         SizedBox(
                           child: TextFormField(
                             controller: search,
                             keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.search,
-                            decoration: InputDecoration(
-                              hintText: "Search Bill of Supply",
+                            decoration: const InputDecoration(
+                              hintText: "Search...",
                               filled: true,
                               fillColor: Colors.white,
-                              prefixIcon: const Icon(Icons.search),
-                              suffixIcon: IconButton(
-                                splashRadius: 20,
-                                onPressed: () async {
-                                  await showFilterSheet();
-                                },
-                                icon: const Icon(Icons.filter_list),
-                              ),
+                              prefixIcon: Icon(Icons.search),
                             ),
                             onTapOutside: (event) {
                               FocusManager.instance.primaryFocus!.unfocus();
@@ -559,6 +638,41 @@ class _InvoiceListingState extends State<InvoiceListing> {
                                         setState(() {
                                           invoiceHandler = getInvoiceList();
                                         });
+                                      }
+                                    });
+                                  },
+                                  onLongPress: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (builder) {
+                                          return BillListOptions(
+                                            title:
+                                                invoiceList[index].billNo ?? '',
+                                          );
+                                        }).then((value) {
+                                      if (value != null) {
+                                        if (value == "1") {
+                                          openDialog(invoiceList[index]);
+                                        } else if (value == "2") {
+                                          openDialog(invoiceList[index]);
+                                        } else if (value == "3") {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  InvoiceDetails(
+                                                invoice: invoiceList[index],
+                                              ),
+                                            ),
+                                          ).then((value) {
+                                            if (value != null && value) {
+                                              setState(() {
+                                                invoiceHandler =
+                                                    getInvoiceList();
+                                              });
+                                            }
+                                          });
+                                        }
                                       }
                                     });
                                   },
@@ -759,5 +873,55 @@ class _InvoiceListingState extends State<InvoiceListing> {
         ),
       ),
     );
+  }
+
+  openDialog(InvoiceModel invoiceModel) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Print Options"),
+        actions: [
+          TextButton(
+            onPressed: () {},
+            child: const Text("Cancel"),
+          ),
+        ],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              onTap: () {
+                Navigator.pop(context, "Original");
+              },
+              title: const Text("Original"),
+            ),
+            ListTile(
+              onTap: () {
+                Navigator.pop(context, "Duplicate");
+              },
+              title: const Text("Duplicate"),
+            ),
+            ListTile(
+              onTap: () {
+                Navigator.pop(context, "Triplicate");
+              },
+              title: const Text("Triplicate"),
+            ),
+          ],
+        ),
+      ),
+    ).then((result) {
+      if (result != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InvoicePdfView(
+              title: result,
+              invoice: invoiceModel,
+            ),
+          ),
+        );
+      }
+    });
   }
 }

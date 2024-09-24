@@ -29,7 +29,7 @@ class _ModalState extends State<Modal> {
   void initState() {
     switch (widget.type) {
       case ModalType.danger:
-        icon = const Icon(CupertinoIcons.drop_triangle);
+        icon = const Icon(Icons.warning_amber_rounded);
         break;
       case ModalType.call:
         icon = const Icon(
@@ -38,7 +38,7 @@ class _ModalState extends State<Modal> {
         break;
       case ModalType.info:
         icon = const Icon(
-          CupertinoIcons.exclamationmark_shield,
+          CupertinoIcons.exclamationmark_square,
         );
         break;
     }
@@ -56,22 +56,25 @@ class _ModalState extends State<Modal> {
         borderRadius: BorderRadius.circular(10),
         side: BorderSide.none,
       ),
-      title: Row(
-        children: [
-          icon!,
-          const SizedBox(
-            width: 8,
-          ),
-          Text(
-            widget.title,
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
+      title: SizedBox(
+        width: double.infinity,
+        child: Row(
+          children: [
+            icon!,
+            const SizedBox(
+              width: 8,
             ),
-          ),
-        ],
+            Text(
+              widget.title,
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
-      content: Text(widget.content),
+      content: SizedBox(width: double.infinity, child: Text(widget.content)),
       actions: [
         Row(
           children: [

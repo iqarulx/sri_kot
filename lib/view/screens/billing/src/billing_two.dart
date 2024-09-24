@@ -42,7 +42,7 @@ class _BillingTwoState extends State<BillingTwo> {
         isLoading = true;
         billingProductList.clear();
       });
-      var storeProvider = FireStoreProvider();
+      var storeProvider = FireStore();
 
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
@@ -56,6 +56,7 @@ class _BillingTwoState extends State<BillingTwo> {
             CategoryDataModel model = CategoryDataModel();
             model.categoryName = categorylist["category_name"].toString();
             model.postion = categorylist["postion"];
+            model.discount = categorylist["discount"];
             model.tmpcatid = categorylist.id;
             setState(() {
               categoryList.add(model);
@@ -87,9 +88,11 @@ class _BillingTwoState extends State<BillingTwo> {
           for (var category in categoryList) {
             Iterable<ProductDataModel> products = productDataList
                 .where((element) => element.categoryid == category.tmpcatid);
+
             for (var element in products) {
               setState(() {
                 element.categoryName = category.categoryName;
+                element.discount = category.discount;
               });
             }
             var data = BillingDataModel(
@@ -114,6 +117,8 @@ class _BillingTwoState extends State<BillingTwo> {
 
                 if (catId != -1 && proId != -1) {
                   setState(() {
+                    elements.discount =
+                        billingProductList[catId].products![proId].discount;
                     billingProductList[catId].products![proId].qty =
                         elements.qty;
                     billingProductList[catId].products![proId].qtyForm!.text =
@@ -164,6 +169,8 @@ class _BillingTwoState extends State<BillingTwo> {
 
                 if (catId != -1 && proId != -1) {
                   setState(() {
+                    elements.discount =
+                        billingProductList[catId].products![proId].discount;
                     billingProductList[catId].products![proId].qty =
                         elements.qty;
                     billingProductList[catId].products![proId].qtyForm!.text =
@@ -241,7 +248,8 @@ class _BillingTwoState extends State<BillingTwo> {
         model.categoryName = categorylist["category_name"].toString();
         model.postion = int.parse(categorylist["postion"]);
         model.tmpcatid = categorylist["category_id"];
-        model.discount = int.parse(categorylist["discount"]);
+        model.discount =
+            int.tryParse(categorylist["discount"]?.toString() ?? "0") ?? 0;
         setState(() {
           categoryList.add(model);
         });
@@ -269,13 +277,15 @@ class _BillingTwoState extends State<BillingTwo> {
           productDataList.add(productInfo);
         });
       }
-
+      // Category & Product Merge
       for (var category in categoryList) {
         Iterable<ProductDataModel> products = productDataList
             .where((element) => element.categoryid == category.tmpcatid);
+
         for (var element in products) {
           setState(() {
             element.categoryName = category.categoryName;
+            element.discount = category.discount;
           });
         }
         var data = BillingDataModel(
@@ -286,6 +296,7 @@ class _BillingTwoState extends State<BillingTwo> {
           billingProductList.add(data);
         });
       }
+
       if (widget.isEdit != null && widget.isEdit! == true) {
         if (widget.enquiryData != null) {
           for (var elements in widget.enquiryData!.products!) {
@@ -299,6 +310,8 @@ class _BillingTwoState extends State<BillingTwo> {
 
             if (catId != -1 && proId != -1) {
               setState(() {
+                elements.discount =
+                    billingProductList[catId].products![proId].discount;
                 billingProductList[catId].products![proId].qty = elements.qty;
                 billingProductList[catId].products![proId].qtyForm!.text =
                     elements.qty.toString();
@@ -347,6 +360,8 @@ class _BillingTwoState extends State<BillingTwo> {
 
             if (catId != -1 && proId != -1) {
               setState(() {
+                elements.discount =
+                    billingProductList[catId].products![proId].discount;
                 billingProductList[catId].products![proId].qty = elements.qty;
                 billingProductList[catId].products![proId].qtyForm!.text =
                     elements.qty.toString();
@@ -438,6 +453,7 @@ class _BillingTwoState extends State<BillingTwo> {
     cartDataInfo.productContent = tmpProductDetails.productContent;
     cartDataInfo.productImg = tmpProductDetails.productImg;
     cartDataInfo.qrCode = tmpProductDetails.qrCode;
+    cartDataInfo.discount = tmpProductDetails.discount;
     cartDataInfo.qty = 1;
     cartDataInfo.qtyForm = TextEditingController(
       text: cartDataInfo.qty.toString(),
@@ -720,12 +736,23 @@ class _BillingTwoState extends State<BillingTwo> {
     }
   }
 
-  dialogBox() {
-    return confirmationDialog(
-      context,
-      title: "Alert",
-      message: "Do you want exit this page ?",
-    );
+  dialogBox() async {
+    await showDialog(
+      context: context,
+      builder: (builder) {
+        return const Modal(
+          title: "Alert",
+          content: "Do you want exit this page ?",
+          type: ModalType.danger,
+        );
+      },
+    ).then((value) async {
+      if (value != null) {
+        if (value) {
+          Navigator.of(context).pop();
+        }
+      }
+    });
   }
 
   showQRBox({required int index, required int count}) async {
@@ -840,12 +867,12 @@ class _BillingTwoState extends State<BillingTwo> {
         key: billingTwoKey,
         endDrawer: CartDrawer(
           isEdit: widget.isEdit ?? false,
-          enquiryDocId: widget.enquiryData?.docID ?? '',
-          estimateDocId: widget.estimateData?.docID ?? '',
+          enquiryDocId: widget.enquiryData?.docID,
+          estimateDocId: widget.estimateData?.docID,
           pageType: 2,
           isConnected: isConnected,
-          enquiryReferenceId: widget.enquiryData?.referenceId ?? '',
-          estimateReferenceId: widget.estimateData?.referenceId ?? '',
+          enquiryReferenceId: widget.enquiryData?.referenceId,
+          estimateReferenceId: widget.estimateData?.referenceId,
         ),
         appBar: AppBar(
           elevation: 0,
@@ -1032,6 +1059,7 @@ class _BillingTwoState extends State<BillingTwo> {
                   itemBuilder: (context, index) {
                     ProductDataModel tmpProductDetails =
                         billingProductList[crttab].products![index];
+
                     return GestureDetector(
                       onTap: () {
                         tapQty(index);
@@ -1052,22 +1080,6 @@ class _BillingTwoState extends State<BillingTwo> {
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade300,
                                     borderRadius: BorderRadius.circular(5),
-                                    //   image:
-                                    //       tmpProductDetails.productImg != null
-                                    //           ? DecorationImage(
-                                    //               image: File(tmpProductDetails
-                                    //                           .productImg!)
-                                    //                       .existsSync()
-                                    //                   ? FileImage(
-                                    //                       File(tmpProductDetails
-                                    //                           .productImg!),
-                                    //                     )
-                                    //                   : AssetImage(Assets
-                                    //                       .images.noImage.path),
-                                    //               fit: BoxFit.cover,
-                                    //             )
-                                    //           : null,
-                                    // ),
                                   ),
                                   child: isConnected
                                       ? CachedNetworkImage(
@@ -1080,6 +1092,8 @@ class _BillingTwoState extends State<BillingTwo> {
                                                   Strings.productImg,
                                           fit: BoxFit.cover,
                                           width: double.infinity,
+                                          errorWidget: (context, url, error) =>
+                                              const Icon(Icons.error),
                                         )
                                       : Container(),
                                 ),
@@ -1109,7 +1123,13 @@ class _BillingTwoState extends State<BillingTwo> {
                                         CrossAxisAlignment.center,
                                     children: [
                                       Text(
-                                        "\u{20B9}${tmpProductDetails.price ?? ""}",
+                                        tmpProductDetails.discountLock !=
+                                                    null &&
+                                                !tmpProductDetails.discountLock!
+                                            ? tmpProductDetails.discount != null
+                                                ? "\u{20B9}${(tmpProductDetails.price! - (tmpProductDetails.price! * (tmpProductDetails.discount!.toDouble() / 100))).toStringAsFixed(2)}"
+                                                : "\u{20B9}${(tmpProductDetails.price)!.toStringAsFixed(2)}"
+                                            : "\u{20B9}${(tmpProductDetails.price)!.toStringAsFixed(2)}",
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleLarge,
@@ -1117,16 +1137,44 @@ class _BillingTwoState extends State<BillingTwo> {
                                       const SizedBox(
                                         width: 5,
                                       ),
-                                      Text(
-                                        "\u{20B9}${tmpProductDetails.price ?? ""}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .copyWith(
-                                              decoration:
-                                                  TextDecoration.lineThrough,
+                                      if (tmpProductDetails.discountLock !=
+                                              null &&
+                                          !tmpProductDetails.discountLock!)
+                                        if (tmpProductDetails.discount != null)
+                                          Flexible(
+                                            child: Text(
+                                              "\u{20B9}${tmpProductDetails.price ?? ""}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall!
+                                                  .copyWith(
+                                                    decoration: TextDecoration
+                                                        .lineThrough,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                      ),
+                                          )
+                                        else
+                                          Flexible(
+                                            child: Text(
+                                              "No Discount",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall!
+                                                  .copyWith(),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
+                                      else
+                                        Flexible(
+                                          child: Text(
+                                            "Net Rate",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall!,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ],

@@ -32,23 +32,55 @@ class _UserListingState extends State<UserListing> {
         ),
         title: const Text("Users"),
         actions: [
+          IconButton(
+            onPressed: () {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final connectionProvider =
+                    Provider.of<ConnectionProvider>(context, listen: false);
+                if (connectionProvider.isConnected) {
+                  AccountValid.accountValid(context);
+
+                  userlistingHandler = getUserInfo();
+                }
+              });
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final connectionProvider =
+                    Provider.of<ConnectionProvider>(context, listen: false);
+                connectionProvider.addListener(() {
+                  if (connectionProvider.isConnected) {
+                    userlistingHandler = getUserInfo();
+                  }
+                });
+              });
+            },
+            icon: const Icon(Icons.refresh),
+          ),
           Provider.of<ConnectionProvider>(context, listen: false).isConnected
               ? IconButton(
                   onPressed: () async {
-                    await LocalService.checkCount(type: ProfileType.admin)
-                        .then((value) async {
-                      if (value) {
-                        await openModelBottomSheat(context).then((result) {
-                          if (result != null && result == true) {
-                            setState(() {
-                              userlistingHandler = getUserInfo();
-                            });
-                          }
-                        });
-                      } else {
-                        snackbar(context, false, "Reached max user count");
-                      }
-                    });
+                    try {
+                      loading(context);
+
+                      await LocalService.checkCount(type: ProfileType.admin)
+                          .then((value) async {
+                        Navigator.pop(context);
+                        if (value) {
+                          await openModelBottomSheat(context).then((result) {
+                            if (result != null && result == true) {
+                              setState(() {
+                                userlistingHandler = getUserInfo();
+                              });
+                            }
+                          });
+                        } else {
+                          snackbar(context, false, "Reached max user count");
+                        }
+                      });
+                    } on Exception catch (e) {
+                      Navigator.pop(context);
+                      snackbar(context, false, e.toString());
+                    }
                   },
                   splashRadius: 20,
                   icon: const Icon(
@@ -155,7 +187,6 @@ class _UserListingState extends State<UserListing> {
                               return Column(
                                 children: [
                                   ListTile(
-                                    contentPadding: const EdgeInsets.all(0),
                                     onTap: () {
                                       setState(() {
                                         adminuid = userListData[index].uid;
@@ -182,20 +213,28 @@ class _UserListingState extends State<UserListing> {
                                         );
                                       });
                                     },
-                                    leading: ClipRRect(
-                                      clipBehavior: Clip.hardEdge,
-                                      borderRadius: BorderRadius.circular(25.0),
+                                    leading: ClipOval(
                                       child: CachedNetworkImage(
-                                        placeholder: (context, url) =>
-                                            const CircularProgressIndicator(),
                                         imageUrl:
                                             userListData[index].imageUrl ??
                                                 Strings.productImg,
+                                        placeholder: (context, url) =>
+                                            const CircularProgressIndicator(),
                                         fit: BoxFit.cover,
+                                        width: 45.0,
+                                        height: 45.0,
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(Icons.error),
                                       ),
                                     ),
                                     title: Text(
                                       userListData[index].adminName.toString(),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     subtitle: Text(
                                       userListData[index]
@@ -207,8 +246,7 @@ class _UserListingState extends State<UserListing> {
                                       ),
                                     ),
                                     trailing: const Icon(
-                                      Icons.chevron_right_outlined,
-                                    ),
+                                        Icons.keyboard_arrow_right_outlined),
                                   ),
                                   Divider(
                                     height: 0,
@@ -294,8 +332,11 @@ class _UserListingState extends State<UserListing> {
   }
 
   Future getUserInfo() async {
+    setState(() {
+      userListData.clear();
+    });
     try {
-      FireStoreProvider provider = FireStoreProvider();
+      FireStore provider = FireStore();
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         final result = await provider.userListing(cid: cid);
@@ -310,13 +351,6 @@ class _UserListingState extends State<UserListing> {
             model.adminLoginId = element["user_login_id"].toString();
             model.password = element["password"].toString();
             model.imageUrl = element["image_url"];
-
-            // var directory = await getApplicationDocumentsDirectory();
-            // model.imageUrl = path.join(
-            //   directory.path,
-            //   'user',
-            //   element.id,
-            // );
 
             model.docid = element.id;
             model.uid = element["uid"].toString();

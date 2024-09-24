@@ -7,6 +7,17 @@ class LocalDB {
     return preferences;
   }
 
+  static Future<bool> checkTestMode() async {
+    var db = await _connect();
+    var result = db.getBool('test_mode') ?? false;
+    return result;
+  }
+
+  static Future setTestMode() async {
+    var db = await _connect();
+    var result = db.setBool('test_mode', true);
+  }
+
   static Future<bool> createNewUser({
     required String username,
     required String loginEmail,
@@ -72,14 +83,24 @@ class LocalDB {
     db.setString('last_sync', DateTime.now().toString());
   }
 
-  static Future setPdfType(int type) async {
+  static Future setPdfType(bool type) async {
     var db = await _connect();
-    return db.setInt('pdf_type', type);
+    return db.setBool('invoice_pdf_type', type);
   }
 
-  static Future<int?> getPdfType() async {
+  static Future<bool?> getPdfType() async {
     var db = await _connect();
-    return db.getInt('pdf_type');
+    return db.getBool('invoice_pdf_type');
+  }
+
+  static Future setPdfAlignment(int type) async {
+    var db = await _connect();
+    return db.setInt('pdf_product_name_alignment', type);
+  }
+
+  static Future<int> getPdfAlignment() async {
+    var db = await _connect();
+    return db.getInt('pdf_product_name_alignment') ?? 1;
   }
 
   static Future<int> getLastEnquiry() async {

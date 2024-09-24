@@ -321,7 +321,7 @@ class _AddUserState extends State<AddUser> {
                     await LocalDB.fetchInfo(type: LocalData.companyName);
                 String? downloadLink;
                 if (profileImage != null) {
-                  downloadLink = await FireStorageProvider().uploadImage(
+                  downloadLink = await Storage().uploadImage(
                     fileData: profileImage!,
                     fileName: DateTime.now().millisecondsSinceEpoch.toString(),
                     filePath: 'users',
@@ -337,7 +337,7 @@ class _AddUserState extends State<AddUser> {
                 deviceData.deviceType = null;
                 userData.deviceModel = deviceData;
 
-                await FireStoreProvider()
+                await FireStore()
                     .registerUserAdmin(userData: userData)
                     .then((userValue) {
                   Navigator.pop(context);

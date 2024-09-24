@@ -12,12 +12,14 @@ class InvoicePDFService {
   final String total;
   final ProfileModel companyDoc;
   final bool pdfType;
+  final int pdfAlignment;
   InvoicePDFService(
       {required this.title,
       required this.invoice,
       required this.total,
       required this.companyDoc,
-      required this.pdfType});
+      required this.pdfType,
+      required this.pdfAlignment});
 
   String totalQty() {
     String total = "0";
@@ -338,7 +340,11 @@ class InvoicePDFService {
                             pw.Padding(
                               padding: const pw.EdgeInsets.all(5),
                               child: pw.Text(
-                                "Date: ${DateFormat("dd-MM-yyyy").format(invoice.biilDate!)}",
+                                companyDoc.hsn != null &&
+                                        companyDoc.hsn!.isNotEmpty &&
+                                        companyDoc.hsn!["common_hsn"]
+                                    ? "HSN : ${companyDoc.hsn!["common_hsn_value"]} / Date: ${DateFormat("dd-MM-yyyy").format(invoice.biilDate!)}"
+                                    : "Date: ${DateFormat("dd-MM-yyyy").format(invoice.biilDate!)}",
                                 textAlign: pw.TextAlign.right,
                                 style: pw.TextStyle(
                                   fontWeight: pw.FontWeight.bold,
@@ -481,7 +487,13 @@ class InvoicePDFService {
                         padding: const pw.EdgeInsets.all(3),
                         child: pw.Text(
                           invoice.listingProducts?[i].productName ?? "",
-                          textAlign: pw.TextAlign.left,
+                          textAlign: pdfAlignment == 1
+                              ? pw.TextAlign.left
+                              : pdfAlignment == 2
+                                  ? pw.TextAlign.right
+                                  : pdfAlignment == 3
+                                      ? pw.TextAlign.center
+                                      : pw.TextAlign.left,
                           style: const pw.TextStyle(
                             fontSize: 10,
                           ),
@@ -928,7 +940,7 @@ class InvoicePDFService {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    "Discount",
+                                    "Discount(${(invoice.price!.discount)!.round()}${invoice.price!.discountsys})",
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -968,7 +980,7 @@ class InvoicePDFService {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    "Extra Discount",
+                                    "Extra Discount(${(invoice.price!.extraDiscount)!.round()}${invoice.price!.extraDiscountsys})",
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -1008,7 +1020,7 @@ class InvoicePDFService {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    "Packing Charges",
+                                    "Packing Charges(${(invoice.price!.package)!.round()}${invoice.price!.packagesys})",
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -1034,6 +1046,41 @@ class InvoicePDFService {
                           ],
                         )
                       : pw.SizedBox(),
+                  pw.Table(
+                    columnWidths: {
+                      0: const pw.FlexColumnWidth(14.8),
+                      1: const pw.FlexColumnWidth(3),
+                    },
+                    border: pw.TableBorder.all(),
+                    children: [
+                      pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              "Round Off",
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              invoice.price?.roundOff?.toStringAsFixed(2) ?? "",
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                   pw.Table(
                     columnWidths: {
                       0: const pw.FlexColumnWidth(14.8),

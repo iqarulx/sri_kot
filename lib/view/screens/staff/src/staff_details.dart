@@ -108,6 +108,8 @@ class _StaffDetailsState extends State<StaffDetails> {
                                         fit: BoxFit.cover,
                                         height: 120,
                                         width: 120,
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(Icons.error),
                                       ))
                                   : Container(
                                       height: 90,
@@ -517,10 +519,11 @@ class _StaffDetailsState extends State<StaffDetails> {
   }
 
   updateStaff() async {
-    loading(context);
     FocusManager.instance.primaryFocus!.unfocus();
     try {
       if (staffKey.currentState!.validate()) {
+        loading(context);
+
         if (!product && !category && !customer && !orders && !estimate) {
           Navigator.pop(context);
           setState(() {
@@ -544,12 +547,12 @@ class _StaffDetailsState extends State<StaffDetails> {
               permissionModel.billofsupply = billofsupply;
 
               model.permission = permissionModel;
-              await FireStoreProvider()
-                  .checkStaffAlreadyExiest(loginID: model.userid!)
+              await FireStore()
+                  .checkStaffAlreadyExist(loginID: model.userid!)
                   .then((staffCheck) async {
                 if (staffCheck != null) {
                   if (staffCheck.docs.isEmpty) {
-                    await FireStoreProvider()
+                    await FireStore()
                         .updateStaff(
                             staffData: model, docID: crtStaffData!.docID!)
                         .then((value) {
@@ -558,7 +561,7 @@ class _StaffDetailsState extends State<StaffDetails> {
                     });
                   } else if (staffCheck.docs.isNotEmpty &&
                       staffCheck.docs.first.id == crtStaffData!.docID) {
-                    await FireStoreProvider()
+                    await FireStore()
                         .updateStaff(
                             staffData: model, docID: crtStaffData!.docID!)
                         .then((value) {
@@ -589,31 +592,28 @@ class _StaffDetailsState extends State<StaffDetails> {
   updateStaffImage(File image) async {
     loading(context);
     try {
-      var downloadLink = await FireStorageProvider().uploadImage(
-        fileData: image,
-        fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-        filePath: 'staff',
-      );
-      StaffDataModel model = StaffDataModel();
-      model.profileImg = downloadLink;
-      await FireStoreProvider()
-          .updateProfileStaff(staffData: model, docID: crtStaffData!.docID!)
+      await Storage()
+          .deleteImage(crtStaffData!.profileImg ?? '')
           .then((value) async {
-        // await FireStorageProvider()
-        //     .saveLocal(
-        //   fileData: profileImage,
-        //   id: crtStaffData!.docID!,
-        //   folder: "staff",
-        // )
-        // .then((value) {
-        setState(() {
-          crtStaffData!.profileImg = downloadLink;
-          profileImage = null;
-        });
+        var downloadLink = await Storage().uploadImage(
+          fileData: image,
+          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+          filePath: 'staff',
+        );
+        StaffDataModel model = StaffDataModel();
+        model.profileImg = downloadLink;
+        await FireStore()
+            .updateProfileStaff(staffData: model, docID: crtStaffData!.docID!)
+            .then((value) async {
+          setState(() {
+            crtStaffData!.profileImg = downloadLink;
+            profileImage = null;
+          });
 
-        Navigator.pop(context);
-        snackbar(context, true, "Successfully Update Staff");
-        // });
+          Navigator.pop(context);
+          snackbar(context, true, "Successfully Update Staff");
+          // });
+        });
       });
     } catch (e) {
       Navigator.pop(context);
@@ -624,19 +624,23 @@ class _StaffDetailsState extends State<StaffDetails> {
   deleteStaff() async {
     try {
       loading(context);
-      await FireStoreProvider()
-          .deleteStaff(docID: crtStaffData!.docID!)
-          .then((value) {
-        Navigator.pop(context);
-        setState(() {
-          staffListingcontroller.animateToPage(
-            0,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeIn,
-          );
-          staffListingPageProvider.toggletab(true);
+      await Storage()
+          .deleteImage(crtStaffData!.profileImg ?? '')
+          .then((value) async {
+        await FireStore()
+            .deleteStaff(docID: crtStaffData!.docID!)
+            .then((value) {
+          Navigator.pop(context);
+          setState(() {
+            staffListingcontroller.animateToPage(
+              0,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeIn,
+            );
+            staffListingPageProvider.toggletab(true);
+          });
+          snackbar(context, true, "Successfully Deleted");
         });
-        snackbar(context, true, "Successfully Deleted");
       });
     } catch (e) {
       Navigator.pop(context);

@@ -19,7 +19,7 @@ class _SearchProductBillingState extends State<SearchProductBilling> {
   List<ProductDataModel> tmpProductDataList = [];
   List<CategoryDataModel> categoryList = [];
 
-  FireStoreProvider provider = FireStoreProvider();
+  FireStore provider = FireStore();
 
   Future getProductInfo() async {
     try {

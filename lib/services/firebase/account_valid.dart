@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sri_kot/constants/constants.dart';
-import 'package:sri_kot/log/log.dart';
-import 'package:sri_kot/services/services.dart';
-import 'package:sri_kot/utils/src/utilities.dart';
-import '../../purchase/purchase.dart';
-import '../../view/screens/screens.dart';
+import '/constants/constants.dart';
+import '/log/log.dart';
+import '/services/services.dart';
+import '/utils/src/utilities.dart';
+import '/purchase/purchase.dart';
+import '/view/screens/screens.dart';
 
 class AccountValid {
   static Future accountValid(context) async {
@@ -31,7 +31,7 @@ class AccountValid {
           );
         }
       } else {
-        var result = await FireStoreProvider().checkExpiry(
+        var result = await FireStore().checkExpiry(
             uid: await LocalDB.fetchInfo(type: LocalData.companyid),
             type: UserType.staff);
         if (!result) {

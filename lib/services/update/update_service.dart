@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sri_kot/services/local/firebase.dart';
@@ -65,18 +66,18 @@ class UpdateService {
   }
 }
 
-class RedeemCode extends Firebase {
-  static String _generateRedeemCode() {
+class AccessCode extends Firebase {
+  static String _generateAccessCode() {
     final random = Random();
     return (100000 + random.nextInt(900000)).toString();
   }
 
-  static Future<String> createRedeemCode() async {
+  static Future<Map<String, dynamic>> createAccessCode() async {
     try {
       DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
 
-      String code = _generateRedeemCode();
-      await Firebase.redeemCode.add({
+      String code = _generateAccessCode();
+      DocumentReference docRef = await Firebase.accessCode.add({
         'code': code,
         'created_at': DateTime.now(),
         'is_cleared': false,
@@ -87,7 +88,7 @@ class RedeemCode extends Firebase {
         'device_model': deviceInfo.modelName,
       });
 
-      return code;
+      return {"code": code, "doc_id": docRef.id};
     } on Exception catch (e) {
       Log.addLog("${DateTime.now()} : $e");
       rethrow;
@@ -99,10 +100,10 @@ class RedeemCode extends Firebase {
   static Future expireCode({required String code}) async {
     try {
       var result =
-          await Firebase.redeemCode.where('code', isEqualTo: code).get();
+          await Firebase.accessCode.where('code', isEqualTo: code).get();
       if (result.docs.isNotEmpty) {
         for (var data in result.docs) {
-          await Firebase.redeemCode.doc(data.id).update({'is_cleared': true});
+          await Firebase.accessCode.doc(data.id).update({'is_cleared': true});
         }
       }
     } on Exception catch (e) {

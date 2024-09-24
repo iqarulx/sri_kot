@@ -80,7 +80,7 @@ class _AddCustomerState extends State<AddCustomer> {
             customerData.mobileNo = mobileNo.text;
             customerData.state = state;
 
-            await FireStoreProvider()
+            await FireStore()
                 .registerCustomer(customerData: customerData)
                 .then((value) {
               Navigator.pop(context);

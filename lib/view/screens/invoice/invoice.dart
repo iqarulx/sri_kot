@@ -1,4 +1,4 @@
-export 'src/inovice_details.dart';
+export 'src/invoice_details.dart';
 export 'src/invoice_add_custom_product.dart';
 export 'src/invoice_creation.dart';
 export 'src/invoice_edit_alert_view.dart';

@@ -556,23 +556,23 @@ class DatabaseHelper {
 
   Future saveLog(String query) async {
     try {
-      const downloadsDirectoryPath =
-          '/storage/emulated/0/Download/Srisoftwarez/';
-      final downloadsDirectory = Directory(downloadsDirectoryPath);
+      // const downloadsDirectoryPath =
+      //     '/storage/emulated/0/Download/Srisoftwarez/';
+      // final downloadsDirectory = Directory(downloadsDirectoryPath);
 
-      if (!await downloadsDirectory.exists()) {
-        await downloadsDirectory.create(recursive: true);
-      }
+      // if (!await downloadsDirectory.exists()) {
+      //   await downloadsDirectory.create(recursive: true);
+      // }
 
-      const filePath = '$downloadsDirectoryPath/backup.txt';
-      final file = File(filePath);
-      final sink = file.openWrite(mode: FileMode.append);
+      // const filePath = '$downloadsDirectoryPath/backup.txt';
+      // final file = File(filePath);
+      // final sink = file.openWrite(mode: FileMode.append);
 
-      sink.writeln(query);
-      await sink.flush();
-      await sink.close();
+      // sink.writeln(query);
+      // await sink.flush();
+      // await sink.close();
 
-      print('Query saved to $filePath');
+      // print('Query saved to $filePath');
     } catch (e) {
       Log.addLog("${DateTime.now()} : Error saving query: $e");
     }

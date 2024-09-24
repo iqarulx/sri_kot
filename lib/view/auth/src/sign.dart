@@ -2,6 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../../services/local/messaging.dart';
+import '../../ui/src/access_code_modal.dart';
+import '../../ui/ui.dart';
 import '/view/auth/auth.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -28,7 +31,7 @@ class _SigninState extends State<Signin> {
   accountHolderLoginFn() async {
     try {
       FirebaseAuthProvider authProvider = FirebaseAuthProvider();
-      FireStoreProvider fireStoreProvider = FireStoreProvider();
+      FireStore fireStore = FireStore();
 
       UserCredential? credential = await authProvider.loginAuth(
         context,
@@ -36,24 +39,11 @@ class _SigninState extends State<Signin> {
         password: password.text,
       );
 
-      var companyData = await fireStoreProvider.getCompanyInfo(
+      var companyData = await fireStore.getCompanyInfo(
         uid: credential!.user!.uid.toString(),
       );
 
       if (companyData!.docs.isNotEmpty) {
-        // LocalService.checkTrialEnd(uid: companyData.docs.first.id.toString())
-        //     .then((value) {
-        //   if (value) {
-        //     Navigator.pop(context);
-        //     snackbar(
-        //         context, false, "Free trial expired, Please purchase a plan.");
-        //   } else {
-        //     FireStoreProvider()
-        //         .checkExpiry(
-        //             uid: credential.user!.uid.toString(),
-        //             type: UserType.accountHolder)
-        //         .then((value) async {
-        //       if (value) {
         if (companyData.docs.first["info_filled"] == false) {
           Navigator.pop(context);
           Navigator.push(
@@ -66,11 +56,12 @@ class _SigninState extends State<Signin> {
                 username: companyData.docs.first["user_name"].toString(),
                 email: companyData.docs.first["user_login_id"].toString(),
                 password: companyData.docs.first["password"].toString(),
-                route: const Signin(),
               ),
             ),
           );
         } else {
+          bool isTestMode = await LocalDB.checkTestMode();
+
           DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
           DeviceModel deviceDetails = DeviceModel();
 
@@ -79,14 +70,14 @@ class _SigninState extends State<Signin> {
           deviceDetails.deviceName = deviceInfo.deviceName;
           deviceDetails.lastlogin = DateTime.now();
 
-          var deviceAccessResult = await fireStoreProvider.checkLoginDeviceInfo(
+          var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
             context,
             uid: credential.user!.uid.toString(),
             deviceData: deviceDetails,
             type: UserType.accountHolder,
           );
 
-          if (deviceAccessResult!.docs.isNotEmpty) {
+          if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
             await LocalDB.createNewUser(
               username: companyData.docs.first["user_name"].toString(),
               loginEmail: companyData.docs.first["user_login_id"].toString(),
@@ -123,8 +114,7 @@ class _SigninState extends State<Signin> {
                 "You're already logged with another device",
               );
             } else {
-              // register New Device
-              await fireStoreProvider
+              await fireStore
                   .registerNewDevice(
                 context,
                 type: UserType.accountHolder,
@@ -140,14 +130,6 @@ class _SigninState extends State<Signin> {
             }
           }
         }
-        //       } else {
-        //         Navigator.pop(context);
-        //         snackbar(
-        //             context, false, "Company Expired. Please renew your plan");
-        //       }
-        //     });
-        //   }
-        // });
       } else {
         Navigator.pop(context);
         snackbar(
@@ -164,25 +146,13 @@ class _SigninState extends State<Signin> {
 
   staffLoginFn() async {
     try {
-      await FireStoreProvider()
+      await FireStore()
           .staffLogin(email: email.text, password: password.text)
           .then((value) async {
         if (value != null && value.docs.isNotEmpty) {
           var tmpData = email.text.split('@');
 
-          // LocalService.checkTrialEnd(
-          //         uid: value.docs.first["company_id"].toString())
-          //     .then((data) {
-          //   if (data) {
-          //     Navigator.pop(context);
-          //     snackbar(context, false,
-          //         "Free trial expired, Please purchase a plan.");
-          //   } else {
-          //     FireStoreProvider()
-          //         .checkExpiry(
-          //             uid: value.docs.first["company_id"], type: UserType.staff)
-          //         .then((result) async {
-          //       if (result) {
+          bool isTestMode = await LocalDB.checkTestMode();
           DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
 
           DeviceModel deviceDetails = DeviceModel();
@@ -191,15 +161,15 @@ class _SigninState extends State<Signin> {
           deviceDetails.deviceName = deviceInfo.deviceName;
           deviceDetails.lastlogin = DateTime.now();
 
-          FireStoreProvider fireStoreProvider = FireStoreProvider();
-          var deviceAccessResult = await fireStoreProvider.checkLoginDeviceInfo(
+          FireStore fireStore = FireStore();
+          var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
             context,
             uid: value.docs.first["user_login_id"],
             deviceData: deviceDetails,
             type: UserType.staff,
           );
 
-          if (deviceAccessResult!.docs.isNotEmpty) {
+          if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
             await LocalDB.createNewUser(
               username: value.docs.first["staff_name"],
               loginEmail: value.docs.first["user_login_id"],
@@ -227,7 +197,8 @@ class _SigninState extends State<Signin> {
           } else {
             if (value.docs.first["device.device_id"] != null &&
                 value.docs.first["device.model_name"] != null &&
-                value.docs.first["device.device_name"] != null) {
+                value.docs.first["device.device_name"] != null &&
+                !isTestMode) {
               Navigator.pop(context);
               snackbar(
                 context,
@@ -235,7 +206,7 @@ class _SigninState extends State<Signin> {
                 "You're already logged with another device",
               );
             } else {
-              await fireStoreProvider
+              await fireStore
                   .registerNewDevice(
                 context,
                 type: UserType.staff,
@@ -248,14 +219,6 @@ class _SigninState extends State<Signin> {
               });
             }
           }
-          //       } else {
-          //         Navigator.pop(context);
-          //         snackbar(context, false,
-          //             "Company Expired. Please renew your plan");
-          //       }
-          //     });
-          //   }
-          // });
         } else {
           adminLoginFn();
         }
@@ -275,24 +238,13 @@ class _SigninState extends State<Signin> {
 
   adminLoginFn() async {
     try {
-      await FireStoreProvider()
+      await FireStore()
           .adminLogin(email: email.text, password: password.text)
           .then((value) async {
         if (value != null && value.docs.isNotEmpty) {
-          // LocalService.checkTrialEnd(
-          //         uid: value.docs.first["company_id"].toString())
-          //     .then((data) {
-          //   if (data) {
-          //     Navigator.pop(context);
-          //     snackbar(context, false,
-          //         "Free trial expired, Please purchase a plan.");
-          //   } else {
-          //     FireStoreProvider()
-          //         .checkExpiry(
-          //             uid: value.docs.first["company_id"], type: UserType.staff)
-          //         .then((result) async {
-          // if (result) {
           var tmpData = email.text.split('@');
+
+          bool isTestMode = await LocalDB.checkTestMode();
 
           DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
 
@@ -302,15 +254,15 @@ class _SigninState extends State<Signin> {
           deviceDetails.deviceName = deviceInfo.deviceName;
           deviceDetails.lastlogin = DateTime.now();
 
-          FireStoreProvider fireStoreProvider = FireStoreProvider();
-          var deviceAccessResult = await fireStoreProvider.checkLoginDeviceInfo(
+          FireStore fireStore = FireStore();
+          var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
             context,
             uid: value.docs.first["user_login_id"],
             deviceData: deviceDetails,
             type: UserType.admin,
           );
 
-          if (deviceAccessResult!.docs.isNotEmpty) {
+          if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
             await LocalDB.createNewUser(
               username: value.docs.first["admin_name"],
               loginEmail: value.docs.first["user_login_id"],
@@ -346,7 +298,7 @@ class _SigninState extends State<Signin> {
                 "You're already logged with another device",
               );
             } else {
-              await fireStoreProvider
+              await fireStore
                   .registerNewDevice(
                 context,
                 type: UserType.admin,
@@ -359,14 +311,6 @@ class _SigninState extends State<Signin> {
               });
             }
           }
-          //       } else {
-          //         Navigator.pop(context);
-          //         snackbar(context, false,
-          //             "Company Expired. Please renew your plan");
-          //       }
-          //     });
-          //   }
-          // });
         } else {
           Navigator.pop(context);
           snackbar(context, false, "User Details Not Found");
@@ -382,10 +326,63 @@ class _SigninState extends State<Signin> {
     try {
       loading(context);
       if (_formKey.currentState!.validate()) {
-        if (validateEmail(email.text)) {
-          accountHolderLoginFn();
+        if (email.text == "activatetestmode" &&
+            password.text == "Testmode@987654") {
+          Navigator.pop(context);
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (builder) {
+              return const Modal(
+                title: "Redeem Code",
+                content:
+                    "If you want to access app previously. A unique code send to admin. You must enter it to access the app.",
+                type: ModalType.info,
+              );
+            },
+          ).then((value) async {
+            if (value != null) {
+              if (value) {
+                loading(context);
+                await AccessCode.createAccessCode().then((value) async {
+                  if (value.isNotEmpty) {
+                    await Messaging.sendCodeToAdmin(
+                        code: value["code"], docId: value["doc_id"]);
+                    Navigator.pop(context);
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (builder) {
+                        return AccessCodeModal(code: value["code"]);
+                      },
+                    ).then((popupValue) async {
+                      if (popupValue != null) {
+                        if (popupValue) {
+                          loading(context);
+                          await AccessCode.expireCode(code: value["code"])
+                              .then((value) async {
+                            Navigator.pop(context);
+                            await LocalDB.setTestMode();
+                            snackbar(context, true, "Test Mode Enabled");
+                            setState(() {
+                              email.text = "";
+                              password.text = "";
+                            });
+                          });
+                        }
+                      }
+                    });
+                  }
+                });
+              }
+            }
+          });
         } else {
-          staffLoginFn();
+          if (validateEmail(email.text)) {
+            accountHolderLoginFn();
+          } else {
+            staffLoginFn();
+          }
         }
       } else {
         Navigator.pop(context);
@@ -660,9 +657,7 @@ class _SigninState extends State<Signin> {
                                   Navigator.push(
                                     context,
                                     CupertinoPageRoute(
-                                      builder: (context) => const Register(
-                                        route: Signin(),
-                                      ),
+                                      builder: (context) => const Register(),
                                     ),
                                   );
                                 },

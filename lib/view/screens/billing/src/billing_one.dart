@@ -143,6 +143,9 @@ class _BillingOneState extends State<BillingOne>
                                                     Strings.productImg,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(Icons.error),
                                           )
                                         : Container(),
                                   ),
@@ -424,23 +427,47 @@ class _BillingOneState extends State<BillingOne>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              tmpProductDetails.discount != null
-                  ? "\u{20B9}${(tmpProductDetails.price! - (tmpProductDetails.price! * (tmpProductDetails.discount!.toDouble() / 100))).toStringAsFixed(2)}"
+              tmpProductDetails.discountLock != null &&
+                      !tmpProductDetails.discountLock!
+                  ? tmpProductDetails.discount != null
+                      ? "\u{20B9}${(tmpProductDetails.price! - (tmpProductDetails.price! * (tmpProductDetails.discount!.toDouble() / 100))).toStringAsFixed(2)}"
+                      : "\u{20B9}${tmpProductDetails.price ?? ""}"
                   : "\u{20B9}${tmpProductDetails.price ?? ""}",
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(
               width: 5,
             ),
-            Flexible(
-              child: Text(
-                "\u{20B9}${tmpProductDetails.price ?? ""}",
-                style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                overflow: TextOverflow.ellipsis,
+            if (tmpProductDetails.discountLock != null &&
+                !tmpProductDetails.discountLock!)
+              if (tmpProductDetails.discount != null)
+                Flexible(
+                  child: Text(
+                    "\u{20B9}${tmpProductDetails.price ?? ""}",
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+              else
+                Flexible(
+                  child: Text(
+                    "No Discount",
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+            else
+              Flexible(
+                child: Text(
+                  "Net Rate",
+                  style: Theme.of(context).textTheme.bodySmall!,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
           ],
         ),
       ],
@@ -792,7 +819,7 @@ class _BillingOneState extends State<BillingOne>
         billingProductList.clear();
       });
 
-      var storeProvider = FireStoreProvider();
+      var storeProvider = FireStore();
 
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
@@ -1538,12 +1565,17 @@ class _BillingOneState extends State<BillingOne>
     }
   }
 
-  dialogBox() {
-    return confirmationDialog(
-      context,
-      title: "Alert",
-      message: "Do you want exit this page ?",
-    ).then((value) {
+  dialogBox() async {
+    await showDialog(
+      context: context,
+      builder: (builder) {
+        return const Modal(
+          title: "Alert",
+          content: "Do you want exit this page ?",
+          type: ModalType.danger,
+        );
+      },
+    ).then((value) async {
       if (value != null) {
         if (value) {
           Navigator.of(context).pop();

@@ -5,6 +5,7 @@
 */
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PurchaseModal extends StatefulWidget {
   const PurchaseModal({super.key});
@@ -52,9 +53,24 @@ class _PurchaseModalState extends State<PurchaseModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextButton(onPressed: () {}, child: const Text("Privacy Terms")),
               TextButton(
-                  onPressed: () {}, child: const Text("Terms Conditions"))
+                  onPressed: () async {
+                    final Uri url =
+                        Uri.parse('https://srisoftwarez.com/privacypolicy.php');
+                    if (!await launchUrl(url)) {
+                      throw Exception('Could not launch $url');
+                    }
+                  },
+                  child: const Text("Privacy Policy")),
+              TextButton(
+                  onPressed: () async {
+                    final Uri url = Uri.parse(
+                        'https://srisoftwarez.com/termscondition.php');
+                    if (!await launchUrl(url)) {
+                      throw Exception('Could not launch $url');
+                    }
+                  },
+                  child: const Text("Terms Conditions"))
             ],
           )
         ],

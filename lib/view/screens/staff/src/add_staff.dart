@@ -93,6 +93,9 @@ class _AddStaffState extends State<AddStaff> {
                                             fit: BoxFit.cover,
                                             height: 120,
                                             width: 120,
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(Icons.error),
                                           )
                                         : Container(
                                             height: 90,
@@ -518,7 +521,7 @@ class _AddStaffState extends State<AddStaff> {
 
               model.permission = permissionModel;
 
-              var downloadLink = await FireStorageProvider().uploadImage(
+              var downloadLink = await Storage().uploadImage(
                 fileData: profileImage!,
                 fileName: DateTime.now().millisecondsSinceEpoch.toString(),
                 filePath: 'staff',
@@ -536,11 +539,11 @@ class _AddStaffState extends State<AddStaff> {
               model.deviceModel = deviceData;
               model.deleteAt = false;
 
-              await FireStoreProvider()
-                  .checkStaffAlreadyExiest(loginID: userid.text)
+              await FireStore()
+                  .checkStaffAlreadyExist(loginID: userid.text)
                   .then((staffCheck) async {
                 if (staffCheck != null && staffCheck.docs.isEmpty) {
-                  await FireStoreProvider()
+                  await FireStore()
                       .registerStaff(staffData: model)
                       .then((value) {
                     // FireStorageProvider()

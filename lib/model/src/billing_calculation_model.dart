@@ -4,6 +4,7 @@ part 'billing_calculation_model.g.dart';
 @JsonSerializable()
 class BillingCalCulationModel {
   double? subTotal;
+  double? roundOff;
   double? discount;
   String? discountsys;
   double? discountValue;
@@ -18,6 +19,7 @@ class BillingCalCulationModel {
   BillingCalCulationModel({
     this.subTotal,
     this.discount,
+    this.roundOff,
     this.discountsys,
     this.discountValue,
     this.extraDiscount,
@@ -37,6 +39,7 @@ class BillingCalCulationModel {
   Map<String, dynamic> toMap() {
     var mapping = <String, dynamic>{};
     mapping["sub_total"] = subTotal;
+    mapping["round_off"] = roundOff;
     mapping["discount"] = discount;
     mapping["discount_sys"] = discountsys;
     mapping["discount_value"] = discountValue;

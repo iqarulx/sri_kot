@@ -5,8 +5,7 @@ import '/utils/utils.dart';
 import 'registercompany.dart';
 
 class Register extends StatefulWidget {
-  final Widget route;
-  const Register({super.key, required this.route});
+  const Register({super.key});
   @override
   State<Register> createState() => _RegisterState();
 }
@@ -39,7 +38,7 @@ class _RegisterState extends State<Register> {
             profileData.username = name.text;
             profileData.filled = false;
             profileData.password = password.text;
-            await FireStoreProvider()
+            await FireStore()
                 .registerCompany(context, profileInfo: profileData)
                 .then((value) {
               if (value != null) {
@@ -54,7 +53,6 @@ class _RegisterState extends State<Register> {
                       username: name.text,
                       email: email.text,
                       password: password.text,
-                      route: widget.route,
                     ),
                   ),
                 );

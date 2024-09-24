@@ -23,6 +23,12 @@ class DeviceInformation {
       modelName = iosDeviceInfo.model.toString();
       deviceId = iosDeviceInfo.identifierForVendor.toString();
       deviceType = "Ios";
+    } else if (Platform.isWindows) {
+      WindowsDeviceInfo windowsDeviceInfo = await deviceInfo.windowsInfo;
+      deviceName = windowsDeviceInfo.userName;
+      modelName = windowsDeviceInfo.productName;
+      deviceId = windowsDeviceInfo.deviceId;
+      deviceType = "Windows";
     }
 
     deviceModel.deviceId = deviceId;

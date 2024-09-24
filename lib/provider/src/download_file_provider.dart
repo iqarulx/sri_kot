@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'permisstion_provider.dart';
+import 'permission_provider.dart';
 
 class DownloadFilesOnline {
   final String urlLink;

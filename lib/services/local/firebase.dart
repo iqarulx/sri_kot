@@ -10,11 +10,11 @@ class Firebase {
   static final staff = _instances.collection('staff');
   static final enquiry = _instances.collection('enquiry');
   static final estimate = _instances.collection('estimate');
-  static final product = _instances.collection('product');
+  static final product = _instances.collection('products');
   static final customer = _instances.collection('customer');
   static final appVersion = _instances.collection('app_version');
   static final purchases = _instances.collection('purchases');
-  static final redeemCode = _instances.collection('redeem_code');
+  static final accessCode = _instances.collection('access_code');
   static final admin = _instances.collection('admin');
 
   static Future<List<QueryDocumentSnapshot>?> get({

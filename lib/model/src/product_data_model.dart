@@ -25,6 +25,7 @@ class ProductDataModel {
   int? postion;
   int? discount;
   DateTime? createdDateTime;
+  String? hsnCode;
 
   ProductDataModel({
     this.categoryid,
@@ -47,6 +48,7 @@ class ProductDataModel {
     this.postion,
     this.discount,
     this.createdDateTime,
+    this.hsnCode,
   });
 
   factory ProductDataModel.fromJson(Map<String, dynamic> json) =>
@@ -66,6 +68,7 @@ class ProductDataModel {
     mapping["qr_code"] = qrCode;
     mapping["video_url"] = videoUrl;
     mapping["name"] = name;
+    mapping["hsn_code"] = hsnCode;
     return mapping;
   }
 
@@ -86,6 +89,7 @@ class ProductDataModel {
     mapping["delete_at"] = delete;
     mapping["name"] = name;
     mapping["postion"] = postion;
+    mapping["hsn_code"] = hsnCode;
     mapping["created_date_time"] =
         createdDateTime?.toIso8601String(); // Convert DateTime to string
     return mapping;

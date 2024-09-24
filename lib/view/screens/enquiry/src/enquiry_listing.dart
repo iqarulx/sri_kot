@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
@@ -27,15 +27,19 @@ class _EnquiryListingState extends State<EnquiryListing> {
   List<EstimateDataModel> enquiryList = [];
   List<EstimateDataModel> tmpEnquiryList = [];
   TextEditingController searchForm = TextEditingController();
+  int? overallTotal;
 
   Future getEnquiryInfo() async {
     try {
+      overallTotal = 0;
+
       setState(() {
         enquiryList.clear();
       });
+
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        var enquiry = await FireStoreProvider().getEnquiry(cid: cid);
+        var enquiry = await FireStore().getEnquiry(cid: cid);
         if (enquiry != null && enquiry.docs.isNotEmpty) {
           for (var enquiryData in enquiry.docs) {
             var calcula = BillingCalCulationModel();
@@ -43,6 +47,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
             calcula.discountValue = enquiryData["price"]["discount_value"];
             calcula.discountsys = enquiryData["price"]["discount_sys"];
             calcula.extraDiscount = enquiryData["price"]["extra_discount"];
+            calcula.roundOff = enquiryData["price"]["round_off"];
             calcula.extraDiscountValue =
                 enquiryData["price"]["extra_discount_value"];
             calcula.extraDiscountsys =
@@ -53,8 +58,14 @@ class _EnquiryListingState extends State<EnquiryListing> {
             calcula.subTotal = enquiryData["price"]["sub_total"];
             calcula.total = enquiryData["price"]["total"];
 
+            // Add the total to overallTotal
+            if (calcula.total != null) {
+              overallTotal = (overallTotal ?? 0) + calcula.total!.toInt();
+            }
+
             CustomerDataModel? customer = CustomerDataModel();
             if (enquiryData["customer"] != null) {
+              customer.address = enquiryData["customer"]["customer_id"] ?? "";
               customer.address = enquiryData["customer"]["address"] ?? "";
               customer.state = enquiryData["customer"]["state"] ?? "";
               customer.city = enquiryData["customer"]["city"] ?? "";
@@ -70,7 +81,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
               tmpProducts.clear();
             });
 
-            await FireStoreProvider()
+            await FireStore()
                 .getEnquiryProducts(docid: enquiryData.id)
                 .then((products) {
               if (products != null && products.docs.isNotEmpty) {
@@ -79,6 +90,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   productDataModel.categoryid = product["category_id"];
                   productDataModel.categoryName = product["category_name"];
                   productDataModel.price = product["price"];
+
                   productDataModel.productId = product["product_id"];
                   productDataModel.productName = product["product_name"];
                   productDataModel.qty = product["qty"];
@@ -90,6 +102,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
                   productDataModel.videoUrl = product["video_url"];
+
                   setState(() {
                     tmpProducts.add(productDataModel);
                   });
@@ -128,6 +141,8 @@ class _EnquiryListingState extends State<EnquiryListing> {
 
   Future getOfflineEnquiryInfo() async {
     try {
+      overallTotal = 0;
+
       setState(() {
         enquiryList.clear();
       });
@@ -147,7 +162,11 @@ class _EnquiryListingState extends State<EnquiryListing> {
         calcula.packagesys = price["package_sys"];
         calcula.subTotal = price["sub_total"];
         calcula.total = price["total"];
+        calcula.roundOff = price["round_off"];
 
+        if (calcula.total != null) {
+          overallTotal = (overallTotal ?? 0) + calcula.total!.toInt();
+        }
         CustomerDataModel? customer = CustomerDataModel();
         if (data["customer"] != null) {
           var customerData =
@@ -281,38 +300,43 @@ class _EnquiryListingState extends State<EnquiryListing> {
     String? customerID,
   ) async {
     Iterable<EstimateDataModel> tmpList = tmpEnquiryList.where((element) {
+      final createdDate = element.createddate!;
+
       if (fromDate == null && toDate == null && customerID != null) {
-        if (element.customer!.docID == customerID) {
-          return true;
-        }
-      } else if (fromDate != null && toDate != null) {
-        if (element.createddate!.microsecondsSinceEpoch <
-                fromDate.microsecondsSinceEpoch &&
-            element.createddate!.microsecondsSinceEpoch >
-                toDate.microsecondsSinceEpoch) {
-          true;
-        }
-      } else if (fromDate != null && toDate != null && customerID != null) {
-        if (element.createddate!.microsecondsSinceEpoch <
-                fromDate.microsecondsSinceEpoch &&
-            element.createddate!.microsecondsSinceEpoch >
-                toDate.microsecondsSinceEpoch &&
-            element.customer!.docID == customerID) {
-          true;
-        }
+        return element.customer!.docID == customerID;
       }
+
+      if (fromDate != null && toDate == null) {
+        return createdDate.isAfter(fromDate) &&
+            element.customer!.docID == customerID;
+      }
+
+      if (fromDate == null && toDate != null) {
+        return createdDate.isBefore(toDate) &&
+            element.customer!.docID == customerID;
+      }
+
+      if (fromDate != null && toDate != null) {
+        return createdDate.isAfter(fromDate) &&
+            createdDate.isBefore(toDate) &&
+            (customerID == null || element.customer!.docID == customerID);
+      }
+
       return false;
     });
 
     if (tmpList.isNotEmpty) {
       setState(() {
+        enquiryList.clear();
         enquiryList.addAll(tmpList);
       });
     }
   }
 
+  String? selectedText;
+
   showFilterSheet() async {
-    var result = await showModalBottomSheet(
+    await showModalBottomSheet(
       shape: RoundedRectangleBorder(
         side: BorderSide.none,
         borderRadius: BorderRadius.circular(10),
@@ -322,14 +346,15 @@ class _EnquiryListingState extends State<EnquiryListing> {
       builder: (builder) {
         return const EnquiryFilter();
       },
-    );
-    if (result != null) {
-      filtersEnquiryFun(
-        result["FromDate"],
-        result["ToDate"],
-        result["CustomerID"],
-      );
-    }
+    ).then((result) {
+      if (result != null) {
+        filtersEnquiryFun(
+          result["FromDate"],
+          result["ToDate"],
+          result["CustomerID"],
+        );
+      }
+    });
   }
 
   downloadExcelData() async {
@@ -421,6 +446,52 @@ class _EnquiryListingState extends State<EnquiryListing> {
                       ),
                       child: Column(
                         children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.white,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Overall Bill Total",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge!
+                                            .copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        "(${enquiryList.length} Bills)",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  "\u{20B9}${overallTotal ?? 0}",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge!
+                                      .copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                )
+                              ],
+                            ),
+                          ),
                           searchField(),
                           Expanded(
                             child: RefreshIndicator(
@@ -446,7 +517,10 @@ class _EnquiryListingState extends State<EnquiryListing> {
                                           CupertinoPageRoute(
                                             builder: (context) =>
                                                 EnquiryDetails(
-                                              estimateData: enquiryList[index],
+                                              cid: enquiryList[index].docID ??
+                                                  enquiryList[index]
+                                                      .referenceId ??
+                                                  '',
                                             ),
                                           ),
                                         ).then((value) {
@@ -470,6 +544,69 @@ class _EnquiryListingState extends State<EnquiryListing> {
                                       // snackbar(context, false,
                                       // "Please upload the data to view details");
                                       // }
+                                    },
+                                    onLongPress: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (builder) {
+                                            return BillListOptions(
+                                              title: enquiryList[index]
+                                                          .enquiryid !=
+                                                      null
+                                                  ? enquiryList[index]
+                                                      .enquiryid!
+                                                  : enquiryList[index]
+                                                              .referenceId !=
+                                                          null
+                                                      ? enquiryList[index]
+                                                          .referenceId!
+                                                      : "Choose an option",
+                                            );
+                                          }).then((value) {
+                                        if (value != null) {
+                                          if (value == "1") {
+                                            sharePDF(enquiryList[index]);
+                                          } else if (value == "2") {
+                                            printEnquiry(enquiryList[index]);
+                                          } else if (value == "3") {
+                                            setState(() {
+                                              Navigator.push(
+                                                context,
+                                                CupertinoPageRoute(
+                                                  builder: (context) =>
+                                                      EnquiryDetails(
+                                                    cid: enquiryList[index]
+                                                            .docID ??
+                                                        '',
+                                                  ),
+                                                ),
+                                              ).then((value) {
+                                                if (value != null &&
+                                                    value == true) {
+                                                  setState(() {
+                                                    if (connectionProvider
+                                                        .isConnected) {
+                                                      enquiryHandler =
+                                                          getEnquiryInfo();
+                                                    } else {
+                                                      enquiryHandler =
+                                                          getOfflineEnquiryInfo();
+                                                    }
+                                                  });
+                                                }
+                                              });
+                                              // crtlistview =
+                                              //     orderlist[index];
+                                            });
+                                          } else if (value == "4") {
+                                            deleteEnquiry(
+                                                enquiryList[index].docID ?? '',
+                                                enquiryList[index]
+                                                        .referenceId ??
+                                                    '');
+                                          }
+                                        }
+                                      });
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(10),
@@ -765,8 +902,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
         borderRadius: BorderRadius.circular(10),
       ),
       onPressed: () async {
-        var result = await showFilterSheet();
-        if (result != null) {}
+        await showFilterSheet();
       },
       label: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -799,4 +935,166 @@ class _EnquiryListingState extends State<EnquiryListing> {
       ],
     );
   }
+
+  deleteEnquiry(String docId, String referenceId) async {
+    loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
+    try {
+      if (connectionProvider.isConnected) {
+        await FireStore().deleteEnquiry(docID: docId).then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackbar(context, true, "Successfully Deleted");
+        });
+      } else {
+        await LocalService.deleteEnquiry(referenceId: referenceId)
+            .then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context, true);
+          snackbar(context, true, "Successfully Deleted");
+        });
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackbar(context, false, e.toString());
+    }
+  }
+
+  sharePDF(EstimateDataModel estimateData) async {
+    loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStore()
+                .getCompanyDocInfo(cid: cid)
+                .then((companyInfo) async {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
+                  companyData.contact = companyInfo["contact"];
+                });
+
+                var pdfAlignment = await LocalDB.getPdfAlignment();
+
+                var pdf = EnquiryPdf(
+                  estimateData: estimateData,
+                  type: PdfType.enquiry,
+                  companyInfo: companyData,
+                  pdfAlignment: pdfAlignment,
+                );
+                await pdf.showA4PDf().then((dataResult) async {
+                  await Printing.sharePdf(
+                    bytes: dataResult,
+                  ).then((value) {
+                    Navigator.pop(context);
+                  });
+                });
+                // var dataResult = await pdf.create3InchPDF();
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+        });
+        var pdfAlignment = await LocalDB.getPdfAlignment();
+
+        var pdf = EnquiryPdf(
+          estimateData: estimateData,
+          type: PdfType.enquiry,
+          companyInfo: companyData,
+          pdfAlignment: pdfAlignment,
+        );
+        await pdf.showA4PDf().then((dataResult) async {
+          await Printing.sharePdf(
+            bytes: dataResult,
+          ).then((value) {
+            Navigator.pop(context);
+          });
+        });
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackbar(context, false, e.toString());
+    }
+  }
+
+  printEnquiry(EstimateDataModel estimateData) async {
+    loading(context);
+    final connectionProvider =
+        Provider.of<ConnectionProvider>(context, listen: false);
+
+    try {
+      if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          if (cid != null) {
+            await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) {
+              if (companyInfo != null) {
+                setState(() {
+                  companyData.companyName = companyInfo["company_name"];
+                  companyData.address = companyInfo["address"];
+                  companyData.contact = companyInfo["contact"];
+                });
+
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => PrintView(
+                      estimateData: estimateData,
+                      companyInfo: companyData,
+                    ),
+                  ),
+                );
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
+        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
+        // add contact
+        setState(() {
+          companyData.companyName = companyName;
+          companyData.address = address;
+          // add also
+        });
+
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => PrintView(
+              estimateData: estimateData,
+              companyInfo: companyData,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      snackbar(context, false, e.toString());
+    }
+  }
+
+  var companyData = ProfileModel();
 }

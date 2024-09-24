@@ -45,7 +45,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
       if (addCategoryKey.currentState!.validate()) {
         await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
-            await FireStoreProvider()
+            await FireStore()
                 .findCategory(
                     cid: cid,
                     categoryName: categoryName.text
@@ -62,14 +62,14 @@ class _CategoryCreateState extends State<CategoryCreate> {
                     categoryName.text.replaceAll(' ', '').trim().toLowerCase();
                 categoryData.postion = 0;
                 categoryData.deleteAt = false;
-                await FireStoreProvider()
+                await FireStore()
                     .getLastPostionCategory(cid: cid)
                     .then((value) {
                   if (value!.docs.isNotEmpty) {
                     categoryData.postion = value.docs.first["postion"] + 1;
                   }
                 });
-                await FireStoreProvider()
+                await FireStore()
                     .registerCategory(categoryData: categoryData)
                     .then((value) {
                   Navigator.pop(context);
@@ -114,7 +114,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
             categoryData.name =
                 categoryName.text.replaceAll(' ', '').trim().toLowerCase();
 
-            await FireStoreProvider()
+            await FireStore()
                 .updateCategory(
                     categoryData: categoryData, docID: widget.docID!)
                 .then((value) {
@@ -146,9 +146,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
   deleteCategory() async {
     loading(context);
     try {
-      await FireStoreProvider()
-          .deleteCategory(docID: widget.docID!)
-          .then((value) {
+      await FireStore().deleteCategory(docID: widget.docID!).then((value) {
         Navigator.pop(context);
         Navigator.pop(context, true);
         snackbar(context, true, "Successfully Deleted");
@@ -218,6 +216,7 @@ class _CategoryCreateState extends State<CategoryCreate> {
                           },
                           icon: const Icon(
                             Icons.delete,
+                            color: Colors.red,
                           ),
                         )
                       : const SizedBox(),

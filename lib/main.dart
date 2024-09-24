@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app/app.dart';
 import 'firebase_options.dart';
-// import 'in_app_purchase/purchase.dart';
-// import 'in_app_purchase/revenuecat.dart';
 import 'provider/provider.dart';
 import 'services/services.dart';
 
@@ -15,7 +13,6 @@ Future<bool> checklogin() async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Purchase.init();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

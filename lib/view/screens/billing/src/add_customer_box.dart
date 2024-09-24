@@ -7,7 +7,9 @@ import '/view/ui/ui.dart';
 import '/constants/constants.dart';
 
 class AddCustomerBox extends StatefulWidget {
-  const AddCustomerBox({super.key});
+  final bool isEdit;
+  final CustomerDataModel? customerData;
+  const AddCustomerBox({super.key, required this.isEdit, this.customerData});
 
   @override
   State<AddCustomerBox> createState() => _AddCustomerBoxState();
@@ -119,13 +121,14 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                             validation: (p0) {
                               return FormValidation().commonValidation(
                                 input: p0,
-                                isMandorty: true,
+                                isMandorty: false,
                                 formName: 'Customer Name',
                                 isOnlyCharter: false,
                               );
                             },
                           ),
                           InputForm(
+                            autofocus: true,
                             controller: mobileNo,
                             lableName: "Mobile No",
                             formName: "Mobile Number",
@@ -162,13 +165,14 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                             validation: (p0) {
                               return FormValidation().commonValidation(
                                 input: p0,
-                                isMandorty: true,
+                                isMandorty: false,
                                 formName: 'Address',
                                 isOnlyCharter: false,
                               );
                             },
                           ),
                           DropDownForm(
+                            isMandorty: false,
                             onChange: (v) {
                               setState(() {
                                 state = v!;
@@ -186,6 +190,7 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                             height: 10,
                           ),
                           DropDownForm(
+                            isMandorty: false,
                             onChange: (v) {
                               setState(() {
                                 city = v!;
@@ -263,11 +268,13 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
             customerData.email = email.text;
             customerData.mobileNo = mobileNo.text;
 
-            await FireStoreProvider()
-                .registerCustomer(customerData: customerData)
-                .then((value) {
-              Navigator.pop(context);
-              if (value.id.isNotEmpty) {
+            if (widget.isEdit) {
+              await FireStore()
+                  .updateCustomer(
+                      docID: widget.customerData!.docID ?? '',
+                      customerData: customerData)
+                  .then((value) {
+                Navigator.pop(context);
                 CustomerDataModel cusdata = CustomerDataModel();
                 cusdata.companyID = cid;
                 cusdata.address = address.text;
@@ -275,17 +282,50 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                 cusdata.customerName = customerName.text;
                 cusdata.email = email.text;
                 cusdata.mobileNo = mobileNo.text;
+                cusdata.state = state;
                 Navigator.pop(context, cusdata);
 
-                snackbar(
+                showToast(
                   context,
-                  true,
-                  "Successfully Created New Customer",
+                  top: false,
+                  isSuccess: true,
+                  content: "Successfully Created New Customer",
                 );
-              } else {
-                snackbar(context, false, "Failed to Create New Customer");
-              }
-            });
+              });
+            } else {
+              await FireStore()
+                  .registerCustomer(customerData: customerData)
+                  .then((value) {
+                Navigator.pop(context);
+                if (value.id.isNotEmpty) {
+                  CustomerDataModel cusdata = CustomerDataModel();
+                  cusdata.companyID = cid;
+                  cusdata.address = address.text;
+                  cusdata.city = city;
+                  cusdata.customerName = customerName.text;
+                  cusdata.email = email.text;
+                  cusdata.mobileNo = mobileNo.text;
+                  cusdata.docID = value.id;
+                  cusdata.state = state;
+
+                  Navigator.pop(context, cusdata);
+
+                  showToast(
+                    context,
+                    top: false,
+                    isSuccess: true,
+                    content: "Successfully Created New Customer",
+                  );
+                } else {
+                  showToast(
+                    context,
+                    top: false,
+                    isSuccess: true,
+                    content: "Failed to Create New Customer",
+                  );
+                }
+              });
+            }
           } else {
             Navigator.pop(context);
             snackbar(context, false, "Company Details Not Fetch");
@@ -302,8 +342,31 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
 
   @override
   void initState() {
-    getState();
+    initFun();
     super.initState();
+  }
+
+  initFun() {
+    getState();
+    if (widget.isEdit) {
+      setState(() {
+        customerName.text = widget.customerData!.customerName ?? '';
+        mobileNo.text = widget.customerData!.mobileNo ?? '';
+        email.text = widget.customerData!.email ?? '';
+        address.text = widget.customerData!.address ?? '';
+      });
+
+      if (widget.customerData!.state != null &&
+          widget.customerData!.city != null) {
+        if (widget.customerData!.state!.isNotEmpty &&
+            widget.customerData!.city!.isNotEmpty) {
+          setState(() {
+            state = widget.customerData!.state;
+            city = widget.customerData!.city;
+          });
+        }
+      }
+    }
   }
 
   TextEditingController customerName = TextEditingController();

@@ -32,7 +32,7 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
       });
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        var enquiry = await FireStoreProvider()
+        var enquiry = await FireStore()
             .getEstimateCustomer(cid: cid, customerID: widget.customerID!);
         if (enquiry != null && enquiry.docs.isNotEmpty) {
           for (var enquiryData in enquiry.docs) {
@@ -69,7 +69,7 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
               tmpProducts.clear();
             });
 
-            // await FireStoreProvider()
+            // await FireStore()
             //     .getEstimateProducts(docid: enquiryData.id)
             //     .then((products) {
             //   if (products != null && products.docs.isNotEmpty) {
@@ -261,7 +261,7 @@ class _CustomerEstimateState extends State<CustomerEstimate> {
                                   context,
                                   CupertinoPageRoute(
                                     builder: (context) => EstimateDetails(
-                                      estimateData: enquiryList[index],
+                                      cid: enquiryList[index].docID ?? '',
                                     ),
                                   ),
                                 );

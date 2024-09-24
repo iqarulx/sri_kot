@@ -148,9 +148,7 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
   }
 
   getpriceListPdf({required String cid}) async {
-    await FireStoreProvider()
-        .getCompanyDocInfo(cid: cid)
-        .then((companyInfo) async {
+    await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) async {
       if (companyInfo != null) {
         var pdf = PdfCreationProvider(
           companyName: companyInfo["company_name"],
@@ -169,7 +167,7 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
   }
 
   Future getCurrentPriceList() async {
-    var fireStore = FireStoreProvider();
+    var fireStore = FireStore();
     var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
     if (cid != null) {
       await fireStore.categoryListing(cid: cid).then((categorylist) async {
@@ -245,7 +243,7 @@ class _PdfPriceListViewState extends State<PdfPriceListView> {
   }
 
   // Future getPriceList() async {
-  //   var fireStore = FireStoreProvider();
+  //   var fireStore = FireStore();
   //   var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
   //   if (cid != null) {
   //     await fireStore.categoryListing(cid: cid).then((categoryList) async {

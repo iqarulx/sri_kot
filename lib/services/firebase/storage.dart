@@ -2,15 +2,15 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
-
 import '../../log/log.dart';
 import '/constants/constants.dart';
 import '/services/services.dart';
 
 final _instances = FirebaseFirestore.instance;
 
-class FireStorageProvider {
+class Storage {
   final storage = FirebaseStorage.instance.ref();
 
   Future<String?> checkImage({
@@ -59,14 +59,44 @@ class FireStorageProvider {
   }) async {
     final cid = await LocalDB.fetchInfo(type: LocalData.companyid);
     String? downloadLink;
-    final uploadDir = storage.child("$cid/$filePath/$fileName.jpg");
+    final uploadDir = storage.child("$cid/$filePath/$fileName.webp");
+
     try {
-      await uploadDir.putFile(fileData);
+      final originalImageBytes = await fileData.readAsBytes();
+
+      final compressedImageBytes = await FlutterImageCompress.compressWithList(
+        originalImageBytes,
+        format: CompressFormat.webp,
+        quality: 75,
+      );
+
+      final compressedFile = File('${fileData.path}.webp')
+        ..writeAsBytesSync(compressedImageBytes);
+
+      if (!await compressedFile.exists()) {
+        return null;
+      }
+
+      await uploadDir.putFile(compressedFile);
       downloadLink = await uploadDir.getDownloadURL();
+
+      await compressedFile.delete();
     } catch (e) {
-      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      print("Error: ${e.toString()}");
     }
+
     return downloadLink;
+  }
+
+  Future deleteImage(String imageUrl) async {
+    try {
+      final Reference storageRef =
+          FirebaseStorage.instance.refFromURL(imageUrl);
+
+      await storageRef.delete();
+    } catch (e) {
+      print("Error deleting image: ${e.toString()}");
+    }
   }
 
   Future<bool> saveLocal({
@@ -75,22 +105,17 @@ class FireStorageProvider {
     required String folder,
   }) async {
     try {
-      // Get the application documents directory
       final directory = await getApplicationDocumentsDirectory();
 
-      // Define the folder path
       final folderPath = '${directory.path}/$folder';
 
-      // Create the folder if it does not exist
       final folderDirectory = Directory(folderPath);
       if (!await folderDirectory.exists()) {
         await folderDirectory.create(recursive: true);
       }
 
-      // Define the path where the file will be saved
       final filePath = '$folderPath/$id';
 
-      // Copy the file to the new location
       await fileData.copy(filePath).then((value) {
         return true;
       });

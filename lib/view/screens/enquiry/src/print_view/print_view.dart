@@ -2,10 +2,10 @@ import 'dart:typed_data';
 import 'package:esc_pos_printer_new/esc_pos_printer_new.dart';
 import 'package:esc_pos_utils_new/esc_pos_utils_new.dart';
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
+import '../../../../../services/services.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';
@@ -32,46 +32,45 @@ class _PrintViewState extends State<PrintView>
   Uint8List? data3Inch;
 
   getpriceListPdf() async {
-    var pdf = EnqueryPdfCreation(
+    var pdfAlignment = await LocalDB.getPdfAlignment();
+
+    var pdf = EnquiryPdf(
+      pdfAlignment: pdfAlignment,
       estimateData: widget.estimateData,
       type: PdfType.enquiry,
       companyInfo: widget.companyInfo,
     );
-    // var dataResult = await pdf.createPdfA4();
-    // if (dataResult != null) {
-    //   setState(() {
-    //     data = Uint8List.fromList(dataResult);
-    //   });
-    // }
-    var dataResult = await pdf.createPDFDemoA4(pageSize: pw.PdfPageFormat.a4);
-    if (dataResult != null) {
-      setState(() {
-        data = dataResult;
-      });
-    }
+
+    var dataResult = await pdf.showA4PDf();
+    setState(() {
+      data = dataResult;
+    });
   }
 
   getpriceListA5Pdf() async {
-    var pdf = EnqueryPdfCreation(
+    var pdfAlignment = await LocalDB.getPdfAlignment();
+
+    var pdf = EnquiryPdf(
+      pdfAlignment: pdfAlignment,
       estimateData: widget.estimateData,
       type: PdfType.enquiry,
       companyInfo: widget.companyInfo,
     );
     // var dataResult = await pdf.createPdfA5();
-    var dataResult = await pdf.createPDFDemoA4(pageSize: pw.PdfPageFormat.a5);
-    if (dataResult != null) {
-      setState(() {
-        dataA5 = Uint8List.fromList(dataResult);
-      });
-    }
+    var dataResult = await pdf.showA5PDf();
+    setState(() {
+      dataA5 = Uint8List.fromList(dataResult);
+    });
   }
 
   getpriceList3InchPdf() async {
-    var pdf = EnqueryPdfCreation(
-      estimateData: widget.estimateData,
-      type: PdfType.enquiry,
-      companyInfo: widget.companyInfo,
-    );
+    var pdfAlignment = await LocalDB.getPdfAlignment();
+
+    var pdf = EnquiryPdf(
+        estimateData: widget.estimateData,
+        type: PdfType.enquiry,
+        companyInfo: widget.companyInfo,
+        pdfAlignment: pdfAlignment);
     var dataResult = await pdf.create3InchPDF();
     if (dataResult != null) {
       setState(() {
@@ -183,7 +182,12 @@ class _PrintViewState extends State<PrintView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Print Enquiry"),
+        leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text("Print Enquiry / Estimate"),
         bottom: TabBar(
           controller: _controller,
           onTap: (value) {

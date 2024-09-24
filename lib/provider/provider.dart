@@ -11,5 +11,5 @@ export 'src/imagepickerprovider.dart';
 export 'src/logger.dart';
 export 'src/page_provider.dart';
 export 'src/pdf_creation_provider.dart';
-export 'src/permisstion_provider.dart';
+export 'src/permission_provider.dart';
 export 'src/thermal_3inch_pdf.dart';

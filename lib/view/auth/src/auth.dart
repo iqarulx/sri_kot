@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../ui/ui.dart';
 import 'sign.dart';
 
 PageController authPage = PageController();
@@ -51,7 +54,43 @@ class _AuthState extends State<Auth> {
             statusBarColor: Colors.transparent,
             statusBarIconBrightness: Brightness.dark,
           ),
-          actions: const [
+          actions: [
+            IconButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (builder) {
+                    return const PolicyDialog();
+                  },
+                ).then((value) async {
+                  if (value != null) {
+                    if (value == 1) {
+                      final Uri url = Uri.parse(
+                          'https://srisoftwarez.com/privacypolicy.php');
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                    } else if (value == 2) {
+                      final Uri url = Uri.parse(
+                          'https://srisoftwarez.com/termscondition.php');
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                    } else {
+                      final Uri url = Uri.parse(
+                          'https://srisoftwarez.com/refundpolicy.php');
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                    }
+                  }
+                });
+              },
+              icon: const Icon(
+                CupertinoIcons.square_grid_2x2,
+                color: Colors.black,
+              ),
+            ),
             // TextButton(
             //     onPressed: () async {
             //       if (crtTab == 1) {

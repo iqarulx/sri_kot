@@ -33,7 +33,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
       });
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        var enquiry = await FireStoreProvider().getEnquiryCustomer(
+        var enquiry = await FireStore().getEnquiryCustomer(
           cid: cid,
           customerID: widget.customerID!,
         );
@@ -264,7 +264,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
                                   context,
                                   CupertinoPageRoute(
                                     builder: (context) => EnquiryDetails(
-                                      estimateData: enquiryList[index],
+                                      cid: enquiryList[index].docID ?? '',
                                     ),
                                   ),
                                 );

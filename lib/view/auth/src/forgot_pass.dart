@@ -19,7 +19,7 @@ class _ForgotPassState extends State<ForgotPass> {
   sendPasswordEmail() async {
     loading(context);
     if (_formKey.currentState!.validate()) {
-      var user = await FireStoreProvider().isUserAvailable(email: email.text);
+      var user = await FireStore().isUserAvailable(email: email.text);
       if (user != null && user.docs.isNotEmpty) {
         Navigator.pop(context);
         await FirebaseAuth.instance

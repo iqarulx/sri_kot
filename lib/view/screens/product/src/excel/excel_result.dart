@@ -36,7 +36,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
         for (var element in excelData) {
           for (var product in element.product) {
             var productsData = ProductDataModel();
-            await FireStoreProvider()
+            await FireStore()
                 .excelGetCategory(
               categoryName: element.categoryname,
               cid: cid,
@@ -72,7 +72,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
           print(element.toMap().toString());
         }
 
-        await FireStoreProvider()
+        await FireStore()
             .excelMultiProduct(productsData: tmpProducts, cid: cid)
             .then((value) {
           if (value != null && value) {
@@ -101,12 +101,12 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
               .then((productCondition) async {
             if (productCondition != null && productCondition) {
               print("All Product will be Deleted and create new Products");
-              await FireStoreProvider()
+              await FireStore()
                   .deleteAllProducts(cid: cid)
                   .then((productDeletedStatus) async {
                 print(productDeletedStatus.toString());
                 if (productDeletedStatus != null) {
-                  await FireStoreProvider()
+                  await FireStore()
                       .deleteAllCategorys(cid: cid)
                       .then((categoryDeletedStatus) async {
                     print(
@@ -128,12 +128,12 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
                         categoryList.add(model);
                         count += 1;
                       }
-                      await FireStoreProvider()
+                      await FireStore()
                           .bulkCategoryCreateFn(categoryList: categoryList)
                           .then((bulkCategoryList) async {
                         if (bulkCategoryList != null) {
                           print("Category Creating");
-                          await FireStoreProvider()
+                          await FireStore()
                               .categoryListing(cid: cid)
                               .then((categoryList) async {
                             print("Category Created");
@@ -251,7 +251,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
           var batch = FirebaseFirestore.instance.batch();
           var batch2 = FirebaseFirestore.instance.batch();
           // Get Currenrt Category Data on Server
-          await FireStoreProvider()
+          await FireStore()
               .categoryListing(cid: cid)
               .then((categoryList) async {
             if (categoryList != null && categoryList.docs.isNotEmpty) {
@@ -268,9 +268,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
             }
           });
           // Get Current Product Data On Server
-          await FireStoreProvider()
-              .productListing(cid: cid)
-              .then((productList) async {
+          await FireStore().productListing(cid: cid).then((productList) async {
             if (productList != null && productList.docs.isNotEmpty) {
               for (var element in productList.docs) {
                 ProductDataModel model = ProductDataModel();
@@ -335,7 +333,7 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
           }
 
           // // Now Again Get All Category List Data
-          // await FireStoreProvider().categoryListing(cid: cid).then((categoryList) async {
+          // await FireStore().categoryListing(cid: cid).then((categoryList) async {
           //   if (categoryList != null && categoryList.docs.isNotEmpty) {
           //     setState(() {
           //       categoryDataList.clear();

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sri_kot/view/ui/src/pdf_alignment_modal.dart';
 import '/utils/src/utilities.dart';
 import '/view/ui/ui.dart';
 import '/provider/provider.dart';
@@ -17,11 +18,12 @@ class AppSettings extends StatefulWidget {
 
 class _AppSettingsState extends State<AppSettings> {
   int crtBillingTab = 1;
-  bool shortSelected = false;
-  bool detailedSelected = false;
   String? lastSynced;
+  bool? invoicePrevBill;
+  String enquiryCount = "0";
+  String estimateCount = "0";
 
-  initFn() async {
+  Future initFn() async {
     await LocalDB.getBillingIndex().then((value) async {
       if (value != null) {
         setState(() {
@@ -35,6 +37,14 @@ class _AppSettingsState extends State<AppSettings> {
       }
     });
 
+    var helper = DatabaseHelper();
+    var dbEnquiryCount = await helper.countEnquiries();
+    var dbEstimateCount = await helper.countEstimate();
+    setState(() {
+      estimateCount = "$dbEstimateCount";
+      enquiryCount = "$dbEnquiryCount";
+    });
+
     await LocalDB.getLastSync().then((value) async {
       if (value != null) {
         lastSynced = await LocalService.parseDate(value);
@@ -42,29 +52,19 @@ class _AppSettingsState extends State<AppSettings> {
     });
 
     await LocalDB.getPdfType().then((value) async {
-      if (value != null) {
-        if (value == 1) {
-          setState(() {
-            shortSelected = true;
-          });
-        } else {
-          setState(() {
-            detailedSelected = true;
-          });
-        }
-      } else {
-        setState(() {
-          shortSelected = true;
-        });
-      }
+      setState(() {
+        invoicePrevBill = value ?? false;
+      });
     });
   }
 
   @override
   void initState() {
     super.initState();
-    initFn();
+    initHandler = initFn();
   }
+
+  Future? initHandler;
 
   syncNow() async {
     loading(context);
@@ -72,7 +72,7 @@ class _AppSettingsState extends State<AppSettings> {
     final connectionProvider =
         Provider.of<ConnectionProvider>(context, listen: false);
     if (connectionProvider.isConnected) {
-      FireStoreProvider firebase = FireStoreProvider();
+      FireStore firebase = FireStore();
       await firebase
           .productListing(
               cid: await LocalDB.fetchInfo(type: LocalData.companyid))
@@ -128,618 +128,581 @@ class _AppSettingsState extends State<AppSettings> {
       backgroundColor: const Color(0xffECECEC),
       appBar: AppBar(
         leading: IconButton(
-          icon:
-              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
         ),
         title: const Text("App Settings"),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(10),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Billing Page",
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                SizedBox(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              crtBillingTab = 1;
-                              LocalDB.changeBilling(1);
-                            });
-                          },
-                          child: Container(
-                            height: 250,
-                            decoration: BoxDecoration(
-                              color: crtBillingTab == 1
-                                  ? Colors.grey.shade100
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Stack(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(15),
-                                  child: Center(
-                                    child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(5),
-                                        child: Assets.billing2.image(
-                                          height: 240,
-                                          fit: BoxFit.contain,
-                                        )),
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.topRight,
+      body: FutureBuilder(
+        future: initHandler,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            return RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  initHandler = initFn();
+                });
+              },
+              child: ListView(
+                padding: const EdgeInsets.all(10),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Billing Page",
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        SizedBox(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      crtBillingTab = 1;
+                                      LocalDB.changeBilling(1);
+                                    });
+                                  },
                                   child: Container(
-                                    height: 25,
-                                    width: 25,
+                                    height: 250,
                                     decoration: BoxDecoration(
                                       color: crtBillingTab == 1
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.grey.shade100,
-                                      shape: BoxShape.circle,
+                                          ? Colors.grey.shade100
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: crtBillingTab == 1
-                                        ? const Center(
-                                            child: Icon(
-                                              Icons.check,
-                                              color: Colors.white,
-                                              size: 18,
+                                    child: Stack(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(15),
+                                          child: Center(
+                                            child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                                child: Assets.billing2.image(
+                                                  height: 240,
+                                                  fit: BoxFit.contain,
+                                                )),
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: Container(
+                                            height: 25,
+                                            width: 25,
+                                            decoration: BoxDecoration(
+                                              color: crtBillingTab == 1
+                                                  ? Theme.of(context)
+                                                      .primaryColor
+                                                  : Colors.grey.shade100,
+                                              shape: BoxShape.circle,
                                             ),
-                                          )
-                                        : null,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              crtBillingTab = 2;
-                              LocalDB.changeBilling(2);
-                            });
-                          },
-                          child: Container(
-                            height: 250,
-                            decoration: BoxDecoration(
-                              color: crtBillingTab == 2
-                                  ? Colors.grey.shade100
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Stack(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(15),
-                                  child: Center(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(5),
-                                      child: Assets.billing1.image(
-                                        height: 240,
-                                        fit: BoxFit.contain,
-                                      ),
+                                            child: crtBillingTab == 1
+                                                ? const Center(
+                                                    child: Icon(
+                                                      Icons.check,
+                                                      color: Colors.white,
+                                                      size: 18,
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                                Align(
-                                  alignment: Alignment.topRight,
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      crtBillingTab = 2;
+                                      LocalDB.changeBilling(2);
+                                    });
+                                  },
                                   child: Container(
-                                    height: 25,
-                                    width: 25,
+                                    height: 250,
                                     decoration: BoxDecoration(
                                       color: crtBillingTab == 2
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.grey.shade100,
-                                      shape: BoxShape.circle,
+                                          ? Colors.grey.shade100
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: crtBillingTab == 2
-                                        ? const Center(
-                                            child: Icon(
-                                              Icons.check,
-                                              color: Colors.white,
-                                              size: 18,
+                                    child: Stack(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(15),
+                                          child: Center(
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              child: Assets.billing1.image(
+                                                height: 240,
+                                                fit: BoxFit.contain,
+                                              ),
                                             ),
-                                          )
-                                        : null,
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: Container(
+                                            height: 25,
+                                            width: 25,
+                                            decoration: BoxDecoration(
+                                              color: crtBillingTab == 2
+                                                  ? Theme.of(context)
+                                                      .primaryColor
+                                                  : Colors.grey.shade100,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: crtBillingTab == 2
+                                                ? const Center(
+                                                    child: Icon(
+                                                      Icons.check,
+                                                      color: Colors.white,
+                                                      size: 18,
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      showDialog(
+                        context: context,
+                        builder: (builder) {
+                          return const HsnModal();
+                        },
+                      ).then((value) {
+                        if (value != null) {
+                          if (value) {
+                            snackbar(context, true, "HSN Updated");
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.square,
+                                  size: 25,
+                                ),
+                                const SizedBox(
+                                  width: 12,
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "HSN Update",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                        ),
+                          const Icon(CupertinoIcons.forward),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                // const Divider(),
-                // const SizedBox(
-                //   height: 10,
-                // ),
-                // Padding(
-                //   padding: const EdgeInsets.all(8.0),
-                //   child: GestureDetector(
-                //     onTap: () {
-                //       syncNow();
-                //     },
-                //     child: Container(
-                //       height: 40,
-                //       decoration: BoxDecoration(
-                //         color: const Color(0xff003049),
-                //         borderRadius: BorderRadius.circular(10),
-                //       ),
-                //       child: const Row(
-                //         mainAxisAlignment: MainAxisAlignment.center,
-                //         children: [
-                //           Icon(
-                //             CupertinoIcons.cloud_upload,
-                //             color: Colors.white,
-                //           ),
-                //           SizedBox(
-                //             width: 5,
-                //           ),
-                //           Text(
-                //             "Sync Now",
-                //             style: TextStyle(
-                //               color: Colors.white,
-                //               fontWeight: FontWeight.bold,
-                //             ),
-                //           )
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                // const SizedBox(
-                //   height: 10,
-                // ),
-                // Padding(
-                //   padding: const EdgeInsets.all(8.0),
-                //   child: GestureDetector(
-                //     onTap: () async {
-                //       await FastCachedImageConfig.clearAllCachedImages();
-                //       snackbar(context, true, "Cache cleared");
-                //     },
-                //     child: Container(
-                //       height: 40,
-                //       decoration: BoxDecoration(
-                //         color: const Color(0xff003049),
-                //         borderRadius: BorderRadius.circular(10),
-                //       ),
-                //       child: const Row(
-                //         mainAxisAlignment: MainAxisAlignment.center,
-                //         children: [
-                //           Icon(
-                //             CupertinoIcons.trash,
-                //             color: Colors.white,
-                //           ),
-                //           SizedBox(
-                //             width: 5,
-                //           ),
-                //           Text(
-                //             "Clear cache",
-                //             style: TextStyle(
-                //               color: Colors.white,
-                //               fontWeight: FontWeight.bold,
-                //             ),
-                //           )
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Container(
-            height: 100,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  "Pdf Type",
-                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      if (estimateCount != "0" && enquiryCount != "0") {
+                        confirmationDialog(context,
+                                title: "Upload offline bills",
+                                message:
+                                    "You need a strong internet connection to upload bills")
+                            .then((value) async {
+                          if (value != null) {
+                            if (value) {
+                              loading(context);
+                              await LocalService.syncNow().then((value) {
+                                Navigator.pop(context);
+                                if (value) {
+                                  snackbar(context, true,
+                                      "Successfully bills are uploaded");
+                                } else {
+                                  snackbar(context, false, "An error occured");
+                                }
+                              });
+                            }
+                          }
+                        });
+                      } else {
+                        snackbar(
+                            context, false, "No bills are available to upload");
+                      }
+                    },
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        CupertinoSwitch(
-                            value: shortSelected,
-                            onChanged: (value) {
-                              setState(() {
-                                shortSelected = value;
-                                detailedSelected = !value;
-                                LocalDB.setPdfType(1);
-                              });
-                            }),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Text(
-                          "Short",
-                          style:
-                              Theme.of(context).textTheme.titleSmall!.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      width: 20,
-                    ),
-                    Row(
-                      children: [
-                        CupertinoSwitch(
-                            value: detailedSelected,
-                            onChanged: (value) {
-                              setState(() {
-                                shortSelected = !value;
-                                detailedSelected = value;
-                                LocalDB.setPdfType(2);
-                              });
-                            }),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Text(
-                          "Detailed",
-                          style:
-                              Theme.of(context).textTheme.titleSmall!.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
-            onTap: () async {
-              loading(context);
-              await LocalService.syncNow().then((value) {
-                Navigator.pop(context);
-                if (value) {
-                  snackbar(context, true, "Successfully bills are uploaded");
-                } else {
-                  snackbar(context, false, "An error occured");
-                }
-              });
-            },
-            child: Container(
-              height: 70,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.cloud_upload,
-                          size: 30,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Upload Local Bills",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall!
-                                  .copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.cloud_upload,
+                                  size: 30,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Upload Local Bills",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                        "Estimate - $estimateCount, Enquiry - $enquiryCount",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall)
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const Icon(CupertinoIcons.forward),
+                        ],
+                      ),
                     ),
                   ),
-                  const Icon(CupertinoIcons.forward),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
-            onTap: () {
-              syncNow();
-            },
-            child: Container(
-              height: 70,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.arrow_3_trianglepath,
-                          size: 30,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Sync Now",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall!
-                                  .copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      syncNow();
+                    },
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.arrow_3_trianglepath,
+                                  size: 30,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Sync Now",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                        "Last Sync : ${lastSynced ?? '--:--:--'}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall),
+                                  ],
+                                ),
+                              ],
                             ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Text("Last Sync : ${lastSynced ?? '--:--:--'}",
-                                style: Theme.of(context).textTheme.bodySmall),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const Icon(CupertinoIcons.forward),
+                        ],
+                      ),
                     ),
                   ),
-                  const Icon(CupertinoIcons.forward),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
-            onTap: () async {
-              await showDialog(
-                context: context,
-                builder: (context) {
-                  return const Modal(
-                    title: "Clear Cache",
-                    content:
-                        "If you clear cache your local data will be removed! Are you sure want to clear?",
-                    type: ModalType.danger,
-                  );
-                },
-              ).then((value) async {
-                if (value != null) {
-                  if (value) {
-                    final dbHelper = DatabaseHelper();
-                    dbHelper.clearCategory();
-                    dbHelper.clearCustomer();
-                    dbHelper.clearProducts();
-                    snackbar(context, true, "Cache cleared");
-                  }
-                }
-              });
-            },
-            child: Container(
-              height: 70,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.trash,
-                          size: 30,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Clear Cache",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall!
-                                  .copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      showDialog(
+                        context: context,
+                        builder: (builder) {
+                          return InvoicePrevBillModal(value: invoicePrevBill);
+                        },
+                      ).then((value) {
+                        if (value != null) {
+                          if (value) {
+                            snackbar(
+                                context, true, "Invoice Prev Bill Updated");
+                            initFn();
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.doc,
+                                  size: 25,
+                                ),
+                                const SizedBox(
+                                  width: 12,
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Invoice Prev Bill Display",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const Icon(CupertinoIcons.forward),
+                        ],
+                      ),
                     ),
                   ),
-                  const Icon(CupertinoIcons.forward),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      var alignment = await LocalDB.getPdfAlignment();
+                      showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) {
+                            return PdfAlignmentModal(pdfAlignment: alignment);
+                          }).then((value) async {
+                        if (value != null) {
+                          if (value == "1") {
+                            await LocalDB.setPdfAlignment(1);
+                            snackbar(context, true, "Pdf Alignment Updated");
+                          } else if (value == "2") {
+                            await LocalDB.setPdfAlignment(2);
+                            snackbar(context, true, "Pdf Alignment Updated");
+                          } else if (value == "3") {
+                            await LocalDB.setPdfAlignment(3);
+                            snackbar(context, true, "Pdf Alignment Updated");
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.doc_text,
+                                  size: 28,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text(
+                                  "Pdf Alignment",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall!
+                                      .copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(CupertinoIcons.forward),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      await showDialog(
+                        context: context,
+                        builder: (context) {
+                          return const Modal(
+                            title: "Clear Bill Records",
+                            content:
+                                "This action clear all your records of enquiry, estimate, invoice. Are you sure want to delete it?",
+                            type: ModalType.danger,
+                          );
+                        },
+                      ).then((value) async {
+                        if (value != null) {
+                          if (value) {
+                            loading(context);
+                            await FireStore().clearBillRecords().then((value) {
+                              Navigator.pop(context);
+                              if (value) {
+                                snackbar(context, true, "All bills cleared");
+                              }
+                            });
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.clear_circled,
+                                  size: 30,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Clear Bill Records",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall!
+                                          .copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            CupertinoIcons.forward,
+                            color: Colors.red,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-
-          // const SizedBox(
-          //   height: 10,
-          // ),
-          // GestureDetector(
-          //   onTap: () async {
-          //     await showModalBottomSheet(
-          //       backgroundColor: Colors.white,
-          //       useSafeArea: true,
-          //       shape: RoundedRectangleBorder(
-          //         side: BorderSide.none,
-          //         borderRadius: BorderRadius.circular(10),
-          //       ),
-          //       isScrollControlled: true,
-          //       context: context,
-          //       builder: (builder) {
-          //         return const DeletedItems();
-          //       },
-          //     ).then((onValue) {
-          //       if (onValue != null) {}
-          //     });
-          //   },
-          //   child: Container(
-          //     height: 60,
-          //     padding: const EdgeInsets.all(10),
-          //     decoration: BoxDecoration(
-          //       color: Colors.white,
-          //       borderRadius: BorderRadius.circular(10),
-          //     ),
-          //     child: Row(
-          //       children: [
-          //         Expanded(
-          //           child: Row(
-          //             children: [
-          //               const Icon(
-          //                 CupertinoIcons.refresh,
-          //                 size: 30,
-          //               ),
-          //               const SizedBox(
-          //                 width: 10,
-          //               ),
-          //               Column(
-          //                 mainAxisAlignment: MainAxisAlignment.center,
-          //                 crossAxisAlignment: CrossAxisAlignment.start,
-          //                 children: [
-          //                   Text(
-          //                     "Recover Deleted Items",
-          //                     style: Theme.of(context)
-          //                         .textTheme
-          //                         .titleSmall!
-          //                         .copyWith(
-          //                           fontWeight: FontWeight.bold,
-          //                         ),
-          //                   ),
-          //                 ],
-          //               ),
-          //             ],
-          //           ),
-          //         ),
-          //         const Icon(CupertinoIcons.forward),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-          // const SizedBox(
-          //   height: 10,
-          // ),
-          // GestureDetector(
-          //   onTap: () async {
-          //     await showModalBottomSheet(
-          //       backgroundColor: Colors.white,
-          //       useSafeArea: true,
-          //       shape: RoundedRectangleBorder(
-          //         side: BorderSide.none,
-          //         borderRadius: BorderRadius.circular(10),
-          //       ),
-          //       isScrollControlled: true,
-          //       context: context,
-          //       builder: (builder) {
-          //         return const Backup();
-          //       },
-          //     ).then((onValue) {
-          //       if (onValue != null) {}
-          //     });
-          //   },
-          //   child: Container(
-          //     height: 60,
-          //     padding: const EdgeInsets.all(10),
-          //     decoration: BoxDecoration(
-          //       color: Colors.white,
-          //       borderRadius: BorderRadius.circular(10),
-          //     ),
-          //     child: Row(
-          //       children: [
-          //         Expanded(
-          //           child: Row(
-          //             children: [
-          //               const Icon(
-          //                 CupertinoIcons.cloud_upload,
-          //                 size: 30,
-          //               ),
-          //               const SizedBox(
-          //                 width: 10,
-          //               ),
-          //               Column(
-          //                 mainAxisAlignment: MainAxisAlignment.center,
-          //                 crossAxisAlignment: CrossAxisAlignment.start,
-          //                 children: [
-          //                   Text(
-          //                     "Upload Backup",
-          //                     style: Theme.of(context)
-          //                         .textTheme
-          //                         .titleSmall!
-          //                         .copyWith(
-          //                           fontWeight: FontWeight.bold,
-          //                         ),
-          //                   ),
-          //                 ],
-          //               ),
-          //             ],
-          //           ),
-          //         ),
-          //         const Icon(CupertinoIcons.forward),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-        ],
+            );
+          }
+        },
       ),
     );
   }

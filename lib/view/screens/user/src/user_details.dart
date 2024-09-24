@@ -104,6 +104,8 @@ class _UserDetailsState extends State<UserDetails> {
                                         fit: BoxFit.cover,
                                         height: 120,
                                         width: 120,
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(Icons.error),
                                       ))
                                   : Container(
                                       height: 90,
@@ -298,39 +300,37 @@ class _UserDetailsState extends State<UserDetails> {
         userData.adminLoginId = "${adminuserid.text}@$unqiueId";
         userData.password = adminpassword.text;
 
-        await FireStorageProvider()
-            .uploadImage(
-          fileData: selectedImage!,
-          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-          filePath: 'users',
-        )
-            .then((value) async {
-          userData.imageUrl = value;
-          print(userData.imageUrl);
-          await FireStoreProvider()
-              .updateUser(docID: docid.toString(), userData: userData)
-              .then((value) async {
-            if (value != null) {
-              // await FireStorageProvider()
-              //     .saveLocal(
-              //   fileData: File(adminProfileImage!),
-              //   id: docid.toString(),
-              //   folder: "user",
-              // )
-              //     .then((value) {
-              Navigator.pop(context);
-              snackbar(context, true, "Successfully User Data Updated");
-              // }).catchError((onError) {
-              //   snackbar(
-              //       context, false, "Something Went wrong Please try again");
-              // });
-            } else {
+        if (selectedImage != null) {
+          Storage().deleteImage(adminProfileImage ?? '').then((value) async {
+            await Storage()
+                .uploadImage(
+              fileData: selectedImage!,
+              fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+              filePath: 'users',
+            )
+                .then((value) async {
+              userData.imageUrl = value;
+
+              await FireStore()
+                  .updateUser(docID: docid.toString(), userData: userData)
+                  .then((value) async {
+                if (value != null) {
+                  Navigator.pop(context);
+                  snackbar(context, true, "Successfully User Data Updated");
+                } else {
+                  snackbar(
+                      context, false, "Something Went wrong Please try again");
+                }
+              });
+            }).catchError((onError) {
               snackbar(context, false, "Something Went wrong Please try again");
-            }
+            });
           });
-        }).catchError((onError) {
-          snackbar(context, false, "Something Went wrong Please try again");
-        });
+        } else {
+          Navigator.pop(context);
+          snackbar(
+              context, false, "Image is empty. Please choose another image");
+        }
       } else {
         Navigator.pop(context);
       }
@@ -349,11 +349,12 @@ class _UserDetailsState extends State<UserDetails> {
       ).then((value) async {
         if (value != null && value == true) {
           loading(context);
-
-          await FireStoreProvider()
-              .deleteAdmin(docID: docid ?? "")
-              .then((firestoreResult) async {
-            if (firestoreResult != null && firestoreResult == true) {
+          await Storage()
+              .deleteImage(adminProfileImage ?? '')
+              .then((value) async {
+            await FireStore()
+                .deleteAdmin(docID: docid ?? "")
+                .then((firestoreResult) async {
               Navigator.pop(context);
               setState(() {
                 userListingcontroller.animateToPage(
@@ -364,12 +365,10 @@ class _UserDetailsState extends State<UserDetails> {
               });
               snackbar(
                 context,
-                false,
-                "Successfully Delete the user",
+                true,
+                "Successfully user deleted",
               );
-            } else {
-              Navigator.pop(context);
-            }
+            });
           });
         }
       });

@@ -7,8 +7,10 @@ import 'package:sri_kot/services/services.dart';
 import 'package:sri_kot/utils/src/utilities.dart';
 import 'package:sri_kot/view/auth/auth.dart';
 import 'package:sri_kot/view/ui/src/modal.dart';
-import 'package:sri_kot/view/ui/src/redeem_code_modal.dart';
+import 'package:sri_kot/view/ui/src/access_code_modal.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../local/messaging.dart';
 
 class AppUpdateScreen extends StatefulWidget {
   const AppUpdateScreen({super.key});
@@ -21,31 +23,38 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
   redeemCode() async {
     try {
       showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (builder) {
           return const Modal(
-              title: "Redeem Code",
-              content:
-                  "If you want to access app previously. A unique code send to admin. You must enter it to access the app.",
-              type: ModalType.info);
+            title: "Redeem Code",
+            content:
+                "If you want to access app previously. A unique code send to admin. You must enter it to access the app.",
+            type: ModalType.info,
+          );
         },
       ).then((value) async {
         if (value != null) {
           if (value) {
             loading(context);
-            await RedeemCode.createRedeemCode().then((value) {
+
+            await AccessCode.createAccessCode().then((value) async {
               if (value.isNotEmpty) {
+                await Messaging.sendCodeToAdmin(
+                    code: value["code"], docId: value["doc_id"]);
                 Navigator.pop(context);
                 showDialog(
+                  barrierDismissible: false,
                   context: context,
                   builder: (builder) {
-                    return RedeemCodeModal(code: value);
+                    return AccessCodeModal(code: value["code"]);
                   },
                 ).then((popupValue) async {
                   if (popupValue != null) {
                     if (popupValue) {
                       loading(context);
-                      await RedeemCode.expireCode(code: value).then((value) {
+                      await AccessCode.expireCode(code: value["code"])
+                          .then((value) {
                         Navigator.pop(context);
                         Navigator.pushReplacement(context,
                             MaterialPageRoute(builder: (builder) {
@@ -62,7 +71,7 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
       });
     } on Exception catch (e) {
       Navigator.pop(context);
-      snackbar(context, false, e.toString());
+      snackbar(context, false, "Update Screen : ${e.toString()}");
     }
   }
 
@@ -73,13 +82,15 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
       if (!await launchUrl(url)) {
         throw Exception('Could not launch $url');
       }
+    } else if (Platform.isIOS) {
+      final Uri url =
+          Uri.parse('https://apps.apple.com/app/sri-kot/id6673907049');
+      if (!await launchUrl(url)) {
+        throw Exception('Could not launch $url');
+      }
     } else {
-      // final Uri url =
-      //     Uri.parse('https://apps.apple.com/app/shop-maintenance/id6464564417');
-      // if (!await launchUrl(url)) {
-      //   throw Exception('Could not launch $url');
-      // }
-      snackbar(context, false, "iOS currently not supported");
+      snackbar(context, false,
+          "Application update option only available on Android and iOS");
     }
   }
 

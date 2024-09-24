@@ -19,6 +19,7 @@ class ProfileModel {
   bool? filled;
   String? password;
   String? companyUniqueID;
+  Map<String, dynamic>? hsn;
 
   ProfileModel({
     this.docId,
@@ -37,6 +38,7 @@ class ProfileModel {
     this.filled,
     this.password,
     this.companyUniqueID,
+    this.hsn,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) =>

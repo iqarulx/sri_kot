@@ -1,3 +1,4 @@
+import 'dart:io'; // Import for platform checking
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '/purchase/products.dart';
@@ -19,8 +20,15 @@ class _PurchaseState extends State<Purchase> {
   @override
   void initState() {
     super.initState();
-    _initializePurchases();
-    Purchases.initializePurchaseUpdates(context);
+    // Only initialize purchases if on Android
+    if (Platform.isAndroid) {
+      _initializePurchases();
+      Purchases.initializePurchaseUpdates(context);
+    } else {
+      setState(() {
+        _isLoading = false; // Set loading to false immediately
+      });
+    }
   }
 
   Future<void> _initializePurchases() async {
@@ -88,132 +96,144 @@ class _PurchaseState extends State<Purchase> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              padding: const EdgeInsets.all(10),
-              itemCount: _products.length,
-              itemBuilder: (context, index) {
-                final product = _products[index];
+          : Platform.isAndroid
+              ? ListView.builder(
+                  padding: const EdgeInsets.all(10),
+                  itemCount: _products.length,
+                  itemBuilder: (context, index) {
+                    final product = _products[index];
 
-                return FutureBuilder<bool>(
-                  future: _isSubscriptionActive(product.id),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Container();
-                    }
+                    return FutureBuilder<bool>(
+                      future: _isSubscriptionActive(product.id),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Container();
+                        }
 
-                    final isActive = snapshot.data ?? false;
+                        final isActive = snapshot.data ?? false;
 
-                    return Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (product.id == basePlanId)
-                                Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Base Plan",
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        if (isActive)
-                                          const Text(
-                                            " (Active)",
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(
-                                      height: 8,
-                                    )
-                                  ],
-                                ),
-                              Row(
+                        return Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                  if (product.id == basePlanId)
+                                    Column(
                                       children: [
-                                        Text(
-                                          product.title,
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "Base Plan",
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .primaryColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            if (isActive)
+                                              const Text(
+                                                " (Active)",
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                ),
+                                              ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          product.description,
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 13,
-                                          ),
-                                        ),
+                                        const SizedBox(height: 8),
                                       ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
+                                  Row(
                                     children: [
-                                      Text(
-                                        "₹${(product.rawPrice * 2).toString()}",
-                                        style: const TextStyle(
-                                          decoration:
-                                              TextDecoration.lineThrough,
-                                          color: Colors.black,
-                                          fontSize: 13,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              product.title,
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .primaryColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              product.description,
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      Text(
-                                        product.price,
-                                        style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
+                                      const SizedBox(width: 10),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            "₹${(product.rawPrice * 2).toString()}",
+                                            style: const TextStyle(
+                                              decoration:
+                                                  TextDecoration.lineThrough,
+                                              color: Colors.black,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          Text(
+                                            product.price,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 10),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).primaryColor,
+                                    ),
+                                    onPressed:
+                                        product.id == basePlanId && isActive
+                                            ? null
+                                            : () => _buyProduct(product),
+                                    child: const Text('Buy'),
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Theme.of(context).primaryColor,
-                                ),
-                                onPressed: product.id == basePlanId && isActive
-                                    ? null
-                                    : () => _buyProduct(product),
-                                child: const Text('Buy'),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
+                )
+              : Center(
+                  child: Text(
+                    'Purchases are only available on Android devices.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
     );
   }
 

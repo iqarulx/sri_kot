@@ -25,7 +25,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
     try {
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        FireStoreProvider provider = FireStoreProvider();
+        FireStore provider = FireStore();
         final result = await provider.productBilling(
             cid: cid, categoryId: widget.categoryID);
         if (result!.docs.isNotEmpty) {
@@ -60,7 +60,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
     try {
       await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
-          await FireStoreProvider()
+          await FireStore()
               .getProductPostion(docID: productID)
               .then((productInfo) async {
             if (productInfo != null && productInfo.exists) {
@@ -71,7 +71,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                   startPostion = productInfo["postion"] + 1;
                   endPostion = newIndex;
                 });
-                await FireStoreProvider()
+                await FireStore()
                     .getProductLimit(
                   startPostion: startPostion,
                   endPostion: endPostion,
@@ -82,7 +82,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                   if (changeCategory != null &&
                       changeCategory.docs.isNotEmpty) {
                     for (var element in changeCategory.docs) {
-                      await FireStoreProvider().updateProductPostion(
+                      await FireStore().updateProductPostion(
                         docId: element.id,
                         postionValue: element["postion"] - 1,
                       );
@@ -94,7 +94,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                   startPostion = newIndex;
                   endPostion = productInfo["postion"] - 1;
                 });
-                await FireStoreProvider()
+                await FireStore()
                     .getProductLimit(
                   startPostion: startPostion,
                   endPostion: endPostion,
@@ -105,7 +105,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                   if (changeCategory != null &&
                       changeCategory.docs.isNotEmpty) {
                     for (var element in changeCategory.docs) {
-                      await FireStoreProvider().updateProductPostion(
+                      await FireStore().updateProductPostion(
                         docId: element.id,
                         postionValue: element["postion"] + 1,
                       );
@@ -114,7 +114,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                 });
               }
 
-              await FireStoreProvider()
+              await FireStore()
                   .updateProductPostion(
                 docId: productID,
                 postionValue: newIndex,
@@ -130,7 +130,7 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
         }
       });
 
-      // await FireStoreProvider().
+      // await FireStore().
     } catch (e) {
       Navigator.pop(context);
       snackbar(context, false, e.toString());
@@ -228,9 +228,6 @@ class _ProductListingCategoryState extends State<ProductListingCategory> {
                   child: ReorderableListView.builder(
                     buildDefaultDragHandles: false,
                     onReorder: (oldIndex, newIndex) {
-                      print(oldIndex);
-                      print(newIndex);
-
                       setState(() {
                         final index =
                             newIndex > oldIndex ? newIndex - 1 : newIndex;

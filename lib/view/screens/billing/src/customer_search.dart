@@ -21,7 +21,7 @@ class _CustomerSearchState extends State<CustomerSearch> {
 
   Future getCustomerInfo() async {
     try {
-      FireStoreProvider provider = FireStoreProvider();
+      FireStore provider = FireStore();
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 
       if (cid != null) {
@@ -32,14 +32,14 @@ class _CustomerSearchState extends State<CustomerSearch> {
           });
           for (var element in result.docs) {
             CustomerDataModel model = CustomerDataModel();
-            model.address = element["address"].toString();
-            model.mobileNo = element["mobile_no"].toString();
-            model.city = element["city"].toString();
-            model.customerName = element["customer_name"].toString();
-            model.email = element["email"].toString();
-            model.state = element["state"].toString();
+            model.address = element["address"] ?? '';
+            model.mobileNo = element["mobile_no"] ?? '';
+            model.city = element["city"] ?? '';
+            model.customerName = element["customer_name"] ?? '';
+            model.email = element["email"] ?? '';
+            model.state = element["state"] ?? '';
             model.docID = element.id;
-            model.companyID = element["company_id"].toString();
+            model.companyID = element["company_id"] ?? '';
             setState(() {
               customerDataList.add(model);
             });

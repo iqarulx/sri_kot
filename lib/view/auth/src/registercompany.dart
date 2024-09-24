@@ -5,10 +5,12 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../services/local/messaging.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';
+import 'sign.dart';
 
 class RegisterCompany extends StatefulWidget {
   final String uid;
@@ -17,16 +19,15 @@ class RegisterCompany extends StatefulWidget {
   final String username;
   final String email;
   final String password;
-  final Widget route;
-  const RegisterCompany(
-      {super.key,
-      required this.uid,
-      required this.docid,
-      required this.companyName,
-      required this.username,
-      required this.email,
-      required this.password,
-      required this.route});
+  const RegisterCompany({
+    super.key,
+    required this.uid,
+    required this.docid,
+    required this.companyName,
+    required this.username,
+    required this.email,
+    required this.password,
+  });
 
   @override
   State<RegisterCompany> createState() => _RegisterCompanyState();
@@ -101,17 +102,21 @@ class _RegisterCompanyState extends State<RegisterCompany> {
         "max_user_count": 1,
         "max_staff_count": 1,
         "plan": PlanTypes.free.name,
-        "expiry_date": DateTime.now().add(const Duration(days: 365))
-      }).then((value) {
+        "expiry_date": DateTime.now().add(const Duration(days: 365)),
+        "hsn": {"common_hsn": false, "common_hsn_value": null}
+      }).then((value) async {
         Navigator.pop(context);
         Navigator.pop(context);
         snackbar(context, true, "Successfully company registred");
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => widget.route,
+            builder: (context) => const Signin(),
           ),
         );
+
+        await Messaging.sendNewCompanyAdmin(
+            docId: widget.docid, companyName: widget.companyName);
       });
 
       // Once update Data to upload Image

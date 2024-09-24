@@ -35,6 +35,8 @@ class CartDrawer extends StatefulWidget {
 }
 
 class _CartDrawerState extends State<CartDrawer> {
+  FocusNode myFocusNode = FocusNode();
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -80,12 +82,20 @@ class _CartDrawerState extends State<CartDrawer> {
                   TextButton(
                     onPressed: () async {
                       if (cartDataList.isNotEmpty) {
-                        await confirmationDialog(context,
-                                title: "Alert",
-                                message: "Do you want clear cart ?")
-                            .then((value) {
-                          if (value != null && value == true) {
-                            clearCart();
+                        await showDialog(
+                          context: context,
+                          builder: (builder) {
+                            return const Modal(
+                              title: "Alert",
+                              content: "Do you want clear cart ?",
+                              type: ModalType.danger,
+                            );
+                          },
+                        ).then((value) async {
+                          if (value != null) {
+                            if (value) {
+                              clearCart();
+                            }
                           }
                         });
                       }
@@ -142,6 +152,8 @@ class _CartDrawerState extends State<CartDrawer> {
                                           fit: BoxFit.cover,
                                           height: 80.0,
                                           width: 80.0,
+                                          errorWidget: (context, url, error) =>
+                                              const Icon(Icons.error),
                                         )),
                                   )
                                 : ClipRRect(
@@ -171,6 +183,8 @@ class _CartDrawerState extends State<CartDrawer> {
                                       imageUrl:
                                           cartDataList[index].productImg ??
                                               Strings.productImg,
+                                      errorWidget: (context, url, error) =>
+                                          const Icon(Icons.error),
                                       fit: BoxFit.cover,
                                       height: 80.0,
                                       width: 80.0,
@@ -358,20 +372,35 @@ class _CartDrawerState extends State<CartDrawer> {
                                           CrossAxisAlignment.end,
                                       children: [
                                         Text(
-                                          "\u{20B9}${cartDataList[index].discount != null ? cartDataList[index].price! : ""}",
+                                          cartDataList[index].discountLock !=
+                                                      null &&
+                                                  !cartDataList[index]
+                                                      .discountLock!
+                                              ? "\u{20B9}${cartDataList[index].discount != null ? cartDataList[index].price! : ""}"
+                                              : "NR",
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodySmall!
                                               .copyWith(
-                                                decoration:
-                                                    TextDecoration.lineThrough,
+                                                decoration: cartDataList[index]
+                                                                .discountLock !=
+                                                            null &&
+                                                        !cartDataList[index]
+                                                            .discountLock!
+                                                    ? TextDecoration.lineThrough
+                                                    : TextDecoration.none,
                                               ),
                                         ),
                                         const SizedBox(
                                           height: 1,
                                         ),
                                         Text(
-                                          "\u{20B9}${cartDataList[index].discount != null ? (cartDataList[index].price! - (cartDataList[index].price! * (cartDataList[index].discount! / 100))).toStringAsFixed(2) : cartDataList[index].price}",
+                                          cartDataList[index].discountLock !=
+                                                      null &&
+                                                  !cartDataList[index]
+                                                      .discountLock!
+                                              ? "\u{20B9}${cartDataList[index].discount != null ? (cartDataList[index].price! - (cartDataList[index].price! * (cartDataList[index].discount! / 100))).toStringAsFixed(2) : cartDataList[index].price}"
+                                              : "${cartDataList[index].price}",
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleLarge,
@@ -427,19 +456,6 @@ class _CartDrawerState extends State<CartDrawer> {
                           GestureDetector(
                             onTap: () {
                               customerAddAlert();
-
-                              // Navigator.push(
-                              //   context,
-                              //   CupertinoPageRoute(
-                              //     builder: (context) => const CustomerSearch(),
-                              //   ),
-                              // ).then((value) {
-                              //   if (value != null) {
-                              //     setState(() {
-                              //       customerInfo = value;
-                              //     });
-                              //   }
-                              // });
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -485,24 +501,24 @@ class _CartDrawerState extends State<CartDrawer> {
                       height: 10,
                     ),
                   ),
-                  // Visibility(
-                  //   visible: customerInfo == null,
-                  //   child: Padding(
-                  //     padding: const EdgeInsets.symmetric(
-                  //       horizontal: 8,
-                  //       vertical: 5,
-                  //     ),
-                  //     child: Center(
-                  //       child: Text(
-                  //         "No Customer Selected",
-                  //         style: Theme.of(context)
-                  //             .textTheme
-                  //             .titleSmall!
-                  //             .copyWith(color: Colors.grey),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
+                  Visibility(
+                    visible: customerInfo == null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "No Customer Selected",
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall!
+                              .copyWith(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ),
                   Visibility(
                     visible: customerInfo == null,
                     child: Center(
@@ -538,10 +554,9 @@ class _CartDrawerState extends State<CartDrawer> {
                               ),
                             ),
                             title: Text(
-                              customerInfo!.customerName ?? "",
-                              // style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                              //       color: Colors.black,
-                              //     ),
+                              customerInfo!.customerName!.isNotEmpty
+                                  ? customerInfo!.customerName!
+                                  : "No name",
                             ),
                             subtitle: Wrap(
                               spacing: 5,
@@ -556,29 +571,47 @@ class _CartDrawerState extends State<CartDrawer> {
                                         color: Colors.grey,
                                       ),
                                 ),
-                                Text(
-                                  "City : ${customerInfo!.city ?? ""}",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium!
-                                      .copyWith(
-                                        color: Colors.grey,
-                                      ),
-                                ),
-                                Text(
-                                  "State : ${customerInfo!.state ?? ""}",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium!
-                                      .copyWith(
-                                        color: Colors.grey,
-                                      ),
-                                ),
+                                if (customerInfo!.city != null)
+                                  Text(
+                                    "City : ${customerInfo!.city ?? ""}",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium!
+                                        .copyWith(
+                                          color: Colors.grey,
+                                        ),
+                                  ),
+                                if (customerInfo!.state != null)
+                                  Text(
+                                    "State : ${customerInfo!.state ?? ""}",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium!
+                                        .copyWith(
+                                          color: Colors.grey,
+                                        ),
+                                  ),
                               ],
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    customerUpdateAlert();
+                                  },
+                                  child: Container(
+                                    height: 30,
+                                    width: 30,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.transparent,
+                                    ),
+                                    child: const Icon(
+                                      Icons.edit,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                ),
                                 GestureDetector(
                                   onTap: () async {
                                     await confirmationDialog(
@@ -604,6 +637,7 @@ class _CartDrawerState extends State<CartDrawer> {
                                     ),
                                     child: const Icon(
                                       Icons.delete,
+                                      color: Colors.red,
                                     ),
                                   ),
                                 ),
@@ -643,7 +677,7 @@ class _CartDrawerState extends State<CartDrawer> {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             Text(
-                              "\u{20B9}${cartTotal()}",
+                              "\u{20B9}${(double.parse(cartTotal()) - double.parse(roundOff())).toStringAsFixed(2)}",
                               style: Theme.of(context)
                                   .textTheme
                                   .titleLarge!
@@ -751,18 +785,17 @@ class _CartDrawerState extends State<CartDrawer> {
                         children: [
                           Expanded(
                             child: Text(
-                              "Extra Discount - ${extraDiscountSys.toUpperCase()} $extraDiscountInput",
+                              "Extra Dis${extraDiscountSys.toUpperCase()} $extraDiscountInput",
                               style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow
-                                  .ellipsis, // Ensures ellipsis on overflow
-                              maxLines:
-                                  1, // Set max lines to ensure a single line
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 5),
                           const Icon(
                             Icons.edit,
                             size: 15,
+                            color: Colors.green,
                           ),
                           const Spacer(),
                           Text(
@@ -804,25 +837,19 @@ class _CartDrawerState extends State<CartDrawer> {
                           // Packing Charges Text with ellipsis
                           Expanded(
                             child: Text(
-                              "Packing Charges - ${packingChargeSys.toUpperCase()} $packingChargeInput",
+                              "P Charge${packingChargeSys.toUpperCase()} $packingChargeInput",
                               style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow
-                                  .ellipsis, // Ensures ellipsis on overflow
-                              maxLines:
-                                  1, // Set max lines to ensure a single line
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                           const SizedBox(width: 5),
-
-                          // Edit Icon
                           const Icon(
                             Icons.edit,
                             size: 15,
+                            color: Colors.green,
                           ),
-
                           const Spacer(),
-
-                          // Packing Charges Amount
                           Text(
                             "\u{20B9}${packingChareges()}",
                             style: Theme.of(context)
@@ -837,6 +864,29 @@ class _CartDrawerState extends State<CartDrawer> {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  Container(
+                    color: Colors.transparent,
+                    child: Row(
+                      children: [
+                        Text(
+                          "Round Off",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const Spacer(),
+                        Text(
+                          "\u{20B9}${roundOff()}",
+                          style:
+                              Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                    color: Colors.red.shade600,
+                                  ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(
@@ -893,6 +943,15 @@ class _CartDrawerState extends State<CartDrawer> {
         ],
       ),
     );
+  }
+
+  String formatText(String text, {int startLength = 10, int endLength = 10}) {
+    if (text.length <= startLength + endLength) {
+      return text; // Not enough length to hide middle
+    }
+    String start = text.substring(0, startLength);
+    String end = text.substring(text.length - endLength);
+    return '$start...$end';
   }
 
   String subTotal() {
@@ -985,6 +1044,7 @@ class _CartDrawerState extends State<CartDrawer> {
     if (tmptotal.isNaN) {
       tmptotal = 0.00;
     }
+
     result = tmptotal.toStringAsFixed(2);
     return result;
   }
@@ -1200,15 +1260,15 @@ class _CartDrawerState extends State<CartDrawer> {
     });
   }
 
-  String discountCart() {
-    String result = "0.00";
-    double tmpSubTotal = 0.00;
-    for (var element in cartDataList) {
-      tmpSubTotal += element.price! * element.qty!;
-    }
-    result = tmpSubTotal.toStringAsFixed(2);
-    return result;
-  }
+  // String discountCart() {
+  //   String result = "0.00";
+  //   double tmpSubTotal = 0.00;
+  //   for (var element in cartDataList) {
+  //     tmpSubTotal += element.price! * element.qty!;
+  //   }
+  //   result = tmpSubTotal.toStringAsFixed(2);
+  //   return result;
+  // }
 
   convertEstimate({required String cid}) async {
     var calcul = BillingCalCulationModel();
@@ -1222,10 +1282,11 @@ class _CartDrawerState extends State<CartDrawer> {
     calcul.packageValue = double.parse(packingChareges());
     calcul.packagesys = packingChargeSys;
     calcul.subTotal = double.parse(subTotal());
-    calcul.total = double.parse(cartTotal());
+    calcul.roundOff = double.parse(roundOff());
+    calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
 
     if (widget.isConnected) {
-      var cloud = FireStoreProvider();
+      var cloud = FireStore();
 
       await cloud
           .createNewEstimate(
@@ -1299,7 +1360,8 @@ class _CartDrawerState extends State<CartDrawer> {
     ).then((value) async {
       if (value != null) {
         if (value == true && customerInfo == null) {
-          snackbar(context, false, "Customer is Must");
+          showToast(context,
+              content: "Customer is Must", isSuccess: false, top: false);
         } else {
           try {
             loading(context);
@@ -1311,7 +1373,9 @@ class _CartDrawerState extends State<CartDrawer> {
                   convertEstimate(cid: cid);
                 } else {
                   var calcul = BillingCalCulationModel();
-                  calcul.discount = discountInput;
+                  calcul.discount = cartDataList.first.discount != null
+                      ? cartDataList.first.discount!.toDouble()
+                      : 0;
                   calcul.discountValue = double.parse(discount());
                   calcul.discountsys = discountSys;
                   calcul.extraDiscount = extraDiscountInput;
@@ -1321,10 +1385,12 @@ class _CartDrawerState extends State<CartDrawer> {
                   calcul.packageValue = double.parse(packingChareges());
                   calcul.packagesys = packingChargeSys;
                   calcul.subTotal = double.parse(subTotal());
-                  calcul.total = double.parse(cartTotal());
+                  calcul.roundOff = double.parse(roundOff());
+                  calcul.total =
+                      double.parse(cartTotal()) - double.parse(roundOff());
 
                   if (widget.isConnected) {
-                    var cloud = FireStoreProvider();
+                    var cloud = FireStore();
                     await cloud
                         .createnewEnquiry(
                       calCulation: calcul,
@@ -1450,7 +1516,28 @@ class _CartDrawerState extends State<CartDrawer> {
       barrierDismissible: false,
       context: context,
       builder: (context) {
-        return const AddCustomerBox();
+        return const AddCustomerBox(
+          isEdit: false,
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          customerInfo = value;
+        });
+      }
+    });
+  }
+
+  customerUpdateAlert() async {
+    await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AddCustomerBox(
+          isEdit: true,
+          customerData: customerInfo,
+        );
       },
     ).then((value) {
       if (value != null) {
@@ -1467,7 +1554,9 @@ class _CartDrawerState extends State<CartDrawer> {
       await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var calcul = BillingCalCulationModel();
-          calcul.discount = discountInput;
+          calcul.discount = cartDataList.first.discount != null
+              ? cartDataList.first.discount!.toDouble()
+              : 0;
           calcul.discountValue = double.parse(discount());
           calcul.discountsys = discountSys;
           calcul.extraDiscount = extraDiscountInput;
@@ -1477,10 +1566,11 @@ class _CartDrawerState extends State<CartDrawer> {
           calcul.packageValue = double.parse(packingChareges());
           calcul.packagesys = packingChargeSys;
           calcul.subTotal = double.parse(subTotal());
-          calcul.total = double.parse(cartTotal());
+          calcul.roundOff = double.parse(roundOff());
+          calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
 
           if (widget.isConnected) {
-            var cloud = FireStoreProvider();
+            var cloud = FireStore();
             await cloud
                 .updateEnquiryDetails(
               docID: widget.enquiryDocId!,
@@ -1524,6 +1614,13 @@ class _CartDrawerState extends State<CartDrawer> {
     }
   }
 
+  String roundOff() {
+    var result = cartTotal();
+    double value = double.parse(result);
+    double decimalPart = value - value.toInt();
+    return decimalPart.toStringAsFixed(2);
+  }
+
   updateEstimateApi() async {
     try {
       loading(context);
@@ -1531,7 +1628,9 @@ class _CartDrawerState extends State<CartDrawer> {
       await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var calcul = BillingCalCulationModel();
-          calcul.discount = discountInput;
+          calcul.discount = cartDataList.first.discount != null
+              ? cartDataList.first.discount!.toDouble()
+              : 0;
           calcul.discountValue = double.parse(discount());
           calcul.discountsys = discountSys;
           calcul.extraDiscount = extraDiscountInput;
@@ -1541,10 +1640,11 @@ class _CartDrawerState extends State<CartDrawer> {
           calcul.packageValue = double.parse(packingChareges());
           calcul.packagesys = packingChargeSys;
           calcul.subTotal = double.parse(subTotal());
-          calcul.total = double.parse(cartTotal());
+          calcul.roundOff = double.parse(roundOff());
+          calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
 
           if (widget.isConnected) {
-            var cloud = FireStoreProvider();
+            var cloud = FireStore();
             await cloud
                 .updateEstimateDetails(
               docID: widget.estimateDocId!,
@@ -1583,7 +1683,7 @@ class _CartDrawerState extends State<CartDrawer> {
       });
     } catch (e) {
       Navigator.pop(context);
-      snackbar(context, false, e.toString());
+      showToast(context, isSuccess: false, content: e.toString(), top: false);
     }
   }
 
@@ -1600,8 +1700,11 @@ class _CartDrawerState extends State<CartDrawer> {
     String result = "0.00";
     double? price = cartDataList[index].price;
     int? qnt = cartDataList[index].qty;
-    double tmpTotal = cartDataList[index].discount != null
-        ? (price! - (price * (cartDataList[index].discount! / 100))) * qnt!
+    double tmpTotal = cartDataList[index].discountLock != null &&
+            !cartDataList[index].discountLock!
+        ? cartDataList[index].discount != null
+            ? (price! - (price * (cartDataList[index].discount! / 100))) * qnt!
+            : price! * qnt!
         : price! * qnt!;
     result = tmpTotal.toStringAsFixed(2);
     return result;

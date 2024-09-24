@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-
+import '../../../../../services/services.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/utils/utils.dart';
@@ -25,31 +25,32 @@ class _PrintViewEstimateState extends State<PrintViewEstimate>
   Uint8List? dataA5;
 
   getpriceListPdf() async {
-    var pdf = EnqueryPdfCreation(
-      estimateData: widget.estimateData,
-      type: PdfType.estimate,
-      companyInfo: widget.companyInfo,
-    );
-    var dataResult = await pdf.createPdfA4();
-    if (dataResult != null) {
-      setState(() {
-        data = Uint8List.fromList(dataResult);
-      });
-    }
+    var pdfAlignment = await LocalDB.getPdfAlignment();
+
+    var pdf = EnquiryPdf(
+        estimateData: widget.estimateData,
+        type: PdfType.estimate,
+        companyInfo: widget.companyInfo,
+        pdfAlignment: pdfAlignment);
+    var dataResult = await pdf.showA4PDf();
+    setState(() {
+      data = Uint8List.fromList(dataResult);
+    });
   }
 
   getpriceListA5Pdf() async {
-    var pdf = EnqueryPdfCreation(
+    var pdfAlignment = await LocalDB.getPdfAlignment();
+
+    var pdf = EnquiryPdf(
+      pdfAlignment: pdfAlignment,
       estimateData: widget.estimateData,
       type: PdfType.estimate,
       companyInfo: widget.companyInfo,
     );
-    var dataResult = await pdf.createPdfA5();
-    if (dataResult != null) {
-      setState(() {
-        dataA5 = Uint8List.fromList(dataResult);
-      });
-    }
+    var dataResult = await pdf.showA5PDf();
+    setState(() {
+      dataA5 = Uint8List.fromList(dataResult);
+    });
   }
 
   printPriceList() async {
@@ -94,7 +95,7 @@ class _PrintViewEstimateState extends State<PrintViewEstimate>
               const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text("Print Enquiry"),
+        title: const Text("Print Enquiry / Estimate"),
         bottom: TabBar(
           controller: _controller,
           onTap: (value) {

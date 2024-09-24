@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 
-class RedeemCodeModal extends StatefulWidget {
+class AccessCodeModal extends StatefulWidget {
   final String code;
-  const RedeemCodeModal({super.key, required this.code});
+  const AccessCodeModal({super.key, required this.code});
 
   @override
-  State<RedeemCodeModal> createState() => _RedeemCodeModalState();
+  State<AccessCodeModal> createState() => _AccessCodeModalState();
 }
 
-class _RedeemCodeModalState extends State<RedeemCodeModal> {
+class _AccessCodeModalState extends State<AccessCodeModal> {
   TextEditingController codeController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   String? errorMessage;

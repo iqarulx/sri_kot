@@ -4,14 +4,14 @@ import '../../../ui/ui.dart';
 import '/constants/constants.dart';
 import '/services/services.dart';
 
-class EnquiryFilter extends StatefulWidget {
-  const EnquiryFilter({super.key});
+class EstimateFilter extends StatefulWidget {
+  const EstimateFilter({super.key});
 
   @override
-  State<EnquiryFilter> createState() => _EnquiryFilterState();
+  State<EstimateFilter> createState() => _EstimateFilterState();
 }
 
-class _EnquiryFilterState extends State<EnquiryFilter> {
+class _EstimateFilterState extends State<EstimateFilter> {
   TextEditingController fromDate = TextEditingController();
   TextEditingController toDate = TextEditingController();
 

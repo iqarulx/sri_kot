@@ -29,8 +29,7 @@ class _AccountInformationState extends State<AccountInformation> {
 
   getUserInfo() async {
     var value = await LocalDB.fetchInfo(type: LocalData.uid);
-    print(value);
-    await FireStoreProvider()
+    await FireStore()
         .getCompanyInfo(uid: await LocalDB.fetchInfo(type: LocalData.uid))
         .then((value) {
       if (value != null) {
@@ -160,7 +159,7 @@ class _AccountInformationState extends State<AccountInformation> {
                             _buildTableRow(
                               context,
                               "Created at",
-                              DateFormat('dd-MM-yyyy h-m a')
+                              DateFormat('dd-MM-yyyy hh:mm a')
                                   .format(createdAt ?? DateTime.now()),
                             ),
                             _buildTableRow(
@@ -181,7 +180,7 @@ class _AccountInformationState extends State<AccountInformation> {
                             _buildTableRow(
                               context,
                               "Expired On",
-                              DateFormat('dd-MM-yyyy h-m a')
+                              DateFormat('dd-MM-yyyy hh:mm a')
                                   .format(expiredOn ?? DateTime.now()),
                             ),
                           ])

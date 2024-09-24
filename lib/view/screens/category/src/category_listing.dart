@@ -28,7 +28,7 @@ class _CategoryListingState extends State<CategoryListing> {
     try {
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        FireStoreProvider provider = FireStoreProvider();
+        FireStore provider = FireStore();
         final result = await provider.categoryListing(cid: cid);
         if (result!.docs.isNotEmpty) {
           setState(() {
@@ -69,7 +69,7 @@ class _CategoryListingState extends State<CategoryListing> {
   //       if (cid != null) {
   //         log("NewIndex - $newIndex OldIndex - $oldIndex");
   //         if (newIndex > oldIndex) {
-  //           await FireStoreProvider()
+  //           await FireStore()
   //               .getcategoryLimit(
   //             startPostion: oldIndex,
   //             endPostion: newIndex,
@@ -86,7 +86,7 @@ class _CategoryListingState extends State<CategoryListing> {
   //           });
   //         } else {
   //           log("is Lessthen");
-  //           await FireStoreProvider()
+  //           await FireStore()
   //               .getcategoryLimit(
   //             startPostion: newIndex,
   //             endPostion: oldIndex,
@@ -105,7 +105,7 @@ class _CategoryListingState extends State<CategoryListing> {
   //       }
   //     });
 
-  //     // await FireStoreProvider().
+  //     // await FireStore().
   //   } catch (e) {
   //     Navigator.pop(context);
   //     snackbar(context, false, e.toString());
@@ -122,7 +122,7 @@ class _CategoryListingState extends State<CategoryListing> {
         if (cid != null) {
           var category = FirebaseFirestore.instance.collection('category');
           var batch = FirebaseFirestore.instance.batch();
-          await FireStoreProvider()
+          await FireStore()
               .getCategoryPostion(docID: categoryid)
               .then((categoryInfo) async {
             if (categoryInfo != null && categoryInfo.exists) {
@@ -133,7 +133,7 @@ class _CategoryListingState extends State<CategoryListing> {
                   startPostion = categoryInfo["postion"] + 1;
                   endPostion = newIndex;
                 });
-                await FireStoreProvider()
+                await FireStore()
                     .getcategoryLimit(
                   startPostion: startPostion,
                   endPostion: endPostion,
@@ -157,7 +157,7 @@ class _CategoryListingState extends State<CategoryListing> {
                   startPostion = newIndex;
                   endPostion = categoryInfo["postion"] - 1;
                 });
-                await FireStoreProvider()
+                await FireStore()
                     .getcategoryLimit(
                   startPostion: startPostion,
                   endPostion: endPostion,
@@ -171,7 +171,7 @@ class _CategoryListingState extends State<CategoryListing> {
                       batch.update(document, {
                         "postion": element["postion"] + 1,
                       });
-                      // await FireStoreProvider().updatePostion(
+                      // await FireStore().updatePostion(
                       //   docId: element.id,
                       //   postionValue: element["postion"] + 1,
                       // );
@@ -182,7 +182,7 @@ class _CategoryListingState extends State<CategoryListing> {
                 });
               }
 
-              await FireStoreProvider()
+              await FireStore()
                   .updatePostion(
                 docId: categoryid,
                 postionValue: newIndex,
@@ -198,7 +198,7 @@ class _CategoryListingState extends State<CategoryListing> {
         }
       });
 
-      // await FireStoreProvider().
+      // await FireStore().
     } catch (e) {
       Navigator.pop(context);
       snackbar(context, false, e.toString());

@@ -37,7 +37,7 @@ class _CompanyListingState extends State<CompanyListing> {
 
   Future getCompanyInfo(context) async {
     try {
-      FireStoreProvider provider = FireStoreProvider();
+      FireStore provider = FireStore();
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
         final result = await provider.getCompanyDocInfo(cid: cid);
@@ -54,16 +54,8 @@ class _CompanyListingState extends State<CompanyListing> {
             password.text = result["password"].toString();
             oldEmail = result["user_login_id"].toString();
             oldPassword = result["password"].toString();
-
             prfileImage = result["company_logo"];
           });
-
-          // var directory = await getApplicationDocumentsDirectory();
-          // prfileImage = File(path.join(
-          //   directory.path,
-          //   'company',
-          //   cid,
-          // ));
 
           return result;
         }
@@ -95,7 +87,7 @@ class _CompanyListingState extends State<CompanyListing> {
             }
             profileModel.userLoginId = userid.text;
             profileModel.password = password.text;
-            await FireStoreProvider()
+            await FireStore()
                 .updateCompany(docId: cid, companyData: profileModel)
                 .then((value) async {
               await FirebaseAuthProvider()
@@ -107,37 +99,43 @@ class _CompanyListingState extends State<CompanyListing> {
               )
                   .then((value) async {
                 if (uploadCompanyPic != null) {
-                  await FireStorageProvider()
-                      .uploadImage(
-                    fileData: uploadCompanyPic!,
-                    fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-                    filePath: "company",
-                  )
-                      .then((downloadLink) async {
-                    if (downloadLink != null && downloadLink.isNotEmpty) {
-                      await FireStoreProvider()
-                          .updateCompanyPic(docId: cid, imageLink: downloadLink)
-                          .then((value) async {
-                        // await FireStorageProvider()
-                        //     .saveLocal(
-                        //   fileData: uploadCompanyPic!,
-                        //   id: cid,
-                        //   folder: "company",
-                        // )
-                        //     .then((value) {
+                  await Storage()
+                      .deleteImage(prfileImage ?? '')
+                      .then((value) async {
+                    await Storage()
+                        .uploadImage(
+                      fileData: uploadCompanyPic!,
+                      fileName:
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      filePath: "company",
+                    )
+                        .then((downloadLink) async {
+                      if (downloadLink != null && downloadLink.isNotEmpty) {
+                        await FireStore()
+                            .updateCompanyPic(
+                                docId: cid, imageLink: downloadLink)
+                            .then((value) async {
+                          // await FireStorageProvider()
+                          //     .saveLocal(
+                          //   fileData: uploadCompanyPic!,
+                          //   id: cid,
+                          //   folder: "company",
+                          // )
+                          //     .then((value) {
+                          Navigator.pop(context);
+                          snackbar(
+                            context,
+                            true,
+                            "Successfully Updated Company Information",
+                          );
+                          // });
+                        });
+                      } else {
+                        // exit Loading Progroccess
                         Navigator.pop(context);
-                        snackbar(
-                          context,
-                          true,
-                          "Successfully Updated Company Information",
-                        );
-                        // });
-                      });
-                    } else {
-                      // exit Loading Progroccess
-                      Navigator.pop(context);
-                      snackbar(context, false, "Something went Wrong");
-                    }
+                        snackbar(context, false, "Something went Wrong");
+                      }
+                    });
                   });
                 } else {
                   Navigator.pop(context);
@@ -319,6 +317,9 @@ class _CompanyListingState extends State<CompanyListing> {
                                               fit: BoxFit.cover,
                                               height: 120,
                                               width: 120,
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(Icons.error),
                                             )
                                           : Container(
                                               height: 120,

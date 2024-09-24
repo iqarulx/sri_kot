@@ -78,6 +78,7 @@ class InvoiceModel {
     mapping["transport_name"] = transportName;
     mapping["transport_number"] = transportNumber;
     mapping["total_amount"] = totalBillAmount;
+    mapping["price"] = price?.toMap();
     mapping["products"] = listingProducts != null
         ? [
             for (var data in listingProducts!) data.toCreateMap(),

@@ -29,7 +29,7 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
       });
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        FireStoreProvider provider = FireStoreProvider();
+        FireStore provider = FireStore();
         final result = await provider.categoryListing(cid: cid);
         if (result!.docs.isNotEmpty) {
           setState(() {

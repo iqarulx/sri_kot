@@ -57,6 +57,56 @@ class LocalService {
     return result;
   }
 
+  static Future<Map<String, dynamic>> getHSN() async {
+    var uid = await LocalDB.fetchInfo(type: LocalData.companyid) ?? '';
+    var result = await Firebase.profile.doc(uid).get();
+    if (result.exists) {
+      return result["hsn"];
+    }
+    return {};
+  }
+
+  static Future updateHSN(String hsnValue, {required bool value}) async {
+    var uid = await LocalDB.fetchInfo(type: LocalData.companyid) ?? '';
+    if (value) {
+      await Firebase.profile.doc(uid).update({
+        "hsn.common_hsn": value,
+        "hsn.common_hsn_value": hsnValue,
+      }).then((company) async {
+        await Firebase.product
+            .where("company_id", isEqualTo: uid)
+            .get()
+            .then((product) async {
+          if (product.docs.isNotEmpty) {
+            for (var data in product.docs) {
+              await Firebase.product.doc(data.id).update({
+                "hsn_code": hsnValue,
+              });
+            }
+          }
+        });
+      });
+    } else {
+      await Firebase.profile.doc(uid).update({
+        "hsn.common_hsn": value,
+        "hsn.common_hsn_value": null,
+      }).then((company) async {
+        await Firebase.product
+            .where("company_id", isEqualTo: uid)
+            .get()
+            .then((product) async {
+          if (product.docs.isNotEmpty) {
+            for (var data in product.docs) {
+              await Firebase.product.doc(data.id).update({
+                "hsn_code": null,
+              });
+            }
+          }
+        });
+      });
+    }
+  }
+
   static updateLogin({required String uid}) async {
     var result = await Firebase.getId(collection: Firebase.profile, docId: uid);
     if (result != null && result.exists) {
@@ -739,7 +789,7 @@ class LocalService {
   static Future<String> parseDate(String? date) async {
     if (date != null) {
       var value = DateTime.parse(date);
-      var result = DateFormat('dd-MM-yyyy h:m a').format(value);
+      var result = DateFormat('dd-MM-yyyy hh:mm a').format(value);
       return result.toString();
     } else {
       return "--:--:--";
@@ -796,10 +846,8 @@ class LocalService {
   static Future<bool> checkTrialEnd({required String uid}) async {
     try {
       var result = await Firebase.profile.doc(uid).get();
-
       if (result.exists) {
         var data = result.data();
-
         if (data != null) {
           var plan = data["plan"];
           if (plan == "free") {

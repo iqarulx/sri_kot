@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-
-import '../../../../../log/log.dart';
+import '/log/log.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
-import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/screens/screens.dart';
@@ -27,15 +25,13 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
 
   initFn() async {
     try {
-      await FireStoreProvider()
+      await FireStore()
           .getLastInvoiceAmount(
               billDate: widget.invoice.biilDate!,
               billNo: widget.invoice.billNo!)
           .then((lastAmount) async {
         await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          await FireStoreProvider()
-              .getCompanyDocInfo(cid: cid)
-              .then((result) async {
+          await FireStore().getCompanyDocInfo(cid: cid).then((result) async {
             if (result != null && result.exists) {
               ProfileModel model = ProfileModel();
               model.companyName = result["company_name"].toString();
@@ -49,12 +45,10 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
               };
               model.gstno = result["gst_no"] ?? "";
               model.companyLogo = result["company_logo"] ?? Strings.productImg;
+              model.hsn = result["hsn"];
 
-              var pdfType = await LocalDB.getPdfType() != null
-                  ? await LocalDB.getPdfType() == 1
-                      ? false
-                      : true
-                  : false;
+              var pdfType = await LocalDB.getPdfType() ?? false;
+              var pdfAlignment = await LocalDB.getPdfAlignment();
 
               await InvoicePDFService(
                 title: widget.title,
@@ -62,6 +56,7 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
                 total: lastAmount.toStringAsFixed(2),
                 companyDoc: model,
                 pdfType: pdfType,
+                pdfAlignment: pdfAlignment,
               ).showA4PDf().then((value) {
                 setState(() {
                   pdfData = value;
@@ -78,21 +73,12 @@ class _InvoicePdfViewState extends State<InvoicePdfView> {
 
   downloadPdfData() async {
     try {
-      loading(context);
-      await PermissionHandler()
-          .storagePermission()
-          .then((permissionResult) async {
-        if (permissionResult != null && permissionResult) {
-          Navigator.pop(context);
-          if (pdfData != null) {
-            await helper.saveAndLaunchFile(pdfData!,
-                'Invoie ${widget.invoice.billNo!.replaceAll("/", "-")}.pdf');
-          }
-        }
-      });
+      if (pdfData != null) {
+        await helper.saveAndLaunchFile(pdfData!,
+            'Invoie ${widget.invoice.billNo!.replaceAll("/", "-")}.pdf');
+      }
     } catch (e) {
       Log.addLog("${DateTime.now()} : ${e.toString()}");
-      Navigator.pop(context);
     }
   }
 

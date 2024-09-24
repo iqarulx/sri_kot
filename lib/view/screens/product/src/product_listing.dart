@@ -170,43 +170,36 @@ class _ProductListingState extends State<ProductListing> {
                                   }
                                 });
                               },
-                              leading: ClipRRect(
-                                  clipBehavior: Clip.hardEdge,
-                                  borderRadius: BorderRadius.circular(25.0),
-                                  child: CachedNetworkImage(
-                                    placeholder: (context, url) =>
-                                        const CircularProgressIndicator(),
-                                    imageUrl:
-                                        productDataList[index].productImg !=
-                                                    null &&
-                                                productDataList[index]
-                                                    .productImg!
-                                                    .isNotEmpty
-                                            ? productDataList[index].productImg!
-                                            : Strings.productImg,
-                                    fit: BoxFit.cover,
-                                  )),
-                              // : Container(
-                              //     height: 45,
-                              //     width: 45,
-                              //     decoration: BoxDecoration(
-                              //       color: Colors.grey.shade300,
-                              //       shape: BoxShape.circle,
-                              //       image: DecorationImage(
-                              //         image: productDataList[index]
-                              //                         .productImg !=
-                              //                     null &&
-
-                              //         fit: BoxFit.cover,
-                              //       ),
-                              //     ),
-                              //   ),
-
+                              leading: ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: productDataList[index].productImg !=
+                                              null &&
+                                          productDataList[index]
+                                              .productImg!
+                                              .isNotEmpty
+                                      ? productDataList[index].productImg!
+                                      : Strings.productImg,
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  fit: BoxFit.cover,
+                                  width: 45.0,
+                                  height: 45.0,
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                ),
+                              ),
                               title: Text(
                                 productDataList[index].productName ?? "",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                               subtitle: Text(
-                                  "Category - ${productDataList[index].categoryName ?? ""}"),
+                                "Category - ${productDataList[index].categoryName ?? ""}",
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -219,13 +212,9 @@ class _ProductListingState extends State<ProductListing> {
                                 ],
                               ),
                             ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              child: Divider(
-                                height: 0,
-                                color: Colors.grey.shade300,
-                              ),
+                            Divider(
+                              height: 0,
+                              color: Colors.grey.shade300,
                             ),
                           ],
                         ),
@@ -547,7 +536,7 @@ class _ProductListingState extends State<ProductListing> {
   List<CategoryDataModel> categoryList = [];
   List<ProductDataModel> tmpProductDataList = [];
 
-  FireStoreProvider provider = FireStoreProvider();
+  FireStore provider = FireStore();
 
   Future<String?> getCategoryName({required String categoryId}) async {
     String? categoryName;
@@ -589,6 +578,8 @@ class _ProductListingState extends State<ProductListing> {
             model.active = element["active"];
             model.productId = element.id;
             model.discountLock = element['discount_lock'];
+            model.hsnCode = element['hsn_code'] ?? '';
+
             setState(() {
               productDataList.add(model);
             });
