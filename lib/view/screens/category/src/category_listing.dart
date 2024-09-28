@@ -616,6 +616,39 @@ class _CategoryListingState extends State<CategoryListing> {
       ),
       title: const Text("Category"),
       actions: [
+        IconButton(
+          onPressed: () {
+            final connectionProvider =
+                Provider.of<ConnectionProvider>(context, listen: false);
+
+            // Initial check of connection status
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              setState(() {
+                _isConnected = connectionProvider.isConnected;
+              });
+              if (_isConnected) {
+                AccountValid.accountValid(context);
+                categoryHandler = getCategoryInfo();
+              }
+            });
+
+            // Set up listener for connection changes
+            _connectionListener = () {
+              if (mounted) {
+                setState(() {
+                  _isConnected = connectionProvider.isConnected;
+                });
+
+                if (_isConnected) {
+                  // Fetch category info when connected
+                  categoryHandler = getCategoryInfo();
+                }
+              }
+            };
+            connectionProvider.addListener(_connectionListener);
+          },
+          icon: const Icon(Icons.refresh),
+        ),
         Provider.of<ConnectionProvider>(context, listen: false).isConnected
             ? IconButton(
                 onPressed: () {

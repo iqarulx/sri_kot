@@ -1,6 +1,7 @@
 import 'dart:io'; // Import for platform checking
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:sri_kot/services/firebase/firestore.dart';
 import '/purchase/products.dart';
 import '/utils/src/utilities.dart';
 import '/view/ui/ui.dart';
@@ -20,13 +21,13 @@ class _PurchaseState extends State<Purchase> {
   @override
   void initState() {
     super.initState();
-    // Only initialize purchases if on Android
+
     if (Platform.isAndroid) {
       _initializePurchases();
       Purchases.initializePurchaseUpdates(context);
     } else {
       setState(() {
-        _isLoading = false; // Set loading to false immediately
+        _isLoading = false;
       });
     }
   }
@@ -40,17 +41,37 @@ class _PurchaseState extends State<Purchase> {
       return;
     }
 
-    const Set<String> kIds = {basePlanId, staffId, userId};
-    final ProductDetailsResponse response =
-        await InAppPurchase.instance.queryProductDetails(kIds);
-    if (response.notFoundIDs.isNotEmpty) {
-      print(response.notFoundIDs);
-    }
+    var isEnterpriseUser = await FireStore().isEnterpriseUser() ?? false;
 
-    setState(() {
-      _products = response.productDetails;
-      _isLoading = false;
-    });
+    if (isEnterpriseUser) {
+      const Set<String> kIds = {
+        enterpriseBasePlanId,
+        enterpriseStaffId,
+        enterpriseuserId
+      };
+      final ProductDetailsResponse response =
+          await InAppPurchase.instance.queryProductDetails(kIds);
+      if (response.notFoundIDs.isNotEmpty) {
+        print(response.notFoundIDs);
+      }
+
+      setState(() {
+        _products = response.productDetails;
+        _isLoading = false;
+      });
+    } else {
+      const Set<String> kIds = {basePlanId, staffId, userId};
+      final ProductDetailsResponse response =
+          await InAppPurchase.instance.queryProductDetails(kIds);
+      if (response.notFoundIDs.isNotEmpty) {
+        print(response.notFoundIDs);
+      }
+
+      setState(() {
+        _products = response.productDetails;
+        _isLoading = false;
+      });
+    }
   }
 
   void _buyProduct(ProductDetails productDetails) {

@@ -25,167 +25,219 @@ class EnquiryDetails extends StatefulWidget {
 
 class _EnquiryDetailsState extends State<EnquiryDetails> {
   var enquiryData = EstimateDataModel();
+  List<CategoryDataModel> categoryList = [];
 
   Future getEnquiryData() async {
     try {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
-        await FireStore().getEnquiryInfo(cid: widget.cid).then((value) async {
-          if (value != null) {
-            if (value.exists) {
-              var calcula = BillingCalCulationModel();
-              calcula.discount = value["price"]["discount"];
-              calcula.discountValue = value["price"]["discount_value"];
-              calcula.discountsys = value["price"]["discount_sys"];
-              calcula.extraDiscount = value["price"]["extra_discount"];
-              calcula.roundOff = value["price"]["round_off"];
-              calcula.extraDiscountValue =
-                  value["price"]["extra_discount_value"];
-              calcula.extraDiscountsys = value["price"]["extra_discount_sys"];
-              calcula.package = value["price"]["package"];
-              calcula.packageValue = value["price"]["package_value"];
-              calcula.packagesys = value["price"]["package_sys"];
-              calcula.subTotal = value["price"]["sub_total"];
-              calcula.total = value["price"]["total"];
-
-              CustomerDataModel? customer = CustomerDataModel();
-              if (value["customer"] != null) {
-                customer.address = value["customer"]["customer_id"];
-                customer.address = value["customer"]["address"];
-                customer.state = value["customer"]["state"];
-                customer.city = value["customer"]["city"];
-                customer.customerName = value["customer"]["customer_name"];
-                customer.email = value["customer"]["email"];
-                customer.mobileNo = value["customer"]["mobile_no"];
-              } else {
-                customer = null;
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStore().categoryListing(cid: cid).then((value) {
+            if (value != null && value.docs.isNotEmpty) {
+              for (var categorylist in value.docs) {
+                CategoryDataModel model = CategoryDataModel();
+                model.categoryName = categorylist["category_name"].toString();
+                model.postion = categorylist["postion"];
+                model.tmpcatid = categorylist.id;
+                model.discount = categorylist["discount"];
+                setState(() {
+                  categoryList.add(model);
+                });
               }
-              List<ProductDataModel> tmpProducts = [];
+            }
+          });
+        }).then((value) async {
+          await FireStore().getEnquiryInfo(cid: widget.cid).then((value) async {
+            if (value != null) {
+              if (value.exists) {
+                var calcula = BillingCalCulationModel();
+                calcula.discount = value["price"]["discount"];
+                calcula.discountValue = value["price"]["discount_value"];
+                calcula.discountsys = value["price"]["discount_sys"];
+                calcula.extraDiscount = value["price"]["extra_discount"];
+                calcula.roundOff = value["price"]["round_off"];
+                calcula.extraDiscountValue =
+                    value["price"]["extra_discount_value"];
+                calcula.extraDiscountsys = value["price"]["extra_discount_sys"];
+                calcula.package = value["price"]["package"];
+                calcula.packageValue = value["price"]["package_value"];
+                calcula.packagesys = value["price"]["package_sys"];
+                calcula.subTotal = value["price"]["sub_total"];
+                calcula.total = value["price"]["total"];
 
-              setState(() {
-                tmpProducts.clear();
-              });
-              await FireStore()
-                  .getEnquiryProducts(docid: value.id)
-                  .then((products) {
-                if (products != null && products.docs.isNotEmpty) {
-                  for (var product in products.docs) {
-                    var productDataModel = ProductDataModel();
-                    productDataModel.categoryid = product["category_id"];
-                    productDataModel.categoryName = product["category_name"];
-                    productDataModel.price = product["price"];
-
-                    productDataModel.productId = product["product_id"];
-                    productDataModel.productName = product["product_name"];
-                    productDataModel.qty = product["qty"];
-                    productDataModel.productCode =
-                        product["product_code"] ?? "";
-                    productDataModel.discountLock = product["discount_lock"];
-                    productDataModel.docid = product.id;
-                    productDataModel.name = product["name"];
-                    productDataModel.productContent =
-                        product["product_content"];
-                    productDataModel.productImg = product["product_img"];
-                    productDataModel.qrCode = product["qr_code"];
-                    productDataModel.videoUrl = product["video_url"];
-
-                    setState(() {
-                      tmpProducts.add(productDataModel);
-                    });
-                  }
+                CustomerDataModel? customer = CustomerDataModel();
+                if (value["customer"] != null) {
+                  customer.docID = value.id;
+                  customer.address = value["customer"]["customer_id"];
+                  customer.address = value["customer"]["address"];
+                  customer.state = value["customer"]["state"];
+                  customer.city = value["customer"]["city"];
+                  customer.customerName = value["customer"]["customer_name"];
+                  customer.email = value["customer"]["email"];
+                  customer.mobileNo = value["customer"]["mobile_no"];
+                } else {
+                  customer = null;
                 }
-              });
+                List<ProductDataModel> tmpProducts = [];
 
+                setState(() {
+                  tmpProducts.clear();
+                });
+                await FireStore()
+                    .getEnquiryProducts(docid: value.id)
+                    .then((products) {
+                  if (products != null && products.docs.isNotEmpty) {
+                    for (var product in products.docs) {
+                      var productDataModel = ProductDataModel();
+                      productDataModel.categoryid = product["category_id"];
+                      productDataModel.categoryName = product["category_name"];
+                      productDataModel.price = product["price"];
+
+                      productDataModel.productId = product["product_id"];
+                      productDataModel.productName = product["product_name"];
+                      productDataModel.qty = product["qty"];
+                      productDataModel.productCode =
+                          product["product_code"] ?? "";
+                      productDataModel.discountLock = product["discount_lock"];
+                      productDataModel.docid = product.id;
+                      productDataModel.name = product["name"];
+                      productDataModel.productContent =
+                          product["product_content"];
+                      productDataModel.productImg = product["product_img"];
+                      productDataModel.qrCode = product["qr_code"];
+                      productDataModel.videoUrl = product["video_url"];
+                      if (productDataModel.categoryid != null &&
+                          productDataModel.categoryid!.isNotEmpty) {
+                        var getCategoryid = categoryList.indexWhere(
+                            (elements) =>
+                                elements.tmpcatid ==
+                                productDataModel.categoryid);
+                        productDataModel.discount =
+                            categoryList[getCategoryid].discount;
+                      }
+                      setState(() {
+                        tmpProducts.add(productDataModel);
+                      });
+                    }
+                  }
+                });
+
+                setState(() {
+                  enquiryData = EstimateDataModel(
+                    docID: value.id,
+                    createddate: DateTime.parse(
+                      value["created_date"].toDate().toString(),
+                    ),
+                    enquiryid: value['enquiry_id'],
+                    estimateid: value["estimate_id"],
+                    price: calcula,
+                    customer: customer,
+                    products: tmpProducts,
+                  );
+                });
+              }
+            }
+          });
+        });
+      } else {
+        var localCategories = await DatabaseHelper().getCategory();
+
+        if (localCategories.isNotEmpty) {
+          for (var i = 0; i < localCategories.length; i++) {
+            CategoryDataModel model = CategoryDataModel();
+            model.categoryName =
+                localCategories[i]["category_name"]?.toString() ?? "";
+            model.postion = int.parse(localCategories[i]["postion"]);
+            model.tmpcatid = localCategories[i]["category_id"];
+            model.discount = localCategories[i]["discount"] != null
+                ? int.tryParse(localCategories[i]["discount"]!.toString())
+                : null;
+            setState(() {
+              categoryList.add(model);
+            });
+          }
+
+          var localEnquiry =
+              await DatabaseHelper().getEnquiryWithId(widget.cid);
+          var calcula = BillingCalCulationModel();
+          var price = jsonDecode(localEnquiry['price']) as Map<String, dynamic>;
+          calcula.discount = price["discount"];
+          calcula.discountValue = price["discount_value"];
+          calcula.discountsys = price["discount_sys"];
+          calcula.extraDiscount = price["extra_discount"];
+          calcula.extraDiscountValue = price["extra_discount_value"];
+          calcula.extraDiscountsys = price["extra_discount_sys"];
+          calcula.package = price["package"];
+          calcula.packageValue = price["package_value"];
+          calcula.packagesys = price["package_sys"];
+          calcula.subTotal = price["sub_total"];
+          calcula.total = price["total"];
+          calcula.roundOff = price["round_off"];
+
+          CustomerDataModel? customer = CustomerDataModel();
+          if (localEnquiry["customer"] != null) {
+            var customerData =
+                jsonDecode(localEnquiry['customer']) as Map<String, dynamic>;
+            customer.address = customerData["address"] ?? "";
+            customer.state = customerData["state"] ?? "";
+            customer.city = customerData["city"] ?? "";
+            customer.customerName = customerData["customer_name"] ?? "";
+            customer.email = customerData["email"] ?? "";
+            customer.mobileNo = customerData["mobile_no"] ?? "";
+          }
+
+          List<ProductDataModel> tmpProducts = [];
+
+          setState(() {
+            tmpProducts.clear();
+          });
+
+          if (localEnquiry["products"] != null) {
+            var productData =
+                jsonDecode(localEnquiry['products']) as List<dynamic>;
+            for (var product in productData) {
+              var productDataModel = ProductDataModel();
+              productDataModel.categoryid = product["category_id"];
+              productDataModel.categoryName = product["category_name"];
+              productDataModel.price = product["price"];
+              productDataModel.productId = product["product_id"];
+              productDataModel.productName = product["product_name"];
+              productDataModel.qty = product["qty"];
+              productDataModel.productCode = product["product_code"] ?? "";
+              productDataModel.discountLock = product["discount_lock"];
+              productDataModel.docid = product["product_id"];
+              productDataModel.name = product["name"];
+              productDataModel.productContent = product["product_content"];
+              productDataModel.productImg = product["product_img"];
+              productDataModel.qrCode = product["qr_code"];
+              productDataModel.videoUrl = product["video_url"];
+              if (productDataModel.categoryid != null) {
+                var getCategoryid = categoryList.indexWhere((elements) =>
+                    elements.tmpcatid == productDataModel.categoryid);
+                productDataModel.discount =
+                    categoryList[getCategoryid].discount;
+              }
               setState(() {
-                enquiryData = EstimateDataModel(
-                  docID: value.id,
-                  createddate: DateTime.parse(
-                    value["created_date"].toDate().toString(),
-                  ),
-                  enquiryid: value['enquiry_id'],
-                  estimateid: value["estimate_id"],
-                  price: calcula,
-                  customer: customer,
-                  products: tmpProducts,
-                );
+                tmpProducts.add(productDataModel);
               });
             }
           }
-        });
-      } else {
-        var localEnquiry = await DatabaseHelper().getEnquiryWithId(widget.cid);
-        var calcula = BillingCalCulationModel();
-        var price = jsonDecode(localEnquiry['price']) as Map<String, dynamic>;
-        calcula.discount = price["discount"];
-        calcula.discountValue = price["discount_value"];
-        calcula.discountsys = price["discount_sys"];
-        calcula.extraDiscount = price["extra_discount"];
-        calcula.extraDiscountValue = price["extra_discount_value"];
-        calcula.extraDiscountsys = price["extra_discount_sys"];
-        calcula.package = price["package"];
-        calcula.packageValue = price["package_value"];
-        calcula.packagesys = price["package_sys"];
-        calcula.subTotal = price["sub_total"];
-        calcula.total = price["total"];
-        calcula.roundOff = price["round_off"];
 
-        CustomerDataModel? customer = CustomerDataModel();
-        if (localEnquiry["customer"] != null) {
-          var customerData =
-              jsonDecode(localEnquiry['customer']) as Map<String, dynamic>;
-          customer.address = customerData["address"] ?? "";
-          customer.state = customerData["state"] ?? "";
-          customer.city = customerData["city"] ?? "";
-          customer.customerName = customerData["customer_name"] ?? "";
-          customer.email = customerData["email"] ?? "";
-          customer.mobileNo = customerData["mobile_no"] ?? "";
+          enquiryData = EstimateDataModel(
+            docID: null,
+            createddate: DateTime.parse(
+              localEnquiry['created_date'],
+            ),
+            enquiryid: null,
+            estimateid: null,
+            price: calcula,
+            customer: customer,
+            products: tmpProducts,
+            dataType: DataTypes.local,
+            referenceId: localEnquiry["reference_id"],
+          );
         }
-
-        List<ProductDataModel> tmpProducts = [];
-
-        setState(() {
-          tmpProducts.clear();
-        });
-
-        if (localEnquiry["products"] != null) {
-          var productData =
-              jsonDecode(localEnquiry['products']) as List<dynamic>;
-          for (var product in productData) {
-            var productDataModel = ProductDataModel();
-            productDataModel.categoryid = product["category_id"];
-            productDataModel.categoryName = product["category_name"];
-            productDataModel.price = product["price"];
-            productDataModel.productId = product["product_id"];
-            productDataModel.productName = product["product_name"];
-            productDataModel.qty = product["qty"];
-            productDataModel.productCode = product["product_code"] ?? "";
-            productDataModel.discountLock = product["discount_lock"];
-            productDataModel.docid = product["product_id"];
-            productDataModel.name = product["name"];
-            productDataModel.productContent = product["product_content"];
-            productDataModel.productImg = product["product_img"];
-            productDataModel.qrCode = product["qr_code"];
-            productDataModel.videoUrl = product["video_url"];
-            setState(() {
-              tmpProducts.add(productDataModel);
-            });
-          }
-        }
-
-        enquiryData = EstimateDataModel(
-          docID: null,
-          createddate: DateTime.parse(
-            localEnquiry['created_date'],
-          ),
-          enquiryid: null,
-          estimateid: null,
-          price: calcula,
-          customer: customer,
-          products: tmpProducts,
-          dataType: DataTypes.local,
-          referenceId: localEnquiry["reference_id"],
-        );
       }
     } on Exception catch (e) {
       snackbar(context, false, e.toString());
@@ -402,17 +454,17 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 docID: enquiryData.docID!,
               )
                   .then((value) async {
-                await FireStore()
-                    .deleteEnquiry(docID: enquiryData.docID!)
-                    .then((value) {
-                  Navigator.pop(context);
-                  Navigator.pop(context, true);
-                  snackbar(
-                    context,
-                    true,
-                    "Successfully Enquiry Converted to Estimate",
-                  );
-                });
+                // await FireStore()
+                //     .deleteEnquiry(docID: enquiryData.docID!)
+                //     .then((value) {
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+                snackbar(
+                  context,
+                  true,
+                  "Successfully Enquiry Converted to Estimate",
+                );
+                // });
               });
             }
           });
@@ -442,6 +494,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 context: context,
                 builder: (context) {
                   return const AddCustomerBox(
+                    isInvoice: false,
                     isEdit: false,
                   );
                 },
@@ -450,7 +503,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                   if (connectionProvider.isConnected) {
                     await FireStore()
                         .updateEnquiryCustomer(
-                            docId: enquiryData.docID ?? '',
+                            docId: widget.cid,
                             address: value.address ?? '',
                             city: value.city ?? '',
                             companyId: value.companyID ?? '',
@@ -506,7 +559,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                   if (connectionProvider.isConnected) {
                     await FireStore()
                         .updateEnquiryCustomer(
-                            docId: enquiryData.docID!,
+                            docId: widget.cid,
                             address: value.address,
                             city: value.city,
                             companyId: value.companyID,
@@ -870,6 +923,9 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                                 false),
                           ],
                         ),
+                        const SizedBox(
+                          height: 10,
+                        ),
                         enquiryData.estimateid == null
                             ? Center(
                                 child: TextButton(
@@ -888,7 +944,31 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                                   child: const Text("Convert to Estimate"),
                                 ),
                               )
-                            : const SizedBox(),
+                            : Center(
+                                child: Column(
+                                children: [
+                                  const Text(
+                                    "Already converted to estimate",
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      await confirmationDialog(
+                                        context,
+                                        title: "Alert",
+                                        message:
+                                            "Do you want Convert the Estimate?",
+                                      ).then((value) {
+                                        if (value != null && value == true) {
+                                          convertEstimate();
+                                        }
+                                      });
+                                    },
+                                    child: const Text(
+                                        "Convert to Another Estimate"),
+                                  ),
+                                ],
+                              )),
                       ],
                     ),
                   ),
@@ -917,7 +997,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                             tableRow("Sub Total",
                                 "Rs.${enquiryData.price!.subTotal}", false),
                             tableRow(
-                                "Discount (${enquiryData.price!.discountsys == "%" ? '${enquiryData.price!.discount != null ? (enquiryData.price!.discount)!.round() : ""}%' : 'Rs ${enquiryData.price!.discount != null ? (enquiryData.price!.discount)!.round() : ""}'})",
+                                "Discount",
                                 "Rs.${enquiryData.price!.discountValue}",
                                 false),
                             tableRow(
@@ -1234,7 +1314,9 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () {
+          Navigator.pop(context);
+        },
       ),
       titleSpacing: 0,
       title: Text(

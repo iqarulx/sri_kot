@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../../../provider/provider.dart';
 import '../../../ui/ui.dart';
 import '/constants/constants.dart';
 import '/services/services.dart';
@@ -17,33 +19,57 @@ class _EstimateFilterState extends State<EstimateFilter> {
 
   List<DropdownMenuItem> customerList = [];
   String? customerId;
+
   Future getCustomerInfo() async {
     try {
       FireStore provider = FireStore();
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+      final connectionProvider =
+          Provider.of<ConnectionProvider>(context, listen: false);
+      if (connectionProvider.isConnected) {
+        if (cid != null) {
+          final result = await provider.customerListing(cid: cid);
+          if (result!.docs.isNotEmpty) {
+            setState(() {
+              customerList.clear();
+            });
+            for (var element in result.docs) {
+              setState(() {
+                customerList.add(
+                  DropdownMenuItem(
+                    value: element.id,
+                    child: Text(
+                      "${element["customer_name"].toString()} - (${element["mobile_no"].toString()})",
+                    ),
+                  ),
+                );
+              });
+            }
 
-      if (cid != null) {
-        final result = await provider.customerListing(cid: cid);
-        if (result!.docs.isNotEmpty) {
-          setState(() {
-            customerList.clear();
-          });
-          for (var element in result.docs) {
+            return customerList;
+          }
+        }
+      } else {
+        setState(() {
+          customerList.clear();
+        });
+        var list = await LocalService.getOfflineCustomerInfo();
+        if (list.isNotEmpty) {
+          for (var element in list) {
             setState(() {
               customerList.add(
                 DropdownMenuItem(
-                  value: element.id,
+                  value: element.docID,
                   child: Text(
-                    element["customer_name"].toString(),
+                    "${element.customerName} - (${element.mobileNo.toString()})",
                   ),
                 ),
               );
             });
           }
-
-          return customerList;
         }
       }
+
       return null;
     } catch (e) {
       throw e.toString();
@@ -80,23 +106,33 @@ class _EstimateFilterState extends State<EstimateFilter> {
   }
 
   applyNow() {
-    if (fromDate.text.isEmpty && toDate.text.isEmpty && customerId == null) {
-      showToast(context,
-          content: "Please choose an option", isSuccess: false, top: false);
+    // Prepare a map to hold the result
+    Map<String, dynamic> result = {};
+
+    // If a customer is selected, add CustomerID to the result
+    if (customerId != null) {
+      result['CustomerID'] = customerId;
+    }
+
+    // If fromDate is selected, add it to the result
+    if (fromDate.text.isNotEmpty) {
+      result['FromDate'] = DateTime.parse(fromDate.text);
+    }
+
+    // If toDate is selected, add it to the result
+    if (toDate.text.isNotEmpty) {
+      result['ToDate'] = DateTime.parse(toDate.text);
+    }
+
+    // Check if the result map is not empty before popping the context
+    if (result.isNotEmpty) {
+      Navigator.pop(context, result);
     } else {
-      if (fromDate.text.isNotEmpty && toDate.text.isEmpty) {
-        showToast(context,
-            content: "Choose To Date is Must", isSuccess: false, top: false);
-      } else if (toDate.text.isNotEmpty && fromDate.text.isEmpty) {
-        showToast(context,
-            content: "Choose From Date is Must", isSuccess: false, top: false);
-      } else {
-        Navigator.pop(context, {
-          "FromDate": DateTime.parse(fromDate.text),
-          "ToDate": DateTime.parse(toDate.text),
-          "CustomerID": customerId,
-        });
-      }
+      // If no valid input is selected, show a toast message
+      showToast(context,
+          content: "Please select at least one option",
+          isSuccess: false,
+          top: false);
     }
   }
 
@@ -227,6 +263,7 @@ class _EstimateFilterState extends State<EstimateFilter> {
                     height: 8,
                   ),
                   DropdownButtonFormField(
+                    menuMaxHeight: 400,
                     value: customerId,
                     isExpanded: true,
                     items: customerList,

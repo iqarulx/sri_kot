@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sri_kot/services/services.dart';
+import '../../../../constants/constants.dart';
 import '/model/model.dart';
 import '/view/screens/screens.dart';
 
@@ -15,6 +16,7 @@ class InvoiceDetails extends StatefulWidget {
 
 class _InvoiceDetailsState extends State<InvoiceDetails> {
   InvoiceModel? invoice;
+  List<CategoryDataModel> categoryList = [];
 
   openDialog() async {
     await showDialog(
@@ -58,7 +60,7 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
           MaterialPageRoute(
             builder: (context) => InvoicePdfView(
               title: result,
-              invoice: widget.invoice,
+              invoice: invoice ?? InvoiceModel(),
             ),
           ),
         );
@@ -100,64 +102,92 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
   }
 
   Future getInvoice() async {
-    await FireStore()
-        .getInvoiceInfo(cid: widget.invoice.docID ?? '')
-        .then((value) {
-      if (value != null) {
-        if (value.exists) {
-          InvoiceModel model = InvoiceModel();
-          model.docID = value.id;
-          model.partyName = value["party_name"];
-          model.address = value["address"];
-          model.biilDate = (value["bill_date"] as Timestamp).toDate();
-          model.billNo = value["bill_no"];
-          model.phoneNumber = value["phone_number"];
-          model.totalBillAmount = value["total_amount"];
-          model.transportName = value["transport_name"];
-          model.transportNumber = value["transport_number"];
-          model.listingProducts = [];
-          if (value["products"] != null) {
-            for (var productElement in value["products"]) {
-              InvoiceProductModel models = InvoiceProductModel();
-              models.productID = productElement["product_id"];
-              models.productName = productElement["product_name"];
-              models.qty = productElement["qty"];
-              models.rate = productElement["rate"].toDouble();
-              models.total = productElement["total"].toDouble();
-              models.unit = productElement["unit"];
-              models.categoryID = productElement["category_id"];
-              models.discountLock = productElement["discount_lock"];
-              models.discount = productElement["discount"];
+    try {
+      await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+        await FireStore().categoryListing(cid: cid).then((value) {
+          if (value != null && value.docs.isNotEmpty) {
+            for (var categorylist in value.docs) {
+              CategoryDataModel model = CategoryDataModel();
+              model.categoryName = categorylist["category_name"].toString();
+              model.postion = categorylist["postion"];
+              model.tmpcatid = categorylist.id;
+              model.discount = categorylist["discount"];
               setState(() {
-                model.listingProducts!.add(models);
+                categoryList.add(model);
               });
             }
           }
-          model.deliveryaddress = value["delivery_address"] ?? "";
+        });
+      }).then((value) async {
+        await FireStore()
+            .getInvoiceInfo(cid: widget.invoice.docID ?? '')
+            .then((value) {
+          if (value != null) {
+            if (value.exists) {
+              InvoiceModel model = InvoiceModel();
+              model.docID = value.id;
+              model.partyName = value["party_name"];
+              model.address = value["address"];
+              model.biilDate = (value["bill_date"] as Timestamp).toDate();
+              model.billNo = value["bill_no"];
+              model.phoneNumber = value["phone_number"];
+              model.totalBillAmount = value["total_amount"];
+              model.transportName = value["transport_name"];
+              model.transportNumber = value["transport_number"];
+              model.listingProducts = [];
+              if (value["products"] != null) {
+                for (var productElement in value["products"]) {
+                  InvoiceProductModel models = InvoiceProductModel();
+                  models.productID = productElement["product_id"];
+                  models.productName = productElement["product_name"];
+                  models.qty = productElement["qty"];
+                  models.rate = productElement["rate"].toDouble();
+                  models.total = productElement["total"].toDouble();
+                  models.unit = productElement["unit"];
+                  models.categoryID = productElement["category_id"];
+                  models.discountLock = productElement["discount_lock"];
+                  if (models.categoryID != null &&
+                      models.categoryID!.isNotEmpty) {
+                    var getCategoryid = categoryList.indexWhere(
+                        (elements) => elements.tmpcatid == models.categoryID);
+                    models.discount = categoryList[getCategoryid].discount;
+                  }
 
-          if (value["price"] != null) {
-            var calcula = BillingCalCulationModel();
-            calcula.discount = value["price"]["discount"];
-            calcula.discountValue = value["price"]["discount_value"];
-            calcula.discountsys = value["price"]["discount_sys"];
-            calcula.extraDiscount = value["price"]["extra_discount"];
-            calcula.extraDiscountValue = value["price"]["extra_discount_value"];
-            calcula.extraDiscountsys = value["price"]["extra_discount_sys"];
-            calcula.package = value["price"]["package"];
-            calcula.packageValue = value["price"]["package_value"];
-            calcula.packagesys = value["price"]["package_sys"];
-            calcula.subTotal = value["price"]["sub_total"];
-            calcula.roundOff = value["price"]["round_off"];
-            calcula.total = value["price"]["total"];
+                  setState(() {
+                    model.listingProducts!.add(models);
+                  });
+                }
+              }
+              model.deliveryaddress = value["delivery_address"] ?? "";
 
-            model.price = calcula;
+              if (value["price"] != null) {
+                var calcula = BillingCalCulationModel();
+                calcula.discount = value["price"]["discount"];
+                calcula.discountValue = value["price"]["discount_value"];
+                calcula.discountsys = value["price"]["discount_sys"];
+                calcula.extraDiscount = value["price"]["extra_discount"];
+                calcula.extraDiscountValue =
+                    value["price"]["extra_discount_value"];
+                calcula.extraDiscountsys = value["price"]["extra_discount_sys"];
+                calcula.package = value["price"]["package"];
+                calcula.packageValue = value["price"]["package_value"];
+                calcula.packagesys = value["price"]["package_sys"];
+                calcula.subTotal = value["price"]["sub_total"];
+                calcula.roundOff = value["price"]["round_off"];
+                calcula.total = value["price"]["total"];
+
+                model.price = calcula;
+              }
+              setState(() {
+                invoice = model;
+              });
+            }
           }
-          setState(() {
-            invoice = model;
-          });
-        }
-      }
-    });
+        });
+      });
+    } on Exception catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -171,47 +201,7 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon:
-              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text("Bill of Supply"),
-        actions: [
-          IconButton(
-            splashRadius: 20,
-            onPressed: () {
-              openDialog();
-            },
-            icon: const Icon(
-              Icons.print,
-            ),
-          ),
-          IconButton(
-            splashRadius: 20,
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => InvoiceCreation(invoice: invoice),
-                ),
-              );
-
-              if (result != null) {
-                if (result) {
-                  setState(() {
-                    invoiceHanlder = getInvoice();
-                  });
-                }
-              }
-            },
-            icon: const Icon(
-              Icons.edit,
-            ),
-          ),
-        ],
-      ),
+      appBar: appbar(context),
       body: FutureBuilder(
         future: invoiceHanlder,
         builder: (context, snapshot) {
@@ -475,24 +465,28 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
                         ),
                         Table(
                           children: [
-                            tableRow("Sub Total",
-                                "Rs.${widget.invoice.price!.subTotal}", false),
                             tableRow(
-                                "Discount (${widget.invoice.price!.discountsys == "%" ? '${widget.invoice.price!.discount != null ? (widget.invoice.price!.discount)!.round() : ""}%' : 'Rs ${widget.invoice.price!.discount != null ? (widget.invoice.price!.discount)!.round() : ""}'})",
-                                "Rs.${widget.invoice.price!.discountValue}",
+                                "Sub Total",
+                                "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
+                                false),
+                            tableRow("Discount",
+                                "Rs.${invoice!.price!.discountValue}", false),
+                            tableRow(
+                                "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
+                                "Rs.${invoice!.price!.extraDiscountValue}",
                                 false),
                             tableRow(
-                                "Extra Discount (${widget.invoice.price!.extraDiscountsys == "%" ? '${widget.invoice.price!.extraDiscount != null ? (widget.invoice.price!.extraDiscount)!.round() : ""}%' : 'Rs ${widget.invoice.price!.extraDiscount != null ? (widget.invoice.price!.extraDiscount)!.round() : ""}'})",
-                                "Rs.${widget.invoice.price!.extraDiscountValue}",
+                                "Package Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
+                                "Rs.${invoice!.price!.packageValue}",
                                 false),
                             tableRow(
-                                "Package Charge (${widget.invoice.price!.packagesys == "%" ? '${widget.invoice.price!.package != null ? (widget.invoice.price!.package)!.round() : ""}%' : 'Rs ${widget.invoice.price!.package != null ? (widget.invoice.price!.package)!.round() : ""}'})",
-                                "Rs.${widget.invoice.price!.packageValue}",
+                                "Round Off",
+                                "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
                                 false),
-                            tableRow("Round Off",
-                                "Rs.${widget.invoice.price!.roundOff}", false),
-                            tableRow("Total",
-                                "Rs.${widget.invoice.price!.total}", true),
+                            tableRow(
+                                "Total",
+                                "Rs.${invoice != null ? invoice!.price!.total : ""}",
+                                true),
                           ],
                         ),
                       ],
@@ -686,6 +680,51 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
           }
         },
       ),
+    );
+  }
+
+  AppBar appbar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+      title: const Text("Bill of Supply"),
+      actions: [
+        IconButton(
+          splashRadius: 20,
+          onPressed: () {
+            openDialog();
+          },
+          icon: const Icon(
+            Icons.print,
+          ),
+        ),
+        IconButton(
+          splashRadius: 20,
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => InvoiceCreation(invoice: invoice),
+              ),
+            );
+
+            if (result != null) {
+              if (result) {
+                setState(() {
+                  invoiceHanlder = getInvoice();
+                });
+              }
+            }
+          },
+          icon: const Icon(
+            Icons.edit,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -287,6 +287,30 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
       actions: [
         IconButton(
           onPressed: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              if (connectionProvider.isConnected) {
+                AccountValid.accountValid(context);
+                getDiscountHandler = getCategory();
+              }
+            });
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              connectionProvider.addListener(() {
+                if (connectionProvider.isConnected) {
+                  AccountValid.accountValid(context);
+                  getDiscountHandler = getCategory();
+                }
+              });
+            });
+          },
+          icon: const Icon(Icons.refresh),
+        ),
+        IconButton(
+          onPressed: () {
             final connectionProvider =
                 Provider.of<ConnectionProvider>(context, listen: false);
             if (connectionProvider.isConnected) {

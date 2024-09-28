@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -59,6 +60,26 @@ class _UserDetailsState extends State<UserDetails> {
                 style: const TextStyle(color: Colors.black),
               ),
               actions: [
+                IconButton(
+                  splashRadius: 20,
+                  onPressed: () async {
+                    await showDialog(
+                      context: context,
+                      builder: (context) {
+                        return DeviceModal(
+                          deviceModel: adminDevice ?? DeviceModel(),
+                        );
+                      },
+                    ).then((value) {
+                      if (value != null) {
+                        if (!value) {
+                          deleteDevice();
+                        }
+                      }
+                    });
+                  },
+                  icon: const Icon(CupertinoIcons.device_phone_portrait),
+                ),
                 IconButton(
                   splashRadius: 20,
                   onPressed: () {
@@ -288,6 +309,19 @@ class _UserDetailsState extends State<UserDetails> {
         ),
       ),
     );
+  }
+
+  deleteDevice() async {
+    try {
+      loading(context);
+      await FireStore().deleteUserDevice(docID: adminDocId ?? '').then((value) {
+        Navigator.pop(context);
+        snackbar(context, true, "User device deleted");
+      });
+    } on Exception catch (e) {
+      Navigator.pop(context);
+      snackbar(context, true, e.toString());
+    }
   }
 
   updateUserInfo() async {

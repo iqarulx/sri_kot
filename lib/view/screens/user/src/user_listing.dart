@@ -204,6 +204,8 @@ class _UserListingState extends State<UserListing> {
                                             userListData[index].password ?? "";
                                         adminProfileImage =
                                             userListData[index].imageUrl;
+                                        adminDevice =
+                                            userListData[index].deviceModel;
                                         userListingcontroller.animateToPage(
                                           1,
                                           duration: const Duration(
@@ -354,6 +356,14 @@ class _UserListingState extends State<UserListing> {
 
             model.docid = element.id;
             model.uid = element["uid"].toString();
+
+            DeviceModel deviceModel = DeviceModel();
+            deviceModel.deviceId = element["device"]["device_id"];
+            deviceModel.deviceName = element["device"]["device_name"];
+            deviceModel.modelName = element["device"]["model_name"];
+
+            model.deviceModel = deviceModel;
+
             setState(() {
               userListData.add(model);
             });

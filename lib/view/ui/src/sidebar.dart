@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../utils/utils.dart';
 import '/log/show_log.dart';
 import '/purchase/purchase.dart';
 import '/provider/provider.dart';
@@ -43,6 +44,8 @@ class _SideBarState extends State<SideBar> {
   DateTime? endsIn;
   File? profileImg;
   String? currentVersion;
+  String? estimateCount;
+  String? enquiryCount;
 
   changeEvent() {
     if (mounted) {
@@ -70,6 +73,14 @@ class _SideBarState extends State<SideBar> {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     setState(() {
       currentVersion = packageInfo.version;
+    });
+
+    var helper = DatabaseHelper();
+    var dbEnquiryCount = await helper.countEnquiries();
+    var dbEstimateCount = await helper.countEstimate();
+    setState(() {
+      estimateCount = "$dbEstimateCount";
+      enquiryCount = "$dbEnquiryCount";
     });
 
     final connectionProvider =
@@ -359,6 +370,101 @@ class _SideBarState extends State<SideBar> {
                             index: 11,
                           )
                         : const SizedBox(),
+                    (prOrder != null && prOrder == true) ||
+                            (prEstimate != null && prEstimate == true)
+                        ? estimateCount != "0" && enquiryCount != "0"
+                            ? GestureDetector(
+                                onTap: () async {
+                                  final connectionProvider =
+                                      Provider.of<ConnectionProvider>(context,
+                                          listen: false);
+                                  if (connectionProvider.isConnected) {
+                                    if (estimateCount != "0" &&
+                                        enquiryCount != "0") {
+                                      confirmationDialog(context,
+                                              title: "Upload offline bills",
+                                              message:
+                                                  "You need a strong internet connection to upload bills")
+                                          .then((value) async {
+                                        if (value != null) {
+                                          if (value) {
+                                            loading(context);
+                                            await LocalService.syncNow()
+                                                .then((value) {
+                                              Navigator.pop(context);
+                                              if (value) {
+                                                showToast(context,
+                                                    isSuccess: false,
+                                                    content:
+                                                        "Successfully bills are uploaded",
+                                                    top: false);
+                                              } else {
+                                                showToast(context,
+                                                    isSuccess: false,
+                                                    content: "An error occured",
+                                                    top: false);
+                                              }
+                                            });
+                                          }
+                                        }
+                                      });
+                                    } else {
+                                      showToast(context,
+                                          isSuccess: false,
+                                          content:
+                                              "No bills are available to upload",
+                                          top: false);
+                                    }
+                                  } else {
+                                    showToast(context,
+                                        isSuccess: false,
+                                        content:
+                                            "You need internet to upload bills",
+                                        top: false);
+                                  }
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Badge(
+                                      label: Text(
+                                          "${int.parse(estimateCount ?? '0') + int.parse(enquiryCount ?? "0")}"),
+                                      textStyle:
+                                          const TextStyle(color: Colors.white),
+                                      child: Container(
+                                        height: 40,
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              CupertinoIcons.cloud_upload,
+                                              size: 19,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              "Upload Local Bills",
+                                              style: TextStyle(
+                                                color: Colors.grey.shade700,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                          ],
+                                        ),
+                                      )),
+                                ),
+                              )
+                            : const SizedBox()
+                        : const SizedBox(),
 
                     isAdmin != null && isAdmin == true
                         ? breakBar()
@@ -471,14 +577,20 @@ class _SideBarState extends State<SideBar> {
                           },
                         ).then((value) async {
                           if (value != null && value == true) {
-                            await LocalDB.logout().then((result) {
+                            loading(context);
+                            await FireStore().deleteDeviceLogout();
+
+                            await LocalDB.logout().then((result) async {
                               final dbHelper = DatabaseHelper();
                               dbHelper.clearCategory();
                               dbHelper.clearCustomer();
                               dbHelper.clearProducts();
                               dbHelper.clearBillRecords();
+
                               if (result) {
                                 Navigator.pop(context);
+                                Navigator.pop(context);
+
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(

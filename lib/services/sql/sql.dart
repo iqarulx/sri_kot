@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -271,12 +272,14 @@ class DatabaseHelper {
   Future<Map<String, dynamic>> getEnquiryWithId(String referenceId) async {
     final db = await database;
 
+    print(referenceId);
+
     try {
       final List<Map<String, dynamic>> result = await db.rawQuery('''
       SELECT * FROM enquiry WHERE reference_id = ?
     ''', [referenceId]);
-
       // Return the count from the query result
+      print(result.first);
       return result.isNotEmpty ? result.first : {};
     } catch (e) {
       // Log the error (optional)
@@ -322,9 +325,6 @@ class DatabaseHelper {
     required String referenceId,
   }) async {
     final db = await database;
-
-    print(referenceId);
-    print(orderData);
 
     await db.update(
       'estimate',
@@ -467,14 +467,92 @@ class DatabaseHelper {
     await saveLog(query);
   }
 
-  Future<List<Map<String, dynamic>>> getEnquiry() async {
+  Future<List<Map<String, dynamic>>> getEnquiry({
+    required int start,
+    required int end,
+    required bool limitApplied,
+  }) async {
     final db = await database;
-    return await db.query('enquiry');
+
+    if (limitApplied) {
+      int limit = end - start;
+
+      var result = await db.query(
+        'enquiry',
+        limit: limit,
+        offset: start,
+      );
+      return result;
+    } else {
+      return await db.query('enquiry');
+    }
   }
 
-  Future<List<Map<String, dynamic>>> getEstimate() async {
+  Future<Map<String, dynamic>> getEnquiryTotal() async {
     final db = await database;
-    return await db.query('estimate');
+    var enquiry = await db.query('enquiry');
+
+    double overallTotal = 0.0;
+    for (var data in enquiry) {
+      try {
+        var price =
+            jsonDecode(data['price'].toString()) as Map<String, dynamic>;
+        if (price["total"] != null && price["total"] is num) {
+          overallTotal += price["total"].toDouble();
+        }
+      } catch (e) {
+        print('Error parsing price: $e');
+      }
+    }
+
+    return {
+      "total": overallTotal.toString(),
+      "no_of_enquiry": enquiry.length,
+    };
+  }
+
+  Future<Map<String, dynamic>> getEstimateTotal() async {
+    final db = await database;
+    var estimate = await db.query('estimate');
+
+    double overallTotal = 0.0;
+    for (var data in estimate) {
+      try {
+        var price =
+            jsonDecode(data['price'].toString()) as Map<String, dynamic>;
+        if (price["total"] != null && price["total"] is num) {
+          overallTotal += price["total"].toDouble();
+        }
+      } catch (e) {
+        print('Error parsing price: $e');
+      }
+    }
+
+    return {
+      "total": overallTotal.toString(),
+      "no_of_estimate": estimate.length,
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> getEstimate({
+    required int start,
+    required int end,
+    required bool limitApplied,
+  }) async {
+    final db = await database;
+
+    if (limitApplied) {
+      int limit = end - start;
+
+      var result = await db.query(
+        'estimate',
+        limit: limit,
+        offset: start,
+      );
+      return result;
+    } else {
+      return await db.query('estimate');
+    }
   }
 
   Future clearBillRecords() async {

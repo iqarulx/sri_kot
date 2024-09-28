@@ -44,71 +44,65 @@ class _CartDrawerState extends State<CartDrawer> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.only(
-              top: 5,
-              left: 15,
-              right: 5,
-              bottom: 5,
-            ),
+            height: 90,
+            padding: const EdgeInsets.all(10),
             color: Theme.of(context).primaryColor,
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Text(
-                    "My Cart",
-                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                          color: Colors.white,
-                        ),
-                  ),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  Text(
-                    "(${cartDataList.length})",
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: Colors.white,
-                        ),
-                  ),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  Text(
-                    "Items-(${cartItemCount()})",
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: Colors.white,
-                        ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () async {
-                      if (cartDataList.isNotEmpty) {
-                        await showDialog(
-                          context: context,
-                          builder: (builder) {
-                            return const Modal(
-                              title: "Alert",
-                              content: "Do you want clear cart ?",
-                              type: ModalType.danger,
-                            );
-                          },
-                        ).then((value) async {
-                          if (value != null) {
-                            if (value) {
-                              clearCart();
-                            }
-                          }
-                        });
-                      }
-                    },
-                    child: const Text(
-                      "Clear",
-                      style: TextStyle(
+            child: Row(
+              children: [
+                Text(
+                  "My Cart",
+                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                         color: Colors.white,
                       ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                Text(
+                  "(${cartDataList.length})",
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Colors.white,
+                      ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                Text(
+                  "Items-(${cartItemCount()})",
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: Colors.white,
+                      ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () async {
+                    if (cartDataList.isNotEmpty) {
+                      await showDialog(
+                        context: context,
+                        builder: (builder) {
+                          return const Modal(
+                            title: "Alert",
+                            content: "Do you want clear cart ?",
+                            type: ModalType.danger,
+                          );
+                        },
+                      ).then((value) async {
+                        if (value != null) {
+                          if (value) {
+                            clearCart();
+                          }
+                        }
+                      });
+                    }
+                  },
+                  child: const Text(
+                    "Clear",
+                    style: TextStyle(
+                      color: Colors.white,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -134,7 +128,8 @@ class _CartDrawerState extends State<CartDrawer> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        cartDataList[index].discountLock == true
+                        cartDataList[index].discountLock == true ||
+                                cartDataList[index].discount == null
                             ? widget.isConnected
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(5),
@@ -719,18 +714,23 @@ class _CartDrawerState extends State<CartDrawer> {
                   ),
                   GestureDetector(
                     onTap: () async {
-                      var result = await formDialog(
-                        context,
-                        title: "Discount",
-                        sysmbol: discountSys,
-                        value: discountInput.toString(),
-                      );
-                      if (result != null) {
-                        setState(() {
-                          discountSys = result["sys"];
-                          discountInput = double.parse(result["value"]);
-                        });
-                      }
+                      showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (context) {
+                            return DiscountModal(
+                              title: "Discount",
+                              symbol: discountSys,
+                              value: discountInput.toString(),
+                            );
+                          }).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            discountSys = value["sys"];
+                            discountInput = double.parse(value["value"]);
+                          });
+                        }
+                      });
                     },
                     child: Container(
                       color: Colors.transparent,
@@ -766,18 +766,36 @@ class _CartDrawerState extends State<CartDrawer> {
                   ),
                   GestureDetector(
                     onTap: () async {
-                      var result = await formDialog(
-                        context,
-                        title: "Extra Discount",
-                        sysmbol: extraDiscountSys,
-                        value: extraDiscountInput.toString(),
-                      );
-                      if (result != null) {
-                        setState(() {
-                          extraDiscountSys = result["sys"];
-                          extraDiscountInput = double.parse(result["value"]);
-                        });
-                      }
+                      // var result = await formDialog(
+                      //   context,
+                      //   title: "Extra Discount",
+                      //   sysmbol: extraDiscountSys,
+                      //   value: extraDiscountInput.toString(),
+                      // );
+                      // if (result != null) {
+                      //   setState(() {
+                      //     extraDiscountSys = result["sys"];
+                      //     extraDiscountInput = double.parse(result["value"]);
+                      //   });
+                      // }
+
+                      showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (context) {
+                            return DiscountModal(
+                              title: "Extra Discount",
+                              symbol: extraDiscountSys,
+                              value: extraDiscountInput.toString(),
+                            );
+                          }).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            extraDiscountSys = value["sys"];
+                            extraDiscountInput = double.parse(value["value"]);
+                          });
+                        }
+                      });
                     },
                     child: Container(
                       color: Colors.transparent,
@@ -785,7 +803,7 @@ class _CartDrawerState extends State<CartDrawer> {
                         children: [
                           Expanded(
                             child: Text(
-                              "Extra Dis${extraDiscountSys.toUpperCase()} $extraDiscountInput",
+                              "Extra Dis ${extraDiscountSys.toUpperCase()} $extraDiscountInput",
                               style: Theme.of(context).textTheme.bodyMedium,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -817,18 +835,23 @@ class _CartDrawerState extends State<CartDrawer> {
                   ),
                   GestureDetector(
                     onTap: () async {
-                      var result = await formDialog(
-                        context,
-                        title: "Packing Charges",
-                        sysmbol: packingChargeSys,
-                        value: packingChargeInput.toString(),
-                      );
-                      if (result != null) {
-                        setState(() {
-                          packingChargeSys = result["sys"];
-                          packingChargeInput = double.parse(result["value"]);
-                        });
-                      }
+                      showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (context) {
+                            return DiscountModal(
+                              title: "Packing Charges",
+                              symbol: packingChargeSys,
+                              value: packingChargeInput.toString(),
+                            );
+                          }).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            packingChargeSys = value["sys"];
+                            packingChargeInput = double.parse(value["value"]);
+                          });
+                        }
+                      });
                     },
                     child: Container(
                       color: Colors.transparent,
@@ -837,7 +860,7 @@ class _CartDrawerState extends State<CartDrawer> {
                           // Packing Charges Text with ellipsis
                           Expanded(
                             child: Text(
-                              "P Charge${packingChargeSys.toUpperCase()} $packingChargeInput",
+                              "P Charge ${packingChargeSys.toUpperCase()} $packingChargeInput",
                               style: Theme.of(context).textTheme.bodyMedium,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
@@ -967,27 +990,25 @@ class _CartDrawerState extends State<CartDrawer> {
   String discount() {
     String result = "0.00";
     double tmpDiscount = 0.00;
+
     for (var element in cartDataList) {
-      if (element.discountLock == false && element.discount != null) {
-        double total = element.price! * element.qty!;
-        tmpDiscount += (total * (element.discount!.toDouble() / 100));
+      if (element.discountLock != null && !element.discountLock!) {
+        if (element.discount != null) {
+          double total = element.price! * element.qty!;
+          if (discountInput == 0) {
+            tmpDiscount += total * (element.discount!.toDouble() / 100);
+          } else {
+            tmpDiscount += (total * (discountInput.toDouble() / 100));
+          }
+        }
       }
     }
-
-    // if (tmpSubTotal > discountInput) {
-    //   if (discountSys == "%") {
-    //     tmpDiscount = (tmpSubTotal * (discountInput / 100));
-    //   } else {
-    //     tmpDiscount = discountInput;
-    //   }
-    // }
 
     if (tmpDiscount.isNaN) {
       tmpDiscount = 0.00;
     }
 
     result = tmpDiscount.toStringAsFixed(2);
-
     return result;
   }
 
@@ -1272,7 +1293,17 @@ class _CartDrawerState extends State<CartDrawer> {
 
   convertEstimate({required String cid}) async {
     var calcul = BillingCalCulationModel();
-    calcul.discount = discountInput;
+    calcul.discount = 0;
+    if (discountInput != 0) {
+      calcul.discount = discountInput;
+    } else {
+      for (var item in cartDataList) {
+        if (item.discount != null) {
+          calcul.discount = item.discount!.toDouble();
+          break;
+        }
+      }
+    }
     calcul.discountValue = double.parse(discount());
     calcul.discountsys = discountSys;
     calcul.extraDiscount = extraDiscountInput;
@@ -1285,70 +1316,84 @@ class _CartDrawerState extends State<CartDrawer> {
     calcul.roundOff = double.parse(roundOff());
     calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
 
-    if (widget.isConnected) {
-      var cloud = FireStore();
+    if (!calcul.total!.isNegative) {
+      if (widget.isConnected) {
+        var cloud = FireStore();
 
-      await cloud
-          .createNewEstimate(
-        calCulation: calcul,
-        cid: cid,
-        productList: cartDataList,
-        customerInfo: customerInfo,
-      )
-          .then((estimateData) async {
-        if (estimateData != null && estimateData.id.isNotEmpty) {
-          await cloud
-              .updateEstimateId(
-            cid: cid,
-            docID: estimateData.id,
-          )
-              .then((resultFinal) async {
-            if (resultFinal != null) {
-              Navigator.pop(context);
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-              snackbar(context, true, "SuccessFully Place the Order");
-              setState(() {
-                cartDataList.clear();
-              });
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => const EstimateListing(),
-                ),
-              );
-            }
-          });
-        } else {
-          Navigator.pop(context);
-          snackbar(
-            context,
-            false,
-            "Something went Wrong Please try again",
-          );
-        }
-      });
-    } else {
-      await LocalService.newEstimate(
-        productList: cartDataList,
-        calCulation: calcul,
-        cid: cid,
-        customerInfo: customerInfo,
-      ).then((value) {
-        Navigator.pop(context);
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
-        snackbar(context, true, "SuccessFully Order Placed");
-        setState(() {
-          cartDataList.clear();
+        await cloud
+            .createNewEstimate(
+          calCulation: calcul,
+          cid: cid,
+          productList: cartDataList,
+          customerInfo: customerInfo,
+        )
+            .then((estimateData) async {
+          if (estimateData != null && estimateData.id.isNotEmpty) {
+            await cloud
+                .updateEstimateId(
+              cid: cid,
+              docID: estimateData.id,
+            )
+                .then((resultFinal) async {
+              if (resultFinal != null) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+
+                // Navigator.of(context).pop();
+                // Navigator.of(context).pop();
+                snackbar(context, true, "Successfully Order Placed");
+                setState(() {
+                  cartDataList.clear();
+                });
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => const EstimateListing(),
+                  ),
+                );
+              }
+            });
+          } else {
+            Navigator.pop(context);
+            snackbar(
+              context,
+              false,
+              "Something went Wrong Please try again",
+            );
+          }
         });
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => const EstimateListing(),
-          ),
-        );
-      });
+      } else {
+        await LocalService.newEstimate(
+          productList: cartDataList,
+          calCulation: calcul,
+          cid: cid,
+          customerInfo: customerInfo,
+        ).then((value) {
+          Navigator.pop(context);
+          Navigator.pop(context);
+
+          // Navigator.of(context).pop();
+          // Navigator.of(context).pop();
+          snackbar(context, true, "SuccessFully Order Placed");
+          setState(() {
+            cartDataList.clear();
+          });
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => const EstimateListing(),
+            ),
+          );
+        });
+      }
+    } else {
+      Navigator.pop(context);
+      showToast(
+        context,
+        isSuccess: false,
+        content: "Bill total is negative",
+        top: false,
+      );
     }
   }
 
@@ -1373,9 +1418,18 @@ class _CartDrawerState extends State<CartDrawer> {
                   convertEstimate(cid: cid);
                 } else {
                   var calcul = BillingCalCulationModel();
-                  calcul.discount = cartDataList.first.discount != null
-                      ? cartDataList.first.discount!.toDouble()
-                      : 0;
+                  calcul.discount = 0;
+                  if (discountInput != 0) {
+                    calcul.discount = discountInput;
+                  } else {
+                    for (var item in cartDataList) {
+                      if (item.discount != null) {
+                        calcul.discount = item.discount!.toDouble();
+                        break;
+                      }
+                    }
+                  }
+
                   calcul.discountValue = double.parse(discount());
                   calcul.discountsys = discountSys;
                   calcul.extraDiscount = extraDiscountInput;
@@ -1389,70 +1443,78 @@ class _CartDrawerState extends State<CartDrawer> {
                   calcul.total =
                       double.parse(cartTotal()) - double.parse(roundOff());
 
-                  if (widget.isConnected) {
-                    var cloud = FireStore();
-                    await cloud
-                        .createnewEnquiry(
-                      calCulation: calcul,
-                      cid: cid,
-                      productList: cartDataList,
-                      customerInfo: customerInfo,
-                    )
-                        .then((enquryData) async {
-                      if (enquryData != null && enquryData.id.isNotEmpty) {
-                        await cloud
-                            .updateEnquiryId(cid: cid, docID: enquryData.id)
-                            .then((resultFinal) {
-                          if (resultFinal != null) {
-                            // Successfuly Order Placed
-                            Navigator.pop(context);
-                            Navigator.of(context).pop();
-                            Navigator.of(context).pop();
-                            snackbar(
-                                context, true, "Successfully order placed");
-                            setState(() {
-                              cartDataList.clear();
-                            });
-
-                            Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                builder: (context) => const EnquiryListing(),
-                              ),
-                            );
-                          }
-                        });
-                      } else {
-                        Navigator.pop(context);
-                        snackbar(
-                          context,
-                          false,
-                          "Something went Wrong Please try again",
-                        );
-                      }
-                    });
-                  } else {
-                    await LocalService.newEnquiry(
-                            calCulation: calcul,
-                            cid: cid,
-                            productList: cartDataList,
-                            customerInfo: customerInfo)
-                        .then((value) {
-                      snackbar(context, true, "Successfully order placed");
-                      setState(() {
-                        cartDataList.clear();
+                  if (!calcul.total!.isNegative) {
+                    if (widget.isConnected) {
+                      var cloud = FireStore();
+                      await cloud
+                          .createnewEnquiry(
+                        calCulation: calcul,
+                        cid: cid,
+                        productList: cartDataList,
+                        customerInfo: customerInfo,
+                      )
+                          .then((enquryData) async {
+                        if (enquryData != null && enquryData.id.isNotEmpty) {
+                          await cloud
+                              .updateEnquiryId(cid: cid, docID: enquryData.id)
+                              .then((resultFinal) {
+                            if (resultFinal != null) {
+                              // Successfuly Order Placed
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+                              // Navigator.of(context).pop();
+                              snackbar(
+                                  context, true, "Successfully order placed");
+                              setState(() {
+                                cartDataList.clear();
+                              });
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => const EnquiryListing(),
+                                ),
+                              );
+                            }
+                          });
+                        } else {
+                          Navigator.pop(context);
+                          snackbar(
+                            context,
+                            false,
+                            "Something went Wrong Please try again",
+                          );
+                        }
                       });
-                      Navigator.pop(context);
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
+                    } else {
+                      await LocalService.newEnquiry(
+                              calCulation: calcul,
+                              cid: cid,
+                              productList: cartDataList,
+                              customerInfo: customerInfo)
+                          .then((value) {
+                        snackbar(context, true, "Successfully order placed");
+                        setState(() {
+                          cartDataList.clear();
+                        });
+                        Navigator.pop(context);
+                        Navigator.pop(context);
 
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (context) => const EnquiryListing(),
-                        ),
-                      );
-                    });
+                        Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                            builder: (context) => const EnquiryListing(),
+                          ),
+                        );
+                      });
+                    }
+                  } else {
+                    Navigator.pop(context);
+                    showToast(
+                      context,
+                      isSuccess: false,
+                      content: "Bill total is negative",
+                      top: false,
+                    );
                   }
                 }
               } else {
@@ -1518,6 +1580,7 @@ class _CartDrawerState extends State<CartDrawer> {
       builder: (context) {
         return const AddCustomerBox(
           isEdit: false,
+          isInvoice: false,
         );
       },
     ).then((value) {
@@ -1537,6 +1600,7 @@ class _CartDrawerState extends State<CartDrawer> {
         return AddCustomerBox(
           isEdit: true,
           customerData: customerInfo,
+          isInvoice: false,
         );
       },
     ).then((value) {
@@ -1554,9 +1618,17 @@ class _CartDrawerState extends State<CartDrawer> {
       await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var calcul = BillingCalCulationModel();
-          calcul.discount = cartDataList.first.discount != null
-              ? cartDataList.first.discount!.toDouble()
-              : 0;
+          calcul.discount = 0;
+          if (discountInput != 0) {
+            calcul.discount = discountInput;
+          } else {
+            for (var item in cartDataList) {
+              if (item.discount != null) {
+                calcul.discount = item.discount!.toDouble();
+                break;
+              }
+            }
+          }
           calcul.discountValue = double.parse(discount());
           calcul.discountsys = discountSys;
           calcul.extraDiscount = extraDiscountInput;
@@ -1569,35 +1641,45 @@ class _CartDrawerState extends State<CartDrawer> {
           calcul.roundOff = double.parse(roundOff());
           calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
 
-          if (widget.isConnected) {
-            var cloud = FireStore();
-            await cloud
-                .updateEnquiryDetails(
-              docID: widget.enquiryDocId!,
-              calCulation: calcul,
-              productList: cartDataList,
-              customerInfo: customerInfo,
-            )
-                .then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-              snackbar(context, true, "Successfully Order Updated");
-            });
+          if (!calcul.total!.isNegative) {
+            if (widget.isConnected) {
+              var cloud = FireStore();
+              await cloud
+                  .updateEnquiryDetails(
+                docID: widget.enquiryDocId!,
+                calCulation: calcul,
+                productList: cartDataList,
+                customerInfo: customerInfo,
+              )
+                  .then((value) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+                snackbar(context, true, "Successfully Order Updated");
+              });
+            } else {
+              // print(widget.enquiryReferenceId);
+              await LocalService.updateEnquiry(
+                cid: await LocalDB.fetchInfo(type: LocalData.companyid),
+                calCulation: calcul,
+                productList: cartDataList,
+                customerInfo: customerInfo,
+                referenceId: widget.enquiryReferenceId ?? '',
+              ).then((value) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+                snackbar(context, true, "Successfully Order Updated");
+              });
+            }
           } else {
-            // print(widget.enquiryReferenceId);
-            await LocalService.updateEnquiry(
-              cid: await LocalDB.fetchInfo(type: LocalData.companyid),
-              calCulation: calcul,
-              productList: cartDataList,
-              customerInfo: customerInfo,
-              referenceId: widget.enquiryReferenceId ?? '',
-            ).then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-              snackbar(context, true, "Successfully Order Updated");
-            });
+            Navigator.pop(context);
+            showToast(
+              context,
+              isSuccess: false,
+              content: "Bill total is negative",
+              top: false,
+            );
           }
         } else {
           Navigator.pop(context);
@@ -1628,9 +1710,17 @@ class _CartDrawerState extends State<CartDrawer> {
       await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
         if (cid != null) {
           var calcul = BillingCalCulationModel();
-          calcul.discount = cartDataList.first.discount != null
-              ? cartDataList.first.discount!.toDouble()
-              : 0;
+          calcul.discount = 0;
+          if (discountInput != 0) {
+            calcul.discount = discountInput;
+          } else {
+            for (var item in cartDataList) {
+              if (item.discount != null) {
+                calcul.discount = item.discount!.toDouble();
+                break;
+              }
+            }
+          }
           calcul.discountValue = double.parse(discount());
           calcul.discountsys = discountSys;
           calcul.extraDiscount = extraDiscountInput;
@@ -1642,35 +1732,44 @@ class _CartDrawerState extends State<CartDrawer> {
           calcul.subTotal = double.parse(subTotal());
           calcul.roundOff = double.parse(roundOff());
           calcul.total = double.parse(cartTotal()) - double.parse(roundOff());
-
-          if (widget.isConnected) {
-            var cloud = FireStore();
-            await cloud
-                .updateEstimateDetails(
-              docID: widget.estimateDocId!,
-              calCulation: calcul,
-              productList: cartDataList,
-              customerInfo: customerInfo,
-            )
-                .then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-              snackbar(context, true, "SuccessFully Estimate Updated");
-            });
+          if (!calcul.total!.isNegative) {
+            if (widget.isConnected) {
+              var cloud = FireStore();
+              await cloud
+                  .updateEstimateDetails(
+                docID: widget.estimateDocId!,
+                calCulation: calcul,
+                productList: cartDataList,
+                customerInfo: customerInfo,
+              )
+                  .then((value) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+                snackbar(context, true, "SuccessFully Estimate Updated");
+              });
+            } else {
+              await LocalService.updateEstimate(
+                cid: await LocalDB.fetchInfo(type: LocalData.companyid),
+                calCulation: calcul,
+                productList: cartDataList,
+                customerInfo: customerInfo,
+                referenceId: widget.estimateReferenceId ?? '',
+              ).then((value) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+                snackbar(context, true, "Successfully Estimate Updated");
+              });
+            }
           } else {
-            await LocalService.updateEstimate(
-              cid: await LocalDB.fetchInfo(type: LocalData.companyid),
-              calCulation: calcul,
-              productList: cartDataList,
-              customerInfo: customerInfo,
-              referenceId: widget.estimateReferenceId ?? '',
-            ).then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-              snackbar(context, true, "Successfully Estimate Updated");
-            });
+            Navigator.pop(context);
+            showToast(
+              context,
+              isSuccess: false,
+              content: "Bill total is negative",
+              top: false,
+            );
           }
         } else {
           Navigator.pop(context);

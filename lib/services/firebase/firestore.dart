@@ -11,7 +11,6 @@ import '/utils/src/utilities.dart';
 final _instances = FirebaseFirestore.instance;
 
 class FireStore {
-  final _users = _instances.collection('users');
   final _profile = _instances.collection('profile');
   final _admin = _instances.collection('users');
   final _staff = _instances.collection('staff');
@@ -34,7 +33,7 @@ class FireStore {
 
   Future<QuerySnapshot?> getUserInfo({required String uid}) async {
     try {
-      var data = await _users.where('uid', isEqualTo: uid).get();
+      var data = await _admin.where('uid', isEqualTo: uid).get();
       return data;
     } catch (e) {
       rethrow;
@@ -46,6 +45,21 @@ class FireStore {
       var data = await _profile.doc(uid).get();
       if (data.exists) {
         if (data["invoice_entry"]) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool?> isEnterpriseUser() async {
+    var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+    try {
+      var data = await _profile.doc(cid).get();
+      if (data.exists) {
+        if (data["user_type"] == "enterprise") {
           return true;
         }
       }
@@ -487,6 +501,26 @@ class FireStore {
     }
   }
 
+  Future<void> deleteStaffDevice({
+    required String docID,
+  }) async {
+    try {
+      return await _staff.doc(docID).update({"device": DeviceModel().toMap()});
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<void> deleteUserDevice({
+    required String docID,
+  }) async {
+    try {
+      return await _admin.doc(docID).update({"device": DeviceModel().toMap()});
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
   Future<void> updateProfileStaff({
     required StaffDataModel staffData,
     required String docID,
@@ -527,6 +561,21 @@ class FireStore {
       throw e.toString();
     }
     return docRef;
+  }
+
+  Future<bool> checkCustomerAlreadyRegistered(
+      {required String mobileNo}) async {
+    try {
+      var docRef =
+          await _customer.where('mobile_no', isEqualTo: mobileNo).get();
+      if (docRef.docs.isEmpty) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      throw e.toString();
+    }
   }
 
   Future<DocumentReference> registerProduct({
@@ -966,10 +1015,11 @@ class FireStore {
 
             await updateEstimateId(cid: cid, docID: estimate.id)
                 .then((value) async {
-              await getEstimate(cid: cid).then((estimateInfo) async {
-                if (estimateInfo != null && estimateInfo.docs.isNotEmpty) {
+              await getEstimate(cid: cid, start: 0, end: 0, isLimitPage: false)
+                  .then((estimateInfo) async {
+                if (estimateInfo.isNotEmpty) {
                   return await _enquiry.doc(docID).update(
-                    {"estimate_id": estimateInfo.docs.first["estimate_id"]},
+                    {"estimate_id": estimateInfo.first["estimate_id"]},
                   );
                 }
               });
@@ -1007,6 +1057,7 @@ class FireStore {
       required String mobileNo,
       required String state}) async {
     try {
+      var data = await _enquiry.doc(docId).get();
       return await _enquiry.doc(docId).update({
         'customer.address': address,
         'customer.city': city,
@@ -1014,7 +1065,7 @@ class FireStore {
         'customer.customer_id': customerId,
         'customer.customer_name': customerName,
         'customer.email': email,
-        'customer.mobileNo': mobileNo,
+        'customer.mobile_no': mobileNo,
         'customer.state': state,
       });
     } catch (e) {
@@ -1122,19 +1173,156 @@ class FireStore {
     }
   }
 
-  Future<QuerySnapshot?> getEnquiry({required String cid}) async {
-    QuerySnapshot? resultData;
-
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getEnquiry(
+      {required String cid, required int start, required int end}) async {
     try {
-      resultData = await _enquiry
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _enquiry
+          .where('company_id', isEqualTo: cid)
+          .where('delete_at', isEqualTo: false)
+          .orderBy('created_date', descending: true)
+          .limit(end)
+          .get();
+      return snapshot.docs.skip(start).take(end - start).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getEnquiryTotal({required String cid}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _enquiry
+          .where('company_id', isEqualTo: cid)
+          .where('delete_at', isEqualTo: false)
+          .get();
+      var total = 0.0;
+      for (var data in snapshot.docs) {
+        total += data["price"]["total"].toDouble();
+        print(data["price"]["total"].toDouble());
+      }
+
+      return {"total": total, "total_enquiry": snapshot.docs.length};
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getEstimate(
+      {required String cid,
+      required int start,
+      required int end,
+      required bool isLimitPage}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _estimate
+          .where('company_id', isEqualTo: cid)
+          .where('delete_at', isEqualTo: false)
+          .orderBy('created_date', descending: true)
+          .limit(end)
+          .get();
+      if (isLimitPage) {
+        return snapshot.docs.skip(start).take(end - start).toList();
+      } else {
+        return snapshot.docs;
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getAllEstimate(
+      {required String cid}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _estimate
           .where('company_id', isEqualTo: cid)
           .where('delete_at', isEqualTo: false)
           .orderBy('created_date', descending: true)
           .get();
+
+      return snapshot.docs;
     } catch (e) {
       rethrow;
     }
-    return resultData;
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getAllEnquiry(
+      {required String cid}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _enquiry
+          .where('company_id', isEqualTo: cid)
+          .where('delete_at', isEqualTo: false)
+          .orderBy('created_date', descending: true)
+          .get();
+
+      return snapshot.docs;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getEstimateTotal({required String cid}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _estimate
+          .where('company_id', isEqualTo: cid)
+          .where('delete_at', isEqualTo: false)
+          .get();
+      var total = 0.0;
+      for (var data in snapshot.docs) {
+        total += data["price"]["total"].toDouble();
+      }
+
+      return {"total": total, "total_estimate": snapshot.docs.length};
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getInvoiceTotal({required String cid}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _invoice
+          .where('company_id', isEqualTo: cid)
+          .where("delete_at", isEqualTo: false)
+          .get();
+      var total = 0.0;
+      for (var data in snapshot.docs) {
+        total += data["price"]["total"].toDouble();
+      }
+
+      return {"total": total, "total_invoice": snapshot.docs.length};
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getInvoice(
+      {required int start, required int end}) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _invoice
+          .where('company_id',
+              isEqualTo: await LocalDB.fetchInfo(type: LocalData.companyid))
+          .where("delete_at", isEqualTo: false)
+          .orderBy('bill_date', descending: true)
+          .limit(end)
+          .get();
+
+      return snapshot.docs.skip(start).take(end - start).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      getAllInvoice() async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _invoice
+          .where('company_id',
+              isEqualTo: await LocalDB.fetchInfo(type: LocalData.companyid))
+          .where('delete_at', isEqualTo: false)
+          .orderBy('bill_date', descending: true)
+          .get();
+
+      return snapshot.docs;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<QuerySnapshot?> getEnquiryCustomer(
@@ -1247,21 +1435,6 @@ class FireStore {
     return resultData;
   }
 
-  Future<QuerySnapshot?> getEstimate({required String cid}) async {
-    QuerySnapshot? resultData;
-
-    try {
-      resultData = await _estimate
-          .where('company_id', isEqualTo: cid)
-          .where('delete_at', isEqualTo: false)
-          .orderBy('created_date', descending: true)
-          .get();
-    } catch (e) {
-      rethrow;
-    }
-    return resultData;
-  }
-
   Future<QuerySnapshot?> getEstimateCustomer(
       {required String cid, required String customerID}) async {
     QuerySnapshot? resultData;
@@ -1306,11 +1479,8 @@ class FireStore {
     AggregateQuerySnapshot? result;
 
     try {
-      result = await _customer
-          .where('company_id', isEqualTo: cid)
-          // .where("delete_at", isEqualTo: false)
-          .count()
-          .get();
+      result =
+          await _customer.where('company_id', isEqualTo: cid).count().get();
     } catch (e) {
       throw e.toString();
     }
@@ -1321,6 +1491,7 @@ class FireStore {
     required String docID,
     required CustomerDataModel customerData,
   }) async {
+    var result = await _customer.doc(docID).get();
     try {
       return await _customer
           .doc(docID)
@@ -1687,19 +1858,6 @@ class FireStore {
     }
   }
 
-  Future<QuerySnapshot<Map<String, dynamic>>> getInvoiceListing() async {
-    try {
-      return await _invoice
-          .where('company_id',
-              isEqualTo: await LocalDB.fetchInfo(type: LocalData.companyid))
-          .where("delete_at", isEqualTo: false)
-          .orderBy('bill_date', descending: true)
-          .get();
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   Future<QuerySnapshot<Map<String, dynamic>>> getInvoiceProductListing(
       {required String docID}) async {
     try {
@@ -1896,8 +2054,10 @@ class FireStore {
     required DateTime fromDate,
     required DateTime toDate,
   }) async {
+    var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
     try {
       return await _invoice
+          .where('company_id', isEqualTo: companyId)
           .where("bill_date",
               isGreaterThanOrEqualTo:
                   fromDate.subtract(const Duration(days: 1)))
@@ -1930,7 +2090,7 @@ class FireStore {
       };
 
       // Fetch user files
-      var userFiles = await _users.where("company_id", isEqualTo: cid).get();
+      var userFiles = await _admin.where("company_id", isEqualTo: cid).get();
       if (userFiles.docs.isNotEmpty) {
         for (var item in userFiles.docs) {
           files['user']!.add({'id': item.id, 'url': item["image_url"] ?? ''});
@@ -1984,7 +2144,7 @@ class FireStore {
 
       // Fetch data from Firestore
       var companySnapshot = await _profile.doc(uid).get();
-      var userSnapshot = await _users.where('company_id', isEqualTo: uid).get();
+      var userSnapshot = await _admin.where('company_id', isEqualTo: uid).get();
       var productSnapshot =
           await _products.where('company_id', isEqualTo: uid).get();
       var staffSnapshot =
@@ -2040,6 +2200,31 @@ class FireStore {
     } on Exception catch (e) {
       print(e);
       return false;
+    }
+  }
+
+  Future deleteDeviceLogout() async {
+    try {
+      var isTestMode = await LocalDB.checkTestMode();
+      if (!isTestMode) {
+        var isAdmin = await LocalDB.fetchInfo(type: LocalData.isAdmin);
+        if (isAdmin) {
+          await _profile
+              .doc(await LocalDB.fetchInfo(type: LocalData.companyid))
+              .update({"device": DeviceModel().toMap()});
+        } else {
+          var uid = await LocalDB.fetchInfo(type: LocalData.uid);
+
+          var admin = await _admin.doc(uid).get();
+          if (admin.exists) {
+            await _admin.doc(uid).update({"device": DeviceModel().toMap()});
+          } else {
+            await _staff.doc(uid).update({"device": DeviceModel().toMap()});
+          }
+        }
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 }

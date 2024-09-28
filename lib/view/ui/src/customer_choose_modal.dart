@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sri_kot/view/ui/src/toast.dart';
+
+import '../../../provider/provider.dart';
 
 class CustomerChoose extends StatefulWidget {
   const CustomerChoose({super.key});
@@ -80,7 +84,23 @@ class _CustomerChooseState extends State<CustomerChoose> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
-                      Navigator.pop(context, option);
+                      if (option == "1") {
+                        final connectionProvider =
+                            Provider.of<ConnectionProvider>(context,
+                                listen: false);
+                        if (connectionProvider.isConnected) {
+                          Navigator.pop(context, option);
+                        } else {
+                          showToast(
+                            context,
+                            content: "You need internet to add customer",
+                            isSuccess: false,
+                            top: false,
+                          );
+                        }
+                      } else {
+                        Navigator.pop(context, option);
+                      }
                     },
                     child: Container(
                       height: 55,

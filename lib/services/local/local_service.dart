@@ -455,7 +455,7 @@ class LocalService {
 
       await dbHelper.checkAndCreateTable('estimate');
       await dbHelper.insertEstimate(orderData: data);
-      await dbHelper.removeEnquiry(referenceId);
+      // await dbHelper.removeEnquiry(referenceId);
       await LocalDB.setLastEstimate();
     } catch (e) {
       throw e.toString();
@@ -553,8 +553,10 @@ class LocalService {
 
   static Future<bool> syncNow() async {
     try {
-      var localEnquiry = await DatabaseHelper().getEnquiry();
-      var localEstimate = await DatabaseHelper().getEstimate();
+      var localEnquiry = await DatabaseHelper()
+          .getEnquiry(start: 0, end: 0, limitApplied: false);
+      var localEstimate = await DatabaseHelper()
+          .getEstimate(start: 0, end: 0, limitApplied: false);
 
       if (localEnquiry.isNotEmpty) {
         for (var data in localEnquiry) {
@@ -926,6 +928,34 @@ class LocalService {
     } on Exception catch (e) {
       Log.addLog("${DateTime.now()} : ${e.toString()}");
       rethrow;
+    }
+  }
+
+  static Future<List<CustomerDataModel>> getOfflineCustomerInfo() async {
+    try {
+      List<CustomerDataModel> customerList = [];
+      var localCustomer = await DatabaseHelper().getCustomer();
+
+      if (localCustomer.isNotEmpty) {
+        for (var element in localCustomer) {
+          CustomerDataModel model = CustomerDataModel();
+          model.address = element["address"].toString();
+          model.mobileNo = element["mobile_no"].toString();
+          model.city = element["city"].toString();
+          model.customerName = element["customer_name"].toString();
+          model.email = element["email"].toString();
+          model.state = element["state"].toString();
+          model.docID = element["customer_id"];
+          model.companyID = element["company_id"].toString();
+
+          customerList.add(model);
+        }
+        return customerList;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      throw e.toString();
     }
   }
 }

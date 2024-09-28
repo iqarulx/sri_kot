@@ -260,6 +260,34 @@ class _StaffListingState extends State<StaffListing> {
       ),
       title: const Text("Staff"),
       actions: [
+        IconButton(
+          onPressed: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              if (connectionProvider.isConnected) {
+                AccountValid.accountValid(context);
+
+                staffHandler = getStaffInfo();
+                staffListingPageProvider.addListener(changeState);
+              }
+            });
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              connectionProvider.addListener(() {
+                if (connectionProvider.isConnected) {
+                  AccountValid.accountValid(context);
+
+                  staffHandler = getStaffInfo();
+                  staffListingPageProvider.addListener(changeState);
+                }
+              });
+            });
+          },
+          icon: const Icon(Icons.refresh),
+        ),
         Provider.of<ConnectionProvider>(context, listen: false).isConnected
             ? IconButton(
                 onPressed: () async {
@@ -320,6 +348,7 @@ class _StaffListingState extends State<StaffListing> {
 
         if (result != null && result.docs.isNotEmpty) {
           for (var element in result.docs) {
+            print(element.data());
             StaffDataModel model = StaffDataModel();
             model.userName = element["staff_name"] ?? "";
             model.phoneNo = element["phone_no"] ?? "";
@@ -337,6 +366,14 @@ class _StaffListingState extends State<StaffListing> {
             permissionModel.billofsupply =
                 element["permission"]["billofsupply"];
             model.permission = permissionModel;
+
+            DeviceModel deviceModel = DeviceModel();
+            deviceModel.deviceId = element["device"]["device_id"];
+            deviceModel.deviceName = element["device"]["device_name"];
+            deviceModel.modelName = element["device"]["model_name"];
+
+            model.deviceModel = deviceModel;
+
             setState(() {
               staffDataList.add(model);
             });

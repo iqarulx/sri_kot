@@ -1257,6 +1257,7 @@ String? adminPagetitle;
 String? adminProfileImage;
 String? adminDocId;
 String? adminuid;
+DeviceModel? adminDevice;
 
 // Excel Upload Page
 

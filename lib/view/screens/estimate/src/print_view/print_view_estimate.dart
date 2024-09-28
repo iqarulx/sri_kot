@@ -96,6 +96,17 @@ class _PrintViewEstimateState extends State<PrintViewEstimate>
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Print Enquiry / Estimate"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              printPriceList();
+            },
+            icon: const Icon(
+              Icons.print,
+              size: 20,
+            ),
+          )
+        ],
         bottom: TabBar(
           controller: _controller,
           onTap: (value) {
@@ -113,26 +124,26 @@ class _PrintViewEstimateState extends State<PrintViewEstimate>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Theme.of(context).primaryColor,
-        shape: RoundedRectangleBorder(
-          side: BorderSide.none,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        onPressed: () {
-          printPriceList();
-        },
-        label: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.print),
-            SizedBox(
-              width: 10,
-            ),
-            Text("Print"),
-          ],
-        ),
-      ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   backgroundColor: Theme.of(context).primaryColor,
+      //   shape: RoundedRectangleBorder(
+      //     side: BorderSide.none,
+      //     borderRadius: BorderRadius.circular(10),
+      //   ),
+      //   onPressed: () {
+      //     printPriceList();
+      //   },
+      //   label: const Row(
+      //     mainAxisSize: MainAxisSize.min,
+      //     children: [
+      //       Icon(Icons.print),
+      //       SizedBox(
+      //         width: 10,
+      //       ),
+      //       Text("Print"),
+      //     ],
+      //   ),
+      // ),
       body: TabBarView(
         controller: _controller,
         physics: const NeverScrollableScrollPhysics(),

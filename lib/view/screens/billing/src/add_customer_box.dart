@@ -9,7 +9,14 @@ import '/constants/constants.dart';
 class AddCustomerBox extends StatefulWidget {
   final bool isEdit;
   final CustomerDataModel? customerData;
-  const AddCustomerBox({super.key, required this.isEdit, this.customerData});
+  final String? docId;
+  final bool isInvoice;
+  const AddCustomerBox(
+      {super.key,
+      required this.isEdit,
+      this.customerData,
+      this.docId,
+      required this.isInvoice});
 
   @override
   State<AddCustomerBox> createState() => _AddCustomerBoxState();
@@ -121,7 +128,7 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                             validation: (p0) {
                               return FormValidation().commonValidation(
                                 input: p0,
-                                isMandorty: false,
+                                isMandorty: widget.isInvoice ? true : false,
                                 formName: 'Customer Name',
                                 isOnlyCharter: false,
                               );
@@ -165,7 +172,7 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                             validation: (p0) {
                               return FormValidation().commonValidation(
                                 input: p0,
-                                isMandorty: false,
+                                isMandorty: widget.isInvoice ? true : false,
                                 formName: 'Address',
                                 isOnlyCharter: false,
                               );
@@ -269,6 +276,9 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
             customerData.mobileNo = mobileNo.text;
 
             if (widget.isEdit) {
+              // await FireStore()
+              //     .checkCustomerAlreadyRegistered(mobileNo: mobileNo.text)
+              //     .then((value) async {
               await FireStore()
                   .updateCustomer(
                       docID: widget.customerData!.docID ?? '',
@@ -283,6 +293,8 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                 cusdata.email = email.text;
                 cusdata.mobileNo = mobileNo.text;
                 cusdata.state = state;
+                cusdata.docID = widget.customerData!.docID;
+
                 Navigator.pop(context, cusdata);
 
                 showToast(
@@ -291,37 +303,53 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                   isSuccess: true,
                   content: "Successfully Created New Customer",
                 );
+                // });
               });
             } else {
               await FireStore()
-                  .registerCustomer(customerData: customerData)
-                  .then((value) {
-                Navigator.pop(context);
-                if (value.id.isNotEmpty) {
-                  CustomerDataModel cusdata = CustomerDataModel();
-                  cusdata.companyID = cid;
-                  cusdata.address = address.text;
-                  cusdata.city = city;
-                  cusdata.customerName = customerName.text;
-                  cusdata.email = email.text;
-                  cusdata.mobileNo = mobileNo.text;
-                  cusdata.docID = value.id;
-                  cusdata.state = state;
+                  .checkCustomerAlreadyRegistered(mobileNo: mobileNo.text)
+                  .then((value) async {
+                if (value) {
+                  await FireStore()
+                      .registerCustomer(customerData: customerData)
+                      .then((value) {
+                    Navigator.pop(context);
+                    if (value.id.isNotEmpty) {
+                      CustomerDataModel cusdata = CustomerDataModel();
+                      cusdata.companyID = cid;
+                      cusdata.address = address.text;
+                      cusdata.city = city;
+                      cusdata.customerName = customerName.text;
+                      cusdata.email = email.text;
+                      cusdata.mobileNo = mobileNo.text;
+                      cusdata.docID = value.id;
+                      cusdata.state = state;
 
-                  Navigator.pop(context, cusdata);
+                      Navigator.pop(context, cusdata);
 
-                  showToast(
-                    context,
-                    top: false,
-                    isSuccess: true,
-                    content: "Successfully Created New Customer",
-                  );
+                      showToast(
+                        context,
+                        top: false,
+                        isSuccess: true,
+                        content: "Successfully Created New Customer",
+                      );
+                    } else {
+                      Navigator.pop(context);
+                      showToast(
+                        context,
+                        top: false,
+                        isSuccess: true,
+                        content: "Failed to Create New Customer",
+                      );
+                    }
+                  });
                 } else {
+                  Navigator.pop(context);
                   showToast(
                     context,
                     top: false,
-                    isSuccess: true,
-                    content: "Failed to Create New Customer",
+                    isSuccess: false,
+                    content: "This mobile number is already registered",
                   );
                 }
               });

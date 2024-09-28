@@ -149,7 +149,7 @@ class _SearchProductBillingState extends State<SearchProductBilling> {
         ProductDataModel productInfo = ProductDataModel();
         productInfo.categoryName = "";
         productInfo.categoryid = product["category_id"].toString();
-        productInfo.discountLock = product["discount_lock"] == 1 ? false : true;
+        productInfo.discountLock = product["discount_lock"] == 1 ? true : false;
         productInfo.name = product["name"].toString();
         productInfo.productCode = product["product_code"];
         productInfo.productContent = product["product_content"];

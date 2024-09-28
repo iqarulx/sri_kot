@@ -198,6 +198,32 @@ class _CompanyListingState extends State<CompanyListing> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Company"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final connectionProvider =
+                    Provider.of<ConnectionProvider>(context, listen: false);
+                if (connectionProvider.isConnected) {
+                  AccountValid.accountValid(context);
+                  companyHandler = getCompanyInfo(context);
+                }
+              });
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final connectionProvider =
+                    Provider.of<ConnectionProvider>(context, listen: false);
+                connectionProvider.addListener(() {
+                  if (connectionProvider.isConnected) {
+                    AccountValid.accountValid(context);
+                    companyHandler = getCompanyInfo(context);
+                  }
+                });
+              });
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: Consumer<ConnectionProvider>(
         builder: (context, connectionProvider, child) {

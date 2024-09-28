@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '/view/screens/screens.dart';
 import '/model/model.dart';
+import 'package:pdf/pdf.dart' as pf;
 
 class InvoicePDFService {
   final String title;
@@ -39,6 +40,111 @@ class InvoicePDFService {
     }
     total = count.toStringAsFixed(2);
     return total;
+  }
+
+  List<List<InvoiceProductModel>> sortEstimateProduct() {
+    List<InvoiceProductModel> netRatedProducts = [];
+    List<List<InvoiceProductModel>> discountGroups = [];
+
+    if (invoice.listingProducts != null) {
+      for (var product in invoice.listingProducts!) {
+        if (product.discountLock != null && !product.discountLock!) {
+          if (product.discount != null) {
+            bool groupExists = false;
+            for (var group in discountGroups) {
+              if (group.isNotEmpty && group[0].discount == product.discount) {
+                group.add(product);
+                groupExists = true;
+                break;
+              }
+            }
+
+            if (!groupExists) {
+              discountGroups.add([product]);
+            }
+          } else {
+            netRatedProducts.add(product);
+          }
+        } else {
+          netRatedProducts.add(product);
+        }
+      }
+    }
+
+    discountGroups.add(netRatedProducts);
+
+    return discountGroups;
+  }
+
+  String discount(double qty, double price, int? discount, bool? discountLock) {
+    if (discountLock != null && !discountLock) {
+      if (discount != null) {
+        double totalPrice = qty * price;
+        double discountAmount = totalPrice * (discount / 100);
+        double finalPrice = totalPrice - discountAmount;
+        return finalPrice.toStringAsFixed(2);
+      } else {
+        double totalPrice = qty * price;
+        double finalPrice = totalPrice;
+        return finalPrice.toStringAsFixed(2);
+      }
+    } else {
+      double totalPrice = qty * price;
+      double finalPrice = totalPrice;
+      return finalPrice.toStringAsFixed(2);
+    }
+  }
+
+  double groupTotal(List<InvoiceProductModel> products) {
+    double overallTotal = 0;
+    for (var product in products) {
+      double totalPrice = product.qty! * product.rate!;
+      if (product.discountLock != null && !product.discountLock!) {
+        if (product.discount != null) {
+          double discountAmount = totalPrice * (product.discount! / 100);
+          double finalPrice = totalPrice - discountAmount;
+          overallTotal += finalPrice;
+        } else {
+          overallTotal += totalPrice;
+        }
+      } else {
+        overallTotal += totalPrice;
+      }
+    }
+    return overallTotal;
+  }
+
+  double overallDiscountTotal() {
+    double overallTotal = 0;
+    for (var productList in sortEstimateProduct()) {
+      if (productList.first.discountLock != null &&
+          !productList.first.discountLock!) {
+        if (productList.first.discount != null) {
+          for (var product in productList) {
+            double totalPrice = product.qty! * product.rate!;
+            double discountAmount = totalPrice * (product.discount! / 100);
+            double finalPrice = totalPrice - discountAmount;
+            overallTotal += finalPrice;
+          }
+        }
+      }
+    }
+    return overallTotal;
+  }
+
+  double overallNetRatedTotal() {
+    double overallTotal = 0;
+    for (var product in sortEstimateProduct().last) {
+      double totalPrice = product.qty! * product.rate!;
+      if (product.discountLock != null && product.discountLock!) {
+        overallTotal += totalPrice;
+      } else {
+        if (product.discount == null) {
+          overallTotal += totalPrice;
+        }
+      }
+    }
+    return overallTotal;
   }
 
   Future<Uint8List> showA4PDf() async {
@@ -456,83 +562,164 @@ class InvoicePDFService {
           );
         },
         build: (pw.Context context) {
+          int totalSerialNumber = 1;
+
           return [
-            pw.Table(
-              columnWidths: {
-                0: const pw.FlexColumnWidth(1.3),
-                1: const pw.FlexColumnWidth(6),
-                2: const pw.FlexColumnWidth(2.5),
-                3: const pw.FlexColumnWidth(2),
-                4: const pw.FlexColumnWidth(3),
-                5: const pw.FlexColumnWidth(3),
-              },
-              border: pw.TableBorder.all(),
-              children: [
-                for (int i = 0; i < invoice.listingProducts!.length; i++)
+            for (int i = 0; i < sortEstimateProduct().length; i++)
+              pw.Table(
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(1.3),
+                  1: const pw.FlexColumnWidth(6),
+                  2: const pw.FlexColumnWidth(2.5),
+                  3: const pw.FlexColumnWidth(2),
+                  4: const pw.FlexColumnWidth(3),
+                  5: const pw.FlexColumnWidth(3),
+                },
+                border: pw.TableBorder.all(),
+                children: [
                   pw.TableRow(
+                    decoration: const pw.BoxDecoration(
+                      color: pf.PdfColors.grey300,
+                    ),
                     children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(3),
-                        child: pw.Center(
-                          child: pw.Text(
-                            (i + 1).toString(),
-                            textAlign: pw.TextAlign.center,
-                            style: const pw.TextStyle(
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
+                      pw.Container(
+                        color: pf.PdfColors.grey500,
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
                         child: pw.Text(
-                          invoice.listingProducts?[i].productName ?? "",
-                          textAlign: pdfAlignment == 1
-                              ? pw.TextAlign.left
-                              : pdfAlignment == 2
-                                  ? pw.TextAlign.right
-                                  : pdfAlignment == 3
-                                      ? pw.TextAlign.center
-                                      : pw.TextAlign.left,
-                          style: const pw.TextStyle(
+                          sortEstimateProduct()[i].first.discountLock != null &&
+                                  !sortEstimateProduct()[i].first.discountLock!
+                              ? sortEstimateProduct()[i].first.discount != null
+                                  ? "Discount: ${sortEstimateProduct()[i].first.discount}%"
+                                  : "Net Rated Products"
+                              : "Net Rated Products",
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
                             fontSize: 10,
                           ),
                         ),
                       ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(3),
-                        child: pw.Center(
+                      pw.Container(color: pf.PdfColors.grey500),
+                      pw.Container(color: pf.PdfColors.grey500),
+                      pw.Container(color: pf.PdfColors.grey500),
+                      pw.Container(color: pf.PdfColors.grey500),
+                    ],
+                  ),
+                  for (var j = 0; j < sortEstimateProduct()[i].length; j++)
+                    pw.TableRow(
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Center(
+                            child: pw.Text(
+                              (totalSerialNumber++).toString(),
+                              textAlign: pw.TextAlign.center,
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            invoice.listingProducts?[i].unit ?? "",
-                            textAlign: pw.TextAlign.center,
+                            "${sortEstimateProduct()[i][j].productName}",
+                            textAlign: pdfAlignment == 1
+                                ? pw.TextAlign.left
+                                : pdfAlignment == 2
+                                    ? pw.TextAlign.right
+                                    : pdfAlignment == 3
+                                        ? pw.TextAlign.center
+                                        : pw.TextAlign.left,
                             style: const pw.TextStyle(
                               fontSize: 10,
                             ),
                           ),
                         ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(3),
-                        child: pw.Center(
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Center(
+                            child: pw.Text(
+                              sortEstimateProduct()[i][j].unit ?? '',
+                              textAlign: pw.TextAlign.center,
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Center(
+                            child: pw.Text(
+                              sortEstimateProduct()[i][j].qty.toString(),
+                              textAlign: pw.TextAlign.center,
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Center(
+                            child: pw.Text(
+                              double.parse(
+                                sortEstimateProduct()[i][j].rate.toString(),
+                              ).toStringAsFixed(2),
+                              textAlign: pw.TextAlign.center,
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            invoice.listingProducts?[i].qty.toString() ?? "",
-                            textAlign: pw.TextAlign.center,
+                            discount(
+                              sortEstimateProduct()[i][j].qty!.toDouble(),
+                              sortEstimateProduct()[i][j].rate!.toDouble(),
+                              sortEstimateProduct()[i][j].discount,
+                              sortEstimateProduct()[i][j].discountLock,
+                            ),
+                            textAlign: pw.TextAlign.right,
                             style: const pw.TextStyle(
                               fontSize: 10,
                             ),
                           ),
                         ),
+                      ],
+                    ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(3),
+                        child: pw.Container(),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(3),
+                        child: pw.Center(
+                          child: pw.Container(),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(3),
+                        child: pw.Container(),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(3),
+                        child: pw.Container(),
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
                         child: pw.Center(
                           child: pw.Text(
-                            double.parse(invoice.listingProducts?[i].rate
-                                        .toString() ??
-                                    "0")
-                                .toStringAsFixed(2),
+                            "Total",
                             textAlign: pw.TextAlign.center,
-                            style: const pw.TextStyle(
+                            style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold,
                               fontSize: 10,
                             ),
                           ),
@@ -541,9 +728,7 @@ class InvoicePDFService {
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
                         child: pw.Text(
-                          double.parse(invoice.listingProducts?[i].total
-                                      .toString() ??
-                                  "0")
+                          groupTotal(sortEstimateProduct()[i])
                               .toStringAsFixed(2),
                           textAlign: pw.TextAlign.right,
                           style: pw.TextStyle(
@@ -554,8 +739,9 @@ class InvoicePDFService {
                       ),
                     ],
                   ),
-              ],
-            ),
+                ],
+              ),
+
             // pw.Table(
             //   defaultVerticalAlignment: pw.TableCellVerticalAlignment.full,
             //   columnWidths: {
@@ -902,7 +1088,7 @@ class InvoicePDFService {
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(3),
                             child: pw.Text(
-                              "Sub Total",
+                              "Net Rated Total",
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontWeight: pw.FontWeight.bold,
@@ -913,8 +1099,7 @@ class InvoicePDFService {
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(3),
                             child: pw.Text(
-                              // subTotal(),
-                              invoice.price?.subTotal?.toStringAsFixed(2) ?? "",
+                              overallNetRatedTotal().toStringAsFixed(2),
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontWeight: pw.FontWeight.bold,
@@ -940,7 +1125,7 @@ class InvoicePDFService {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    "Discount(${(invoice.price!.discount)!.round()}${invoice.price!.discountsys})",
+                                    "Discounted Products Total",
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -951,9 +1136,7 @@ class InvoicePDFService {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    invoice.price?.discountValue
-                                            ?.toStringAsFixed(2) ??
-                                        "",
+                                    overallDiscountTotal().toStringAsFixed(2),
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -966,6 +1149,42 @@ class InvoicePDFService {
                           ],
                         )
                       : pw.SizedBox(),
+                  pw.Table(
+                    columnWidths: {
+                      0: const pw.FlexColumnWidth(14.8),
+                      1: const pw.FlexColumnWidth(3),
+                    },
+                    border: pw.TableBorder.all(),
+                    children: [
+                      pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              "Sub Total",
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              (overallNetRatedTotal() + overallDiscountTotal())
+                                  .toStringAsFixed(2),
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                   invoice.price?.extraDiscountValue != null &&
                           invoice.price!.extraDiscountValue! > 0.0
                       ? pw.Table(

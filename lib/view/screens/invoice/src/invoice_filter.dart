@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '/utils/utils.dart';
+import '../../../ui/ui.dart';
 
 class InvoiceFilter extends StatefulWidget {
   const InvoiceFilter({super.key});
@@ -43,35 +43,27 @@ class _InvoiceFilterState extends State<InvoiceFilter> {
   }
 
   applyNow() {
-    if (fromDate.text.isEmpty && toDate.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Choose any one Form'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          margin: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height - 100,
-            right: 20,
-            left: 20,
-          ),
-        ),
-      );
-      // snackbar(context, false, "Choose any one Form");
+    // Prepare a map to hold the result
+    Map<String, dynamic> result = {};
+
+    if (fromDate.text.isNotEmpty) {
+      result['FromDate'] = DateTime.parse(fromDate.text);
+    }
+
+    // If toDate is selected, add it to the result
+    if (toDate.text.isNotEmpty) {
+      result['ToDate'] = DateTime.parse(toDate.text);
+    }
+
+    // Check if the result map is not empty before popping the context
+    if (result.isNotEmpty) {
+      Navigator.pop(context, result);
     } else {
-      if (fromDate.text.isNotEmpty && toDate.text.isEmpty) {
-        snackbar(context, false, "Choose To Date is Must");
-      } else if (fromDate.text.isEmpty && toDate.text.isNotEmpty) {
-        if (fromDate.text.isEmpty) {
-          snackbar(context, false, "Choose From Date is Must");
-        }
-      } else {
-        Navigator.pop(context, {
-          "FromDate": DateTime.parse(fromDate.text),
-          "ToDate": DateTime.parse(toDate.text),
-        });
-      }
+      // If no valid input is selected, show a toast message
+      showToast(context,
+          content: "Please select at least one option",
+          isSuccess: false,
+          top: false);
     }
   }
 

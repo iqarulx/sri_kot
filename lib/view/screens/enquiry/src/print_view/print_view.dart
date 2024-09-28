@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:esc_pos_printer_new/esc_pos_printer_new.dart';
 import 'package:esc_pos_utils_new/esc_pos_utils_new.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
@@ -117,7 +118,9 @@ class _PrintViewState extends State<PrintView>
           onLayout: (_) => dataA5!,
         );
       } else if (data3Inch != null && _controller.index == 2) {
-        print();
+        await Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) async => data3Inch!,
+        );
         // await Printing.layoutPdf(
         //   onLayout: (_) => data3Inch!,
         // );
@@ -207,27 +210,36 @@ class _PrintViewState extends State<PrintView>
             Tab(text: "3-Inch"),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Theme.of(context).primaryColor,
-        shape: RoundedRectangleBorder(
-          side: BorderSide.none,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        onPressed: () {
-          printPriceList();
-        },
-        label: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.print),
-            SizedBox(
-              width: 10,
+        actions: [
+          IconButton(
+            onPressed: () {
+              printPriceList();
+            },
+            icon: const Icon(
+              Icons.print,
+              size: 20,
             ),
-            Text("Print"),
-          ],
-        ),
+          )
+        ],
       ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   backgroundColor: Theme.of(context).primaryColor,
+      //   shape: RoundedRectangleBorder(
+      //     side: BorderSide.none,
+      //     borderRadius: BorderRadius.circular(10),
+      //   ),
+      //   onPressed: () {},
+      //   label: const Row(
+      //     mainAxisSize: MainAxisSize.min,
+      //     children: [
+      //       Icon(Icons.print),
+      //       SizedBox(
+      //         width: 10,
+      //       ),
+      //       Text("Print"),
+      //     ],
+      //   ),
+      // ),
       body: TabBarView(
         controller: _controller,
         physics: const NeverScrollableScrollPhysics(),

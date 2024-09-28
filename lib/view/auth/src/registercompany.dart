@@ -99,11 +99,12 @@ class _RegisterCompanyState extends State<RegisterCompany> {
         "invoice_entry": false,
         "created": DateTime.now(),
         "free_trial": {"opened": null, "ends_in": null},
-        "max_user_count": 1,
-        "max_staff_count": 1,
+        "max_user_count": 0,
+        "max_staff_count": 0,
         "plan": PlanTypes.free.name,
         "expiry_date": DateTime.now().add(const Duration(days: 365)),
-        "hsn": {"common_hsn": false, "common_hsn_value": null}
+        "hsn": {"common_hsn": false, "common_hsn_value": null},
+        "user_type": "normal",
       }).then((value) async {
         Navigator.pop(context);
         Navigator.pop(context);

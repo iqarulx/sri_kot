@@ -31,6 +31,22 @@ class _EstimateDetailsState extends State<EstimateDetails> {
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
+        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
+          await FireStore().categoryListing(cid: cid).then((value) {
+            if (value != null && value.docs.isNotEmpty) {
+              for (var categorylist in value.docs) {
+                CategoryDataModel model = CategoryDataModel();
+                model.categoryName = categorylist["category_name"].toString();
+                model.postion = categorylist["postion"];
+                model.tmpcatid = categorylist.id;
+                model.discount = categorylist["discount"];
+                setState(() {
+                  categoryList.add(model);
+                });
+              }
+            }
+          });
+        });
         await FireStore().getEstimateInfo(cid: widget.cid).then((value) async {
           if (value != null) {
             if (value.exists) {
@@ -51,6 +67,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
               CustomerDataModel? customer = CustomerDataModel();
               if (value["customer"] != null) {
+                customer.docID = value.id;
                 customer.address = value["customer"]["customer_id"];
                 customer.address = value["customer"]["address"];
                 customer.state = value["customer"]["state"];
@@ -75,13 +92,19 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                     productDataModel.categoryid = product["category_id"];
                     productDataModel.categoryName = product["category_name"];
                     productDataModel.price = product["price"];
-
                     productDataModel.productId = product["product_id"];
                     productDataModel.productName = product["product_name"];
                     productDataModel.qty = product["qty"];
                     productDataModel.productCode =
                         product["product_code"] ?? "";
                     productDataModel.discountLock = product["discount_lock"];
+                    if (productDataModel.categoryid != null &&
+                        productDataModel.categoryid!.isNotEmpty) {
+                      var getCategoryid = categoryList.indexWhere((elements) =>
+                          elements.tmpcatid == productDataModel.categoryid);
+                      productDataModel.discount =
+                          categoryList[getCategoryid].discount;
+                    }
                     productDataModel.docid = product.id;
                     productDataModel.name = product["name"];
                     productDataModel.productContent =
@@ -114,79 +137,104 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           }
         });
       } else {
-        var localEnquiry = await DatabaseHelper().getEstimateWithId(widget.cid);
-        // for (var data in localEnquiry) {
-        var calcula = BillingCalCulationModel();
-        var price = jsonDecode(localEnquiry['price']) as Map<String, dynamic>;
-        calcula.discount = price["discount"];
-        calcula.discountValue = price["discount_value"];
-        calcula.discountsys = price["discount_sys"];
-        calcula.extraDiscount = price["extra_discount"];
-        calcula.extraDiscountValue = price["extra_discount_value"];
-        calcula.extraDiscountsys = price["extra_discount_sys"];
-        calcula.package = price["package"];
-        calcula.packageValue = price["package_value"];
-        calcula.packagesys = price["package_sys"];
-        calcula.subTotal = price["sub_total"];
-        calcula.total = price["total"];
-        calcula.roundOff = price["round_off"];
+        var localCategories = await DatabaseHelper().getCategory();
 
-        CustomerDataModel? customer = CustomerDataModel();
-        if (localEnquiry["customer"] != null) {
-          var customerData =
-              jsonDecode(localEnquiry['customer']) as Map<String, dynamic>;
-          customer.address = customerData["address"] ?? "";
-          customer.state = customerData["state"] ?? "";
-          customer.city = customerData["city"] ?? "";
-          customer.customerName = customerData["customer_name"] ?? "";
-          customer.email = customerData["email"] ?? "";
-          customer.mobileNo = customerData["mobile_no"] ?? "";
-        }
-
-        List<ProductDataModel> tmpProducts = [];
-
-        setState(() {
-          tmpProducts.clear();
-        });
-
-        if (localEnquiry["products"] != null) {
-          var productData =
-              jsonDecode(localEnquiry['products']) as List<dynamic>;
-          for (var product in productData) {
-            var productDataModel = ProductDataModel();
-            productDataModel.categoryid = product["category_id"];
-            productDataModel.categoryName = product["category_name"];
-            productDataModel.price = product["price"];
-            productDataModel.productId = product["product_id"];
-            productDataModel.productName = product["product_name"];
-            productDataModel.qty = product["qty"];
-            productDataModel.productCode = product["product_code"] ?? "";
-            productDataModel.discountLock = product["discount_lock"];
-            productDataModel.docid = product["product_id"];
-            productDataModel.name = product["name"];
-            productDataModel.productContent = product["product_content"];
-            productDataModel.productImg = product["product_img"];
-            productDataModel.qrCode = product["qr_code"];
-            productDataModel.videoUrl = product["video_url"];
+        if (localCategories.isNotEmpty) {
+          for (var i = 0; i < localCategories.length; i++) {
+            CategoryDataModel model = CategoryDataModel();
+            model.categoryName =
+                localCategories[i]["category_name"]?.toString() ?? "";
+            model.postion = int.parse(localCategories[i]["postion"]);
+            model.tmpcatid = localCategories[i]["category_id"];
+            model.discount = localCategories[i]["discount"] != null
+                ? int.tryParse(localCategories[i]["discount"]!.toString())
+                : null;
             setState(() {
-              tmpProducts.add(productDataModel);
+              categoryList.add(model);
             });
           }
-        }
 
-        estimateData = EstimateDataModel(
-          docID: null,
-          createddate: DateTime.parse(
-            localEnquiry['created_date'],
-          ),
-          enquiryid: null,
-          estimateid: null,
-          price: calcula,
-          customer: customer,
-          products: tmpProducts,
-          dataType: DataTypes.local,
-          referenceId: localEnquiry["reference_id"],
-        );
+          var localEnquiry =
+              await DatabaseHelper().getEstimateWithId(widget.cid);
+          var calcula = BillingCalCulationModel();
+          var price = jsonDecode(localEnquiry['price']) as Map<String, dynamic>;
+          calcula.discount = price["discount"];
+          calcula.discountValue = price["discount_value"];
+          calcula.discountsys = price["discount_sys"];
+          calcula.extraDiscount = price["extra_discount"];
+          calcula.extraDiscountValue = price["extra_discount_value"];
+          calcula.extraDiscountsys = price["extra_discount_sys"];
+          calcula.package = price["package"];
+          calcula.packageValue = price["package_value"];
+          calcula.packagesys = price["package_sys"];
+          calcula.subTotal = price["sub_total"];
+          calcula.total = price["total"];
+          calcula.roundOff = price["round_off"];
+
+          CustomerDataModel? customer = CustomerDataModel();
+          if (localEnquiry["customer"] != null) {
+            var customerData =
+                jsonDecode(localEnquiry['customer']) as Map<String, dynamic>;
+            customer.address = customerData["address"] ?? "";
+            customer.state = customerData["state"] ?? "";
+            customer.city = customerData["city"] ?? "";
+            customer.customerName = customerData["customer_name"] ?? "";
+            customer.email = customerData["email"] ?? "";
+            customer.mobileNo = customerData["mobile_no"] ?? "";
+          }
+
+          List<ProductDataModel> tmpProducts = [];
+
+          setState(() {
+            tmpProducts.clear();
+          });
+
+          if (localEnquiry["products"] != null) {
+            var productData =
+                jsonDecode(localEnquiry['products']) as List<dynamic>;
+            for (var product in productData) {
+              var productDataModel = ProductDataModel();
+              productDataModel.categoryid = product["category_id"];
+              productDataModel.categoryName = product["category_name"];
+              productDataModel.price = product["price"];
+              productDataModel.productId = product["product_id"];
+              productDataModel.productName = product["product_name"];
+              productDataModel.qty = product["qty"];
+              productDataModel.productCode = product["product_code"] ?? "";
+              productDataModel.discountLock = product["discount_lock"];
+              productDataModel.docid = product["product_id"];
+              productDataModel.name = product["name"];
+              productDataModel.productContent = product["product_content"];
+              productDataModel.productImg = product["product_img"];
+              productDataModel.qrCode = product["qr_code"];
+              productDataModel.videoUrl = product["video_url"];
+              if (productDataModel.categoryid != null &&
+                  productDataModel.categoryid!.isNotEmpty) {
+                var getCategoryid = categoryList.indexWhere((elements) =>
+                    elements.tmpcatid == productDataModel.categoryid);
+                productDataModel.discount =
+                    categoryList[getCategoryid].discount;
+              }
+              setState(() {
+                tmpProducts.add(productDataModel);
+              });
+            }
+          }
+
+          estimateData = EstimateDataModel(
+            docID: null,
+            createddate: DateTime.parse(
+              localEnquiry['created_date'],
+            ),
+            enquiryid: null,
+            estimateid: null,
+            price: calcula,
+            customer: customer,
+            products: tmpProducts,
+            dataType: DataTypes.local,
+            referenceId: localEnquiry["reference_id"],
+          );
+        }
       }
     } on Exception catch (e) {
       snackbar(context, false, e.toString());
@@ -536,7 +584,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
                 var pdf = EnquiryPdf(
                     estimateData: estimateData,
-                    type: PdfType.enquiry,
+                    type: PdfType.estimate,
                     companyInfo: companyData,
                     pdfAlignment: pdfAlignment);
                 await pdf.showA4PDf().then((dataResult) async {
@@ -567,7 +615,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
         var pdf = EnquiryPdf(
           pdfAlignment: pdfAlignment,
           estimateData: estimateData,
-          type: PdfType.enquiry,
+          type: PdfType.estimate,
           companyInfo: companyData,
         );
         await pdf.showA4PDf().then((dataResult) async {
@@ -593,7 +641,9 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded,
                 color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.pop(context);
+            },
           ),
           titleSpacing: 0,
           title:
@@ -811,8 +861,6 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                               "Do you want Convert the Bill of Supply?",
                                         ).then((value) {
                                           if (value != null && value == true) {
-                                            Navigator.pop(context);
-
                                             InvoiceModel model = InvoiceModel();
                                             model.isEstimateConverted = true;
                                             model.address = estimateData
@@ -855,8 +903,9 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                                   element.discountLock;
                                               productElement.discount =
                                                   element.discount;
+
                                               productElement.categoryID =
-                                                  element.companyId;
+                                                  element.categoryid;
                                               model.listingProducts!
                                                   .add(productElement);
                                             }
@@ -906,7 +955,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                       "Rs.${estimateData.price!.subTotal}",
                                       false),
                                   tableRow(
-                                      "Discount (${estimateData.price!.discountsys == "%" ? '${estimateData.price!.discount != null ? (estimateData.price!.discount)!.round() : ""}%' : 'Rs ${estimateData.price!.discount != null ? (estimateData.price!.discount)!.round() : ""}'})",
+                                      "Discount",
                                       "Rs.${estimateData.price!.discountValue}",
                                       false),
                                   tableRow(

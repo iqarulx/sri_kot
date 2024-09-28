@@ -230,6 +230,7 @@ class _DropDownFormState extends State<DropDownForm> {
             height: 5,
           ),
           DropdownButtonFormField<String>(
+            menuMaxHeight: 300,
             onTap: widget.onTap,
             value: widget.value,
             items: widget.listItems,
@@ -562,6 +563,7 @@ Future<bool?> confirmationDialog(
 }) async {
   return await showDialog(
     context: context,
+    barrierDismissible: false,
     builder: (context) {
       return Modal(title: title, content: message, type: ModalType.danger);
     },

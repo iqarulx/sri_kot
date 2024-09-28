@@ -71,6 +71,16 @@ class _PurchaseHistoryState extends State<PurchaseHistory> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Payment History"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                purchaseHandler = getPayments();
+              });
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: FutureBuilder(
         future: purchaseHandler,
@@ -170,7 +180,7 @@ class _PurchaseHistoryState extends State<PurchaseHistory> {
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    DateFormat('dd-MM-yyyy h:m a').format(
+                                    DateFormat('dd-MM-yyyy hh:mm a').format(
                                         purchaseHistory[index].createdAt ??
                                             DateTime.now()),
                                     style: const TextStyle(

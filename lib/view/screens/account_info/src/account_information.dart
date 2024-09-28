@@ -52,13 +52,22 @@ class _AccountInformationState extends State<AccountInformation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon:
-              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text("Account Information"),
-      ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: const Text("Account Information"),
+          actions: [
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  userHandler = getUserInfo();
+                });
+              },
+              icon: const Icon(Icons.refresh),
+            ),
+          ]),
       body: FutureBuilder(
         future: userHandler,
         builder: (context, snapshot) {

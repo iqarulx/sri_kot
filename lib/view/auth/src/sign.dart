@@ -214,7 +214,6 @@ class _SigninState extends State<Signin> {
                 deviceData: deviceDetails,
               )
                   .then((value) {
-                Navigator.pop(context);
                 staffLoginFn();
               });
             }
@@ -306,7 +305,6 @@ class _SigninState extends State<Signin> {
                 deviceData: deviceDetails,
               )
                   .then((value) {
-                Navigator.pop(context);
                 adminLoginFn();
               });
             }

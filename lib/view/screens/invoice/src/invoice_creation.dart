@@ -89,6 +89,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
       });
     } catch (e) {
       snackbar(context, false, e.toString());
+      throw e.toString();
     }
   }
 
@@ -115,12 +116,17 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
     if (productFormKey.currentState!.validate()) {
       int index = cartProductList.indexWhere(
           (element) => element.productID == currentProduct!.productID);
+
+      var getCategoryid = productDataList.indexWhere(
+          (elements) => elements.productID == currentProduct!.productID);
+      var categoryID = productDataList[getCategoryid].categoryID;
       if (index == -1) {
         InvoiceProductModel value = InvoiceProductModel();
         value = currentProduct!;
         value.qty = int.parse(qty.text);
         value.rate = double.parse(rate.text);
         value.unit = unit.text;
+        value.categoryID = categoryID;
         value.total = double.parse(
             (double.parse(qty.text) * value.rate!).toStringAsFixed(2));
         value.docID = null;
@@ -191,7 +197,17 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
               await LocalDB.fetchInfo(type: LocalData.companyid);
 
           var calcul = BillingCalCulationModel();
-          calcul.discount = discountInput;
+          calcul.discount = 0;
+          if (discountInput != 0) {
+            calcul.discount = discountInput;
+          } else {
+            for (var item in cartDataList) {
+              if (item.discount != null) {
+                calcul.discount = item.discount!.toDouble();
+                break;
+              }
+            }
+          }
           calcul.discountValue = double.parse(discount());
           calcul.discountsys = discountSys;
           calcul.extraDiscount = extraDiscountInput;
@@ -208,33 +224,78 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           model.listingProducts = [];
           model.listingProducts!.addAll(cartProductList);
           model.companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
-          if (widget.invoice == null || widget.invoice!.docID == null) {
-            model.biilDate = DateTime.now();
-            model.createdDate = DateTime.now();
 
-            await FireStore()
-                .createNewInvoice(
-                    invoiceData: model, cartDataList: cartProductList)
-                .then((value) async {
+          if (!calcul.total!.isNegative) {
+            if (widget.invoice == null || widget.invoice!.docID == null) {
+              model.biilDate = DateTime.now();
+              model.createdDate = DateTime.now();
+
               await FireStore()
-                  .registerCustomer(customerData: customerDataModel)
+                  .createNewInvoice(
+                      invoiceData: model, cartDataList: cartProductList)
+                  .then((value) async {
+                Navigator.pop(context);
+
+                showDialog(
+                  context: context,
+                  builder: (builder) {
+                    return const Modal(
+                      title: "Save Customer",
+                      content: "Are you want to save customer?",
+                      type: ModalType.info,
+                    );
+                  },
+                ).then((value) async {
+                  if (value != null) {
+                    if (value) {
+                      loading(context);
+                      await FireStore()
+                          .checkCustomerAlreadyRegistered(mobileNo: phone.text)
+                          .then((value) async {
+                        if (value) {
+                          await FireStore()
+                              .registerCustomer(customerData: customerDataModel)
+                              .then((value) {
+                            Navigator.pop(context);
+                            Navigator.pop(context, true);
+                            snackbar(
+                                context, true, "Successfully Invoice Created");
+                          });
+                        } else {
+                          Navigator.pop(context);
+                          Navigator.pop(context, true);
+                          snackbar(context, true,
+                              "Successfully Invoice Created. But customer already registered.");
+                        }
+                      });
+                    } else {
+                      Navigator.pop(context);
+                      Navigator.pop(context, true);
+                      snackbar(context, true, "Successfully Invoice Created.");
+                    }
+                  }
+                });
+              });
+            } else {
+              await FireStore()
+                  .updateInvoice(
+                      docID: widget.invoice!.docID!,
+                      invoiceData: model,
+                      cartDataList: cartProductList)
                   .then((value) {
                 Navigator.pop(context);
                 Navigator.pop(context, true);
-                snackbar(context, true, "Successfully Created New Invoice");
+                snackbar(context, true, "Successfully Updated Invoice");
               });
-            });
+            }
           } else {
-            await FireStore()
-                .updateInvoice(
-                    docID: widget.invoice!.docID!,
-                    invoiceData: model,
-                    cartDataList: cartProductList)
-                .then((value) {
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-              snackbar(context, true, "Successfully Updated Invoice");
-            });
+            Navigator.pop(context);
+            showToast(
+              context,
+              isSuccess: false,
+              content: "Bill total is negative",
+              top: false,
+            );
           }
         } else {
           Navigator.pop(context);
@@ -244,6 +305,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
     } catch (e) {
       Navigator.pop(context);
       snackbar(context, false, e.toString());
+      throw e.toString();
     }
   }
 
@@ -256,8 +318,9 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
         phone.text = widget.invoice!.phoneNumber ?? "";
         transportName.text = widget.invoice!.transportName ?? "";
         transportNumber.text = widget.invoice!.transportNumber ?? "";
+
         cartProductList.addAll(widget.invoice!.listingProducts ?? []);
-        discountInput = widget.invoice!.price!.discount!;
+        // discountInput = widget.invoice!.price!.discount!;
         discountSys = widget.invoice!.price!.discountsys!;
         extraDiscountInput = widget.invoice!.price!.extraDiscount!;
         extraDiscountSys = widget.invoice!.price!.extraDiscountsys!;
@@ -327,6 +390,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           currentProduct = model;
           productName.text = value;
           rate.text = "0.0";
+          model.categoryID = null;
         });
       }
     });
@@ -334,20 +398,26 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
 
   String discount() {
     String result = "0.00";
-    double subTotalValue = double.parse(subtotal());
     double tmpDiscount = 0.00;
-
-    if (discountSys == "%") {
-      double tmpsubtotal = subTotalValue;
-      tmpDiscount = tmpsubtotal * (discountInput / 100);
-    } else {
-      tmpDiscount = discountInput;
+    for (var element in cartProductList) {
+      if (element.discountLock != null && !element.discountLock!) {
+        if (element.discount != null) {
+          double total = element.rate! * element.qty!;
+          if (discountInput == 0) {
+            tmpDiscount += total * (element.discount!.toDouble() / 100);
+          } else {
+            tmpDiscount += (total * (discountInput.toDouble() / 100));
+          }
+        }
+      }
     }
 
     if (tmpDiscount.isNaN) {
       tmpDiscount = 0.00;
     }
+
     result = tmpDiscount.toStringAsFixed(2);
+
     return result;
   }
 
@@ -422,6 +492,47 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
     super.initState();
   }
 
+  customerAddAlert() async {
+    await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return const AddCustomerBox(
+          isEdit: false,
+          isInvoice: true,
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          partyName.text = value.customerName ?? '';
+          address.text = value.address ?? '';
+          phone.text = value.mobileNo ?? '';
+        });
+      }
+    });
+  }
+
+  customerAlert() async {
+    await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return const CustomerSearch(
+          isConnected: true,
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          partyName.text = value.customerName ?? '';
+          address.text = value.address ?? '';
+          phone.text = value.mobileNo ?? '';
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -437,7 +548,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded,
                 color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.pop(context),
           ),
           title: Text("${widget.invoice != null ? "Edit" : "New"} Invoice"),
         ),
@@ -462,7 +573,88 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Party Name",
+                            "Customer option",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () {
+                                    customerAlert();
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.search,
+                                        color: Colors.white,
+                                        size: 15,
+                                      ),
+                                      const SizedBox(
+                                        width: 8,
+                                      ),
+                                      Text(
+                                        "Choose",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall!
+                                            .copyWith(
+                                              color: Colors.white,
+                                            ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () {
+                                    customerAddAlert();
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                        size: 15,
+                                      ),
+                                      const SizedBox(
+                                        width: 8,
+                                      ),
+                                      Text(
+                                        "Add",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall!
+                                            .copyWith(
+                                              color: Colors.white,
+                                            ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Text(
+                            "Party Name (*)",
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 8),
@@ -496,7 +688,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Address",
+                            "Address (*)",
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 8),
@@ -529,7 +721,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Phone Number",
+                            "Phone Number (*)",
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 8),
@@ -570,7 +762,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Transport Name",
+                            "Transport Name (*)",
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 8),
@@ -581,7 +773,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                               border: OutlineInputBorder(
                                 borderSide: BorderSide.none,
                               ),
-                              hintText: "Transport Name",
+                              hintText: "Transport Name (*)",
                               contentPadding:
                                   EdgeInsets.symmetric(horizontal: 10),
                               prefixIcon: Icon(Icons.local_shipping_outlined),
@@ -659,7 +851,7 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Delivery Address",
+                            "Delivery Address (*)",
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 8),
@@ -1006,14 +1198,35 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      cartProductList[index].productName ?? "",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge!
-                                          .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          cartProductList[index].productName ??
+                                              "",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        if (cartProductList[index]
+                                                    .discountLock !=
+                                                null &&
+                                            !cartProductList[index]
+                                                .discountLock!)
+                                          if (cartProductList[index].discount !=
+                                              null)
+                                            Text(
+                                              "(*)",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge!
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                      ],
                                     ),
                                     const SizedBox(height: 10),
                                     Text(
@@ -1118,23 +1331,27 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                     const SizedBox(height: 5),
                     GestureDetector(
                       onTap: () async {
-                        var result = await formDialog(
-                          context,
-                          title: "Discount",
-                          sysmbol: discountSys,
-                          value: discountInput.toString(),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            discountSys = result["sys"];
-                            discountInput = double.parse(result["value"]);
-                          });
-                        }
+                        showDialog(
+                            context: context,
+                            builder: (builder) {
+                              return DiscountModal(
+                                title: "Discount",
+                                symbol: discountSys,
+                                value: discountInput.toString(),
+                              );
+                            }).then((value) {
+                          if (value != null) {
+                            setState(() {
+                              discountSys = value["sys"];
+                              discountInput = double.parse(value["value"]);
+                            });
+                          }
+                        });
                       },
                       child: Row(
                         children: [
                           Text(
-                            "Discount - ${discountSys.toUpperCase()} $discountInput",
+                            "Discount",
                             textAlign: TextAlign.start,
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
@@ -1157,18 +1374,22 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                     const SizedBox(height: 5),
                     GestureDetector(
                       onTap: () async {
-                        var result = await formDialog(
-                          context,
-                          title: "Extra Discount",
-                          sysmbol: extraDiscountSys,
-                          value: extraDiscountInput.toString(),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            extraDiscountSys = result["sys"];
-                            extraDiscountInput = double.parse(result["value"]);
-                          });
-                        }
+                        showDialog(
+                            context: context,
+                            builder: (builder) {
+                              return DiscountModal(
+                                title: "Extra Discount",
+                                symbol: extraDiscountSys,
+                                value: extraDiscountInput.toString(),
+                              );
+                            }).then((value) {
+                          if (value != null) {
+                            setState(() {
+                              extraDiscountSys = value["sys"];
+                              extraDiscountInput = double.parse(value["value"]);
+                            });
+                          }
+                        });
                       },
                       child: Row(
                         children: [
@@ -1196,18 +1417,22 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                     const SizedBox(height: 5),
                     GestureDetector(
                       onTap: () async {
-                        var result = await formDialog(
-                          context,
-                          title: "Packing Charges",
-                          sysmbol: packingChargeSys,
-                          value: packingChargeInput.toString(),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            packingChargeSys = result["sys"];
-                            packingChargeInput = double.parse(result["value"]);
-                          });
-                        }
+                        showDialog(
+                            context: context,
+                            builder: (builder) {
+                              return DiscountModal(
+                                title: "Packing Charges",
+                                symbol: packingChargeSys,
+                                value: packingChargeInput.toString(),
+                              );
+                            }).then((value) {
+                          if (value != null) {
+                            setState(() {
+                              packingChargeSys = value["sys"];
+                              packingChargeInput = double.parse(value["value"]);
+                            });
+                          }
+                        });
                       },
                       child: Row(
                         children: [

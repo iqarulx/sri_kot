@@ -9,3 +9,5 @@ export 'src/toast.dart';
 export 'src/hsn_modal.dart';
 export 'src/bill_list_options.dart';
 export 'src/invoice_prev_bill_modal.dart';
+export 'src/discount_modal.dart';
+export 'src/device_modal.dart';

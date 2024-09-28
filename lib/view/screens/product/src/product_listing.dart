@@ -422,6 +422,32 @@ class _ProductListingState extends State<ProductListing> {
       actions: [
         IconButton(
           onPressed: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              if (connectionProvider.isConnected) {
+                AccountValid.accountValid(context);
+
+                productHandler = getProductInfo();
+              }
+            });
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final connectionProvider =
+                  Provider.of<ConnectionProvider>(context, listen: false);
+              connectionProvider.addListener(() {
+                if (connectionProvider.isConnected) {
+                  AccountValid.accountValid(context);
+
+                  productHandler = getProductInfo();
+                }
+              });
+            });
+          },
+          icon: const Icon(Icons.refresh),
+        ),
+        IconButton(
+          onPressed: () {
             final connectionProvider =
                 Provider.of<ConnectionProvider>(context, listen: false);
             if (connectionProvider.isConnected) {

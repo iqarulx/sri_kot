@@ -33,26 +33,20 @@ class _BillingOneState extends State<BillingOne>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        return await dialogBox();
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        key: billingOneKey,
-        endDrawer: cartDrawer(),
-        appBar: appbar(context),
-        floatingActionButton:
-            isLoading == false ? floatingButton(context) : null,
-        body: Consumer<ConnectionProvider>(
-          builder: (context, connectionProvider, child) {
-            return connectionProvider.isConnected
-                ? body()
-                : synced
-                    ? body()
-                    : notSync(context);
-          },
-        ),
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      key: billingOneKey,
+      endDrawer: cartDrawer(),
+      appBar: appbar(context),
+      floatingActionButton: isLoading == false ? floatingButton(context) : null,
+      body: Consumer<ConnectionProvider>(
+        builder: (context, connectionProvider, child) {
+          return connectionProvider.isConnected
+              ? body()
+              : synced
+                  ? body()
+                  : notSync(context);
+        },
       ),
     );
   }
@@ -453,7 +447,7 @@ class _BillingOneState extends State<BillingOne>
               else
                 Flexible(
                   child: Text(
-                    "No Discount",
+                    "",
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
                           decoration: TextDecoration.lineThrough,
                         ),
@@ -463,7 +457,7 @@ class _BillingOneState extends State<BillingOne>
             else
               Flexible(
                 child: Text(
-                  "Net Rate",
+                  "",
                   style: Theme.of(context).textTheme.bodySmall!,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -608,15 +602,12 @@ class _BillingOneState extends State<BillingOne>
   AppBar appbar(BuildContext context) {
     return AppBar(
       elevation: 0,
-      leading: widget.isEdit == null || widget.isEdit == false
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white),
-              onPressed: () async {
-                await dialogBox();
-              },
-            )
-          : null,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () async {
+          Navigator.pop(context);
+        },
+      ),
       title: const Text("Billing"),
       actions: isLoading == false
           ? [
@@ -936,7 +927,7 @@ class _BillingOneState extends State<BillingOne>
                 extraDiscountSys =
                     widget.enquiryData!.price!.extraDiscountsys ?? "%";
                 packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
-                discountInput = widget.enquiryData!.price!.discount ?? 0;
+                // discountInput = widget.enquiryData!.price!.discount ?? 0;
                 extraDiscountInput =
                     widget.enquiryData!.price!.extraDiscount ?? 0;
                 packingChargeInput = widget.enquiryData!.price!.package ?? 0;
@@ -986,7 +977,7 @@ class _BillingOneState extends State<BillingOne>
                     widget.estimateData!.price!.extraDiscountsys ?? "%";
                 packingChargeSys =
                     widget.estimateData!.price!.packagesys ?? "%";
-                discountInput = widget.estimateData!.price!.discount ?? 0;
+                // discountInput = widget.estimateData!.price!.discount ?? 0;
                 extraDiscountInput =
                     widget.estimateData!.price!.extraDiscount ?? 0;
                 packingChargeInput = widget.estimateData!.price!.package ?? 0;
@@ -1034,9 +1025,9 @@ class _BillingOneState extends State<BillingOne>
               localCategories[i]["category_name"]?.toString() ?? "";
           model.postion = int.parse(localCategories[i]["postion"]);
           model.tmpcatid = localCategories[i]["category_id"];
-          model.discount =
-              int.tryParse(localCategories[i]["discount"]?.toString() ?? "0") ??
-                  0;
+          model.discount = localCategories[i]["discount"] != null
+              ? int.tryParse(localCategories[i]["discount"]!.toString())
+              : null;
           setState(() {
             categoryList.add(model);
           });
@@ -1047,7 +1038,8 @@ class _BillingOneState extends State<BillingOne>
           productInfo.categoryName = "";
           productInfo.categoryid = product["category_id"];
           productInfo.discountLock =
-              product["discount_lock"] == 1 ? false : true;
+              product["discount_lock"] == 1 ? true : false;
+
           productInfo.name = product["name"] ?? "";
           productInfo.productCode = product["product_code"] ?? "";
           productInfo.productContent = product["product_content"] ?? "";
@@ -1070,6 +1062,7 @@ class _BillingOneState extends State<BillingOne>
         tmpProductDataList.addAll(productDataList);
 
         // Category & Product Merge
+        /*
         for (var category in categoryList) {
           Iterable<ProductDataModel> products = productDataList
               .where((element) => element.categoryid == category.tmpcatid);
@@ -1189,6 +1182,133 @@ class _BillingOneState extends State<BillingOne>
                   widget.estimateData!.price!.extraDiscountsys ?? "%";
               packingChargeSys = widget.estimateData!.price!.packagesys ?? "%";
               discountInput = widget.estimateData!.price!.discount ?? 0;
+              extraDiscountInput =
+                  widget.estimateData!.price!.extraDiscount ?? 0;
+              packingChargeInput = widget.estimateData!.price!.package ?? 0;
+
+              customerInfo = widget.estimateData!.customer;
+            });
+          }
+        }*/
+        for (var category in categoryList) {
+          Iterable<ProductDataModel> products = productDataList
+              .where((element) => element.categoryid == category.tmpcatid);
+          for (var element in products) {
+            setState(() {
+              element.categoryName = category.categoryName;
+              element.discount = category.discount;
+            });
+          }
+          var data = BillingDataModel(
+            category: category,
+            products: [for (var product in products) product],
+          );
+          setState(() {
+            billingProductList.add(data);
+          });
+        }
+
+        setState(() {
+          controller = TabController(
+            length: billingProductList.length,
+            vsync: this,
+          );
+        });
+
+        if (widget.isEdit != null && widget.isEdit! == true) {
+          if (widget.enquiryData != null) {
+            for (var elements in widget.enquiryData!.products!) {
+              int catId = billingProductList.indexWhere((element) =>
+                  element.category!.tmpcatid == elements.categoryid);
+              int proId = -1;
+              if (catId != -1) {
+                proId = billingProductList[catId].products!.indexWhere(
+                    (element) => element.productId == elements.productId);
+              }
+
+              if (catId != -1 && proId != -1) {
+                setState(() {
+                  elements.discount =
+                      billingProductList[catId].products![proId].discount;
+                  billingProductList[catId].products![proId].qty = elements.qty;
+                  billingProductList[catId].products![proId].qtyForm!.text =
+                      elements.qty.toString();
+                });
+
+                editaddtoCart(elements);
+
+                /// Add to Cart Function Creation Work Pending
+              } else {
+                BillingDataModel billing = BillingDataModel();
+
+                var category = CategoryDataModel();
+                category.categoryName = "";
+                category.tmpcatid = "";
+
+                billing.category = category;
+                billing.products = [];
+
+                setState(() {
+                  billingProductList.add(billing);
+                  editaddtoCart(elements);
+                });
+              }
+            }
+            // Update Discount & Packing Charges
+            setState(() {
+              discountSys = widget.enquiryData!.price!.discountsys ?? "%";
+              extraDiscountSys =
+                  widget.enquiryData!.price!.extraDiscountsys ?? "%";
+              packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
+              // discountInput = widget.enquiryData!.price!.discount ?? 0;
+              extraDiscountInput =
+                  widget.enquiryData!.price!.extraDiscount ?? 0;
+              packingChargeInput = widget.enquiryData!.price!.package ?? 0;
+
+              customerInfo = widget.enquiryData!.customer;
+            });
+          } else if (widget.estimateData != null) {
+            for (var elements in widget.estimateData!.products!) {
+              int catId = billingProductList.indexWhere((element) =>
+                  element.category!.tmpcatid == elements.categoryid);
+              int proId = -1;
+              if (catId != -1) {
+                proId = billingProductList[catId].products!.indexWhere(
+                    (element) => element.productId == elements.productId);
+              }
+              if (catId != -1 && proId != -1) {
+                setState(() {
+                  elements.discount =
+                      billingProductList[catId].products![proId].discount;
+                  billingProductList[catId].products![proId].qty = elements.qty;
+                  billingProductList[catId].products![proId].qtyForm!.text =
+                      elements.qty.toString();
+                });
+
+                editaddtoCart(elements);
+              } else {
+                BillingDataModel billing = BillingDataModel();
+
+                var category = CategoryDataModel();
+                category.categoryName = "";
+                category.tmpcatid = "";
+
+                billing.category = category;
+                billing.products = [];
+
+                setState(() {
+                  billingProductList.add(billing);
+                  editaddtoCart(elements);
+                });
+              }
+            }
+            // Update Discount & Packing Charges
+            setState(() {
+              discountSys = widget.estimateData!.price!.discountsys ?? "%";
+              extraDiscountSys =
+                  widget.estimateData!.price!.extraDiscountsys ?? "%";
+              packingChargeSys = widget.estimateData!.price!.packagesys ?? "%";
+              // discountInput = widget.estimateData!.price!.discount ?? 0;
               extraDiscountInput =
                   widget.estimateData!.price!.extraDiscount ?? 0;
               packingChargeInput = widget.estimateData!.price!.package ?? 0;
@@ -1565,24 +1685,24 @@ class _BillingOneState extends State<BillingOne>
     }
   }
 
-  dialogBox() async {
-    await showDialog(
-      context: context,
-      builder: (builder) {
-        return const Modal(
-          title: "Alert",
-          content: "Do you want exit this page ?",
-          type: ModalType.danger,
-        );
-      },
-    ).then((value) async {
-      if (value != null) {
-        if (value) {
-          Navigator.of(context).pop();
-        }
-      }
-    });
-  }
+  // dialogBox() async {
+  //   await showDialog(
+  //     context: context,
+  //     builder: (builder) {
+  //       return const Modal(
+  //         title: "Alert",
+  //         content: "Do you want exit this page ?",
+  //         type: ModalType.danger,
+  //       );
+  //     },
+  //   ).then((value) async {
+  //     if (value != null) {
+  //       if (value) {
+  //         Navigator.of(context).pop();
+  //       }
+  //     }
+  //   });
+  // }
 
   showQRBox({required int index, required int count}) async {
     await showDialog(
@@ -1733,18 +1853,25 @@ class _BillingOneState extends State<BillingOne>
   }
 
   bool showcart() {
-    bool result = false;
+    final mediaQuery = MediaQuery.of(context);
+    final width = mediaQuery.size.width;
+    final height = mediaQuery.size.height;
+    final aspectRatio = mediaQuery.size.aspectRatio;
+
     if (cartDataList.isNotEmpty) {
-      if (MediaQuery.of(context).size.width > 700 &&
-          orientation == Orientation.portrait) {
-        result = true;
-      } else if (MediaQuery.of(context).size.width > 600 &&
-          orientation == Orientation.landscape) {
-        result = true;
+      bool isTablet = mediaQuery.size.shortestSide >= 600;
+      if (orientation == Orientation.portrait) {
+        if (isTablet) {
+          return true;
+        }
+      } else if (orientation == Orientation.landscape) {
+        if (isTablet) {
+          return true;
+        }
       }
     }
 
-    return result;
+    return false;
   }
 
   List<ProductDataModel> tmpProductDataList = [], productDataList = [];

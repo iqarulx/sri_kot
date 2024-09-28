@@ -150,7 +150,7 @@ class _BillingTwoState extends State<BillingTwo> {
                 extraDiscountSys =
                     widget.enquiryData!.price!.extraDiscountsys ?? "%";
                 packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
-                discountInput = widget.enquiryData!.price!.discount ?? 0;
+                // discountInput = widget.enquiryData!.price!.discount ?? 0;
                 extraDiscountInput =
                     widget.enquiryData!.price!.extraDiscount ?? 0;
                 packingChargeInput = widget.enquiryData!.price!.package ?? 0;
@@ -203,7 +203,7 @@ class _BillingTwoState extends State<BillingTwo> {
                     widget.estimateData!.price!.extraDiscountsys ?? "%";
                 packingChargeSys =
                     widget.estimateData!.price!.packagesys ?? "%";
-                discountInput = widget.estimateData!.price!.discount ?? 0;
+                // discountInput = widget.estimateData!.price!.discount ?? 0;
                 extraDiscountInput =
                     widget.estimateData!.price!.extraDiscount ?? 0;
                 packingChargeInput = widget.estimateData!.price!.package ?? 0;
@@ -243,13 +243,15 @@ class _BillingTwoState extends State<BillingTwo> {
       var localProducts = await DatabaseHelper().getProducts();
       var localCategories = await DatabaseHelper().getCategory();
 
-      for (var categorylist in localCategories) {
+      for (var i = 0; i < localCategories.length; i++) {
         CategoryDataModel model = CategoryDataModel();
-        model.categoryName = categorylist["category_name"].toString();
-        model.postion = int.parse(categorylist["postion"]);
-        model.tmpcatid = categorylist["category_id"];
-        model.discount =
-            int.tryParse(categorylist["discount"]?.toString() ?? "0") ?? 0;
+        model.categoryName =
+            localCategories[i]["category_name"]?.toString() ?? "";
+        model.postion = int.parse(localCategories[i]["postion"]);
+        model.tmpcatid = localCategories[i]["category_id"];
+        model.discount = localCategories[i]["discount"] != null
+            ? int.tryParse(localCategories[i]["discount"]!.toString())
+            : null;
         setState(() {
           categoryList.add(model);
         });
@@ -259,7 +261,7 @@ class _BillingTwoState extends State<BillingTwo> {
         ProductDataModel productInfo = ProductDataModel();
         productInfo.categoryName = "";
         productInfo.categoryid = product["category_id"].toString();
-        productInfo.discountLock = product["discount_lock"] == 1 ? false : true;
+        productInfo.discountLock = product["discount_lock"] == 1 ? true : false;
         productInfo.name = product["name"].toString();
         productInfo.productCode = product["product_code"];
         productInfo.productContent = product["product_content"];
@@ -278,6 +280,7 @@ class _BillingTwoState extends State<BillingTwo> {
         });
       }
       // Category & Product Merge
+      /*
       for (var category in categoryList) {
         Iterable<ProductDataModel> products = productDataList
             .where((element) => element.categoryid == category.tmpcatid);
@@ -399,6 +402,128 @@ class _BillingTwoState extends State<BillingTwo> {
             customerInfo = widget.estimateData!.customer;
           });
         }
+      }*/
+      for (var category in categoryList) {
+        Iterable<ProductDataModel> products = productDataList
+            .where((element) => element.categoryid == category.tmpcatid);
+
+        for (var element in products) {
+          setState(() {
+            element.categoryName = category.categoryName;
+            element.discount = category.discount;
+          });
+        }
+        var data = BillingDataModel(
+          category: category,
+          products: [for (var product in products) product],
+        );
+        setState(() {
+          billingProductList.add(data);
+        });
+      }
+
+      if (widget.isEdit != null && widget.isEdit! == true) {
+        if (widget.enquiryData != null) {
+          for (var elements in widget.enquiryData!.products!) {
+            int catId = billingProductList.indexWhere(
+                (element) => element.category!.tmpcatid == elements.categoryid);
+            int proId = -1;
+            if (catId != -1) {
+              proId = billingProductList[catId].products!.indexWhere(
+                  (element) => element.productId == elements.productId);
+            }
+
+            if (catId != -1 && proId != -1) {
+              setState(() {
+                elements.discount =
+                    billingProductList[catId].products![proId].discount;
+                billingProductList[catId].products![proId].qty = elements.qty;
+                billingProductList[catId].products![proId].qtyForm!.text =
+                    elements.qty.toString();
+              });
+
+              editaddtoCart(elements);
+
+              /// Add to Cart Function Creation Work Pending
+            } else {
+              BillingDataModel billing = BillingDataModel();
+
+              var category = CategoryDataModel();
+              category.categoryName = "";
+              category.tmpcatid = "";
+
+              billing.category = category;
+              billing.products = [];
+
+              setState(() {
+                billingProductList.add(billing);
+                editaddtoCart(elements);
+              });
+            }
+          }
+          // Update Discount & Packing Charges
+          setState(() {
+            discountSys = widget.enquiryData!.price!.discountsys ?? "%";
+            extraDiscountSys =
+                widget.enquiryData!.price!.extraDiscountsys ?? "%";
+            packingChargeSys = widget.enquiryData!.price!.packagesys ?? "%";
+            // discountInput = widget.enquiryData!.price!.discount ?? 0;
+            extraDiscountInput = widget.enquiryData!.price!.extraDiscount ?? 0;
+            packingChargeInput = widget.enquiryData!.price!.package ?? 0;
+
+            customerInfo = widget.enquiryData!.customer;
+          });
+        } else if (widget.estimateData != null) {
+          for (var elements in widget.estimateData!.products!) {
+            int catId = billingProductList.indexWhere(
+                (element) => element.category!.tmpcatid == elements.categoryid);
+            int proId = -1;
+            if (catId != -1) {
+              proId = billingProductList[catId].products!.indexWhere(
+                  (element) => element.productId == elements.productId);
+            }
+
+            if (catId != -1 && proId != -1) {
+              setState(() {
+                elements.discount =
+                    billingProductList[catId].products![proId].discount;
+                billingProductList[catId].products![proId].qty = elements.qty;
+                billingProductList[catId].products![proId].qtyForm!.text =
+                    elements.qty.toString();
+              });
+
+              editaddtoCart(elements);
+
+              /// Add to Cart Function Creation Work Pending
+            } else {
+              BillingDataModel billing = BillingDataModel();
+
+              var category = CategoryDataModel();
+              category.categoryName = "";
+              category.tmpcatid = "";
+
+              billing.category = category;
+              billing.products = [];
+
+              setState(() {
+                billingProductList.add(billing);
+                editaddtoCart(elements);
+              });
+            }
+          }
+          // Update Discount & Packing Charges
+          setState(() {
+            discountSys = widget.estimateData!.price!.discountsys ?? "%";
+            extraDiscountSys =
+                widget.estimateData!.price!.extraDiscountsys ?? "%";
+            packingChargeSys = widget.estimateData!.price!.packagesys ?? "%";
+            // discountInput = widget.estimateData!.price!.discount ?? 0;
+            extraDiscountInput = widget.estimateData!.price!.extraDiscount ?? 0;
+            packingChargeInput = widget.estimateData!.price!.package ?? 0;
+
+            customerInfo = widget.estimateData!.customer;
+          });
+        }
       }
 
       setState(() {
@@ -475,6 +600,7 @@ class _BillingTwoState extends State<BillingTwo> {
     cartDataInfo.productId = tmpProductDetails.productId;
     cartDataInfo.productName = tmpProductDetails.productName;
     cartDataInfo.discountLock = tmpProductDetails.discountLock;
+    cartDataInfo.discount = tmpProductDetails.discount;
     cartDataInfo.productCode = tmpProductDetails.productCode;
     cartDataInfo.productContent = tmpProductDetails.productContent;
     cartDataInfo.productImg = tmpProductDetails.productImg;
@@ -1157,7 +1283,7 @@ class _BillingTwoState extends State<BillingTwo> {
                                         else
                                           Flexible(
                                             child: Text(
-                                              "No Discount",
+                                              "",
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .bodySmall!
@@ -1168,7 +1294,7 @@ class _BillingTwoState extends State<BillingTwo> {
                                       else
                                         Flexible(
                                           child: Text(
-                                            "Net Rate",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall!,
