@@ -1,0 +1,163 @@
+import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:sri_kot/constants/constants.dart';
+import 'package:sri_kot/model/model.dart';
+
+class DiscountDetailsModal extends StatefulWidget {
+  final List<CartDataModel> cartDataModel;
+
+  const DiscountDetailsModal({super.key, required this.cartDataModel});
+
+  @override
+  State<DiscountDetailsModal> createState() => _DiscountDetailsModalState();
+}
+
+class _DiscountDetailsModalState extends State<DiscountDetailsModal> {
+  @override
+  Widget build(BuildContext context) {
+    // Calculate the total discounted price
+    double totalDiscountedPrice =
+        widget.cartDataModel.fold(0.0, (total, product) {
+      double discountedPrice = product.discountLock != null &&
+              !product.discountLock! &&
+              product.discount != null
+          ? product.price! * product.qty! * (product.discount! / 100)
+          : 0;
+      return total + discountedPrice;
+    });
+
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      insetPadding: const EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide.none,
+      ),
+      title: const SizedBox(
+        width: double.infinity,
+        child: Row(
+          children: [
+            Icon(Iconsax.info_circle),
+            SizedBox(width: 8),
+            Text(
+              "Discount Details",
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...widget.cartDataModel.map((product) {
+                double discountedPrice = product.productType ==
+                        ProductType.discounted
+                    ? product.price! * product.qty! * (product.discount! / 100)
+                    : 0;
+                return ListTile(
+                  title: Text(
+                    product.productName ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                      "\u{20B9} ${product.price!.toStringAsFixed(2)} X ${product.qty}"), // Original price
+                  trailing: Text(
+                    "- \u{20B9} ${discountedPrice.toStringAsFixed(2)}", // Discounted price
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  leading: Container(
+                    height: 30,
+                    width: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        product.discountLock != null && !product.discountLock!
+                            ? product.discount != null
+                                ? "${product.discount}%"
+                                : "NR"
+                            : "NR",
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 10), // Space before the total
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Total Discounted Price:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "\u{20B9} ${totalDiscountedPrice.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context, false);
+                  },
+                  child: Container(
+                    height: 55,
+                  )),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(context, true);
+                },
+                child: Container(
+                  height: 55,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "Confirm",
+                      style: TextStyle(
+                        color: Color(0xffF4F4F9),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}

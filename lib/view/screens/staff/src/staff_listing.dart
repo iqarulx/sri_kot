@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -26,10 +27,19 @@ class _StaffListingState extends State<StaffListing> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appbar(context),
-      body: Consumer<ConnectionProvider>(
-        builder: (context, connectionProvider, child) {
-          return connectionProvider.isConnected ? body() : noInternet(context);
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
         },
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return connectionProvider.isConnected
+                ? body()
+                : noInternet(context);
+          },
+        ),
       ),
     );
   }
@@ -94,32 +104,25 @@ class _StaffListingState extends State<StaffListing> {
             ),
           );
         } else {
-          return PageView(
-            physics: const NeverScrollableScrollPhysics(),
-            controller: staffListingcontroller,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Container(
-                  height: double.infinity,
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      staffHandler = getStaffInfo();
-                    },
-                    child: staffDataList.isNotEmpty
-                        ? screenView()
-                        : noData(context),
-                  ),
-                ),
+          return Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Container(
+              height: double.infinity,
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
               ),
-              const StaffDetails(),
-            ],
+              child: RefreshIndicator(
+                color: Theme.of(context).primaryColor,
+                onRefresh: () async {
+                  staffHandler = getStaffInfo();
+                },
+                child:
+                    staffDataList.isNotEmpty ? screenView() : noData(context),
+              ),
+            ),
           );
         }
       },
@@ -133,15 +136,22 @@ class _StaffListingState extends State<StaffListing> {
         return Column(
           children: [
             ListTile(
-              onTap: () {
-                setState(() {
-                  crtStaffData = staffDataList[index];
-                  staffListingcontroller.animateToPage(
-                    1,
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.linear,
-                  );
-                });
+              onTap: () async {
+                var result = await Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) =>
+                        StaffDetails(staffDetails: staffDataList[index]),
+                  ),
+                );
+
+                if (result != null) {
+                  if (result) {
+                    setState(() {
+                      staffHandler = getStaffInfo();
+                    });
+                  }
+                }
               },
               leading: ClipOval(
                 child: CachedNetworkImage(
@@ -348,7 +358,6 @@ class _StaffListingState extends State<StaffListing> {
 
         if (result != null && result.docs.isNotEmpty) {
           for (var element in result.docs) {
-            print(element.data());
             StaffDataModel model = StaffDataModel();
             model.userName = element["staff_name"] ?? "";
             model.phoneNo = element["phone_no"] ?? "";

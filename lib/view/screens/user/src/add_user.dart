@@ -148,13 +148,13 @@ class _AddUserState extends State<AddUser> {
                     children: [
                       InputForm(
                         controller: name,
-                        lableName: "User Name",
+                        labelName: "User Name",
                         formName: "Full Name",
                         prefixIcon: Icons.person,
                         validation: (p0) {
                           return FormValidation().commonValidation(
                             input: p0,
-                            isMandorty: true,
+                            isMandatory: true,
                             formName: "User Name",
                             isOnlyCharter: false,
                           );
@@ -162,22 +162,22 @@ class _AddUserState extends State<AddUser> {
                       ),
                       InputForm(
                         controller: phoneNo,
-                        lableName: "Phone Number",
+                        labelName: "Phone Number",
                         formName: "Phone No",
                         prefixIcon: Icons.phone,
                         keyboardType: TextInputType.phone,
                         validation: (p0) {
                           return FormValidation().phoneValidation(
                             input: p0.toString(),
-                            isMandorty: true,
-                            lableName: 'Phone Number',
+                            isMandatory: true,
+                            labelName: 'Phone Number',
                           );
                         },
                       ),
                       // Expanded(
                       //   child: InputForm(
                       //     controller: userId,
-                      //     lableName: "User Id",
+                      //     labelName: "User Id",
                       //     formName: "User Id",
                       //     prefixIcon:
                       //         Icons.alternate_email_outlined,
@@ -187,7 +187,7 @@ class _AddUserState extends State<AddUser> {
                       //           .commonValidation(
                       //         input: p0.toString(),
                       //         formName: "User ID",
-                      //         isMandorty: true,
+                      //         isMandatory: true,
                       //         isOnlyCharter: false,
                       //       );
                       //     },
@@ -216,7 +216,7 @@ class _AddUserState extends State<AddUser> {
                           return FormValidation().commonValidation(
                             input: p0.toString(),
                             formName: "User ID",
-                            isMandorty: true,
+                            isMandatory: true,
                             isOnlyCharter: false,
                           );
                         },
@@ -224,7 +224,7 @@ class _AddUserState extends State<AddUser> {
                       const SizedBox(height: 10),
                       InputForm(
                         controller: password,
-                        lableName: "Passsword",
+                        labelName: "Passsword",
                         formName: "Passsword",
                         isPasswordForm: true,
                         prefixIcon: Icons.key,

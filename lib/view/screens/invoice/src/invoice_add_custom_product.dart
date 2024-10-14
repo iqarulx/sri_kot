@@ -4,7 +4,8 @@ class InvoiceAddCustomProduct extends StatefulWidget {
   const InvoiceAddCustomProduct({super.key});
 
   @override
-  State<InvoiceAddCustomProduct> createState() => _InvoiceAddCustomProductState();
+  State<InvoiceAddCustomProduct> createState() =>
+      _InvoiceAddCustomProductState();
 }
 
 class _InvoiceAddCustomProductState extends State<InvoiceAddCustomProduct> {
@@ -42,7 +43,7 @@ class _InvoiceAddCustomProductState extends State<InvoiceAddCustomProduct> {
                     controller: customProduct,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return "Product Name is Must";
+                        return "Product Name is must";
                       } else {
                         return null;
                       }

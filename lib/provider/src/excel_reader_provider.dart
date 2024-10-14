@@ -4,52 +4,48 @@ import '/model/class.dart';
 
 class ExcelReaderProvider {
   Future<List<ExcelCategoryClass>?> readExcelData({required File file}) async {
-    List<ExcelCategoryClass>? exceldata = [];
+    List<ExcelCategoryClass> excelData = [];
     try {
       var bytes = file.readAsBytesSync();
       var excel = Excel.decodeBytes(bytes);
 
+      Map<String, ExcelCategoryClass> categoryMap = {};
+
       for (var table in excel.tables.keys) {
-        if (excel.tables[table]!.maxColumns == 4 &&
-            excel.tables[table]!.rows[0][0]!.value == null &&
-            excel.tables[table]!.rows[0][2]!.value == null) {
-          for (var row in excel.tables[table]!.rows) {
-            if (row[0] == null &&
-                row[1] == null &&
-                row[2] == null &&
-                row[3] == null) {
-              continue;
-            } else if (row[0] == null && row[2] == null && row[3] == null) {
-              exceldata.add(
-                ExcelCategoryClass(
-                  categoryname: row[1] != null ? row[1]!.value.toString() : '',
-                  product: [],
-                ),
-              );
-            } else {
-              exceldata[exceldata.length - 1].product.add(
-                    ExcelProductClass(
-                      productno: row[0] != null ? row[0]!.value.toString() : '',
-                      productname:
-                          row[1] != null ? row[1]!.value.toString() : '',
-                      content: row[2] != null ? row[2]!.value.toString() : '',
-                      price: row[3] != null ? row[3]!.value.toString() : '',
-                      discountlock:
-                          "0", //row[4] == null ? "" : row[4]!.value.toString(),
-                      qrcode:
-                          "1", // row[5] == null ? "" : row[5]!.value.toString()
-                    ),
-                  );
-            }
+        var sheet = excel.tables[table];
+
+        for (var row in sheet!.rows) {
+          if (row[0]?.value == null) continue;
+          var productNo = row[0]?.value.toString();
+          var categoryName = row[1]?.value.toString();
+          var productName = row[2]?.value.toString();
+          var content = row[3]?.value.toString();
+          var price = row[4]?.value.toString();
+
+          if (!categoryMap.containsKey(categoryName)) {
+            categoryMap[categoryName!] = ExcelCategoryClass(
+              categoryname: categoryName,
+              product: [],
+            );
+            excelData.add(categoryMap[categoryName]!);
           }
-          break;
-        } else {
-          throw "Excel Data is Not Correct";
+
+          categoryMap[categoryName]!.product.add(ExcelProductClass(
+                productno: productNo.toString(),
+                productname: productName.toString(),
+                content: content.toString(),
+                price: price ?? '',
+                discountlock: "0",
+                qrcode: "1",
+                discount: null,
+                taxValue: null,
+                hsnCode: null,
+              ));
         }
       }
     } catch (e) {
-      throw e.toString();
+      throw 'Error: ${e.toString()}';
     }
-    return exceldata;
+    return excelData.isNotEmpty ? excelData : null;
   }
 }

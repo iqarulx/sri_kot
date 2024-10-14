@@ -20,6 +20,11 @@ Future<void> main() async {
   var result = await checklogin();
   var login = result;
   final appUpdate = await UpdateService.isUpdateAvailable();
+  var currentTheme = await LocalDB.getTheme();
+  if (currentTheme == null) {
+    await LocalDB.setTheme(theme: 'original');
+  }
+  changeThemeApp.toggletab(await LocalDB.getTheme() ?? 'original');
 
   runApp(
     MultiProvider(

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../gen/assets.gen.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -30,19 +31,26 @@ class _ProductDetailsState extends State<ProductDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appbar(),
-      body: FutureBuilder(
-        future: productDetails,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(snapshot.error.toString()),
-            );
-          } else {
-            return body(context);
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
           }
         },
+        child: FutureBuilder(
+          future: productDetails,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return futureLoading(context);
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text(snapshot.error.toString()),
+              );
+            } else {
+              return body(context);
+            }
+          },
+        ),
       ),
       bottomNavigationBar: bottomAppbar(context),
     );
@@ -119,57 +127,66 @@ class _ProductDetailsState extends State<ProductDetails> {
                         });
                       }
                     },
-                    child: Container(
-                      height: 120,
-                      width: 120,
-                      decoration: const BoxDecoration(
-                        color: Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Stack(
-                        children: [
-                          productImage == null
-                              ? ClipRRect(
-                                  clipBehavior: Clip.hardEdge,
-                                  borderRadius: BorderRadius.circular(50.0),
-                                  child: CachedNetworkImage(
-                                    placeholder: (context, url) => const Center(
-                                        child: CircularProgressIndicator()),
-                                    imageUrl: imageUrl ?? Strings.productImg,
-                                    fit: BoxFit.cover,
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(Icons.error),
-                                  ))
-                              : Container(
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image: FileImage(productImage!),
+                    child: Center(
+                      child: SizedBox(
+                        height: 90,
+                        width: 90,
+                        child: Stack(
+                          children: [
+                            productImage == null
+                                ? ClipRRect(
+                                    clipBehavior: Clip.hardEdge,
+                                    borderRadius: BorderRadius.circular(50.0),
+                                    child: CachedNetworkImage(
+                                      placeholder: (context, url) =>
+                                          const Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                      imageUrl: imageUrl ?? Strings.productImg,
                                       fit: BoxFit.cover,
+                                      height: 120,
+                                      width: 120,
+                                      errorWidget: (context, url, error) =>
+                                          const Icon(Icons.error),
+                                    ),
+                                  )
+                                : Container(
+                                    height: 90,
+                                    width: 90,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade300,
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: productImage!.existsSync()
+                                            ? FileImage(productImage!)
+                                            : AssetImage(
+                                                Assets.images.noImage.path,
+                                              ),
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: Container(
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow.shade800,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    width: 2,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(width: 2, color: Colors.white),
-                                color: Colors.yellow.shade800,
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(5),
-                              child: const Icon(
-                                Icons.edit,
-                                color: Colors.white,
-                                size: 18,
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                  size: 15,
+                                ),
                               ),
                             ),
-                          )
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -184,7 +201,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                 productNameOption(),
                 productCodeOption(),
                 qrCodeOption(),
-                hsnCodeOption(),
+                if (widget.edit)
+                  if (taxType)
+                    Column(
+                      children: [hsnCodeOption(), taxValueOption()],
+                    ),
                 videoUrlOption(),
                 discountLockOption(context),
                 // DropDownForm(
@@ -286,11 +307,11 @@ class _ProductDetailsState extends State<ProductDetails> {
     return InputForm(
       controller: videoUrl,
       formName: "Video Url",
-      lableName: "Video Url",
+      labelName: "Video Url",
       validation: (input) {
         return FormValidation().commonValidation(
           input: input,
-          isMandorty: false,
+          isMandatory: false,
           formName: 'Video Url',
           isOnlyCharter: false,
         );
@@ -305,11 +326,11 @@ class _ProductDetailsState extends State<ProductDetails> {
           child: InputForm(
             controller: qrCode,
             formName: "QR Code",
-            lableName: "QR Code",
+            labelName: "QR Code",
             validation: (input) {
               return FormValidation().commonValidation(
                 input: input,
-                isMandorty: false,
+                isMandatory: false,
                 formName: 'QR Code',
                 isOnlyCharter: false,
               );
@@ -321,12 +342,12 @@ class _ProductDetailsState extends State<ProductDetails> {
           child: InputForm(
             controller: price,
             formName: "Price",
-            lableName: "Price",
+            labelName: "Price",
             keyboardType: TextInputType.number,
             validation: (input) {
               return FormValidation().commonValidation(
                 input: input,
-                isMandorty: true,
+                isMandatory: true,
                 formName: 'Price',
                 isOnlyCharter: false,
               );
@@ -345,15 +366,24 @@ class _ProductDetailsState extends State<ProductDetails> {
             controller: hsnCode,
             keyboardType: TextInputType.number,
             formName: "HSN Code",
-            lableName: "HSN Code",
-            validation: (input) {
-              return FormValidation().commonValidation(
-                input: input,
-                isMandorty: false,
-                formName: 'HSN Code',
-                isOnlyCharter: false,
-              );
-            },
+            labelName: "HSN Code",
+            enabled: false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row taxValueOption() {
+    return Row(
+      children: [
+        Expanded(
+          child: InputForm(
+            controller: taxValue,
+            keyboardType: TextInputType.number,
+            formName: "Tax Value",
+            labelName: "Tax Value",
+            enabled: false,
           ),
         ),
       ],
@@ -367,11 +397,11 @@ class _ProductDetailsState extends State<ProductDetails> {
           child: InputForm(
             controller: productCode,
             formName: "Product Code",
-            lableName: "Product Code",
+            labelName: "Product Code",
             validation: (input) {
               return FormValidation().commonValidation(
                 input: input,
-                isMandorty: true,
+                isMandatory: true,
                 formName: 'Product Code',
                 isOnlyCharter: false,
               );
@@ -383,11 +413,11 @@ class _ProductDetailsState extends State<ProductDetails> {
           child: InputForm(
             controller: productContent,
             formName: "Product Content",
-            lableName: "Product Content",
+            labelName: "Product Content",
             validation: (input) {
               return FormValidation().commonValidation(
                 input: input,
-                isMandorty: true,
+                isMandatory: true,
                 formName: 'Product Content',
                 isOnlyCharter: false,
               );
@@ -402,11 +432,11 @@ class _ProductDetailsState extends State<ProductDetails> {
     return InputForm(
       controller: productName,
       formName: "Product Name",
-      lableName: "Product Name",
+      labelName: "Product Name",
       validation: (input) {
         return FormValidation().commonValidation(
           input: input,
-          isMandorty: true,
+          isMandatory: true,
           formName: 'Product Name',
           isOnlyCharter: false,
         );
@@ -456,6 +486,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   TextEditingController productContent = TextEditingController();
   TextEditingController qrCode = TextEditingController();
   TextEditingController hsnCode = TextEditingController();
+  TextEditingController taxValue = TextEditingController();
   TextEditingController price = TextEditingController();
   TextEditingController videoUrl = TextEditingController();
 
@@ -489,8 +520,11 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   var addProductKey = GlobalKey<FormState>();
+  bool taxType = false;
 
   Future inifunc() async {
+    taxType = await FireStore().getCompanyTax();
+
     if (widget.edit) {
       setState(() {
         categoryID = widget.productData!.categoryid ?? "";
@@ -507,6 +541,7 @@ class _ProductDetailsState extends State<ProductDetails> {
         discountLock = widget.productData!.discountLock ?? false;
         active = widget.productData!.active ?? false;
         hsnCode.text = widget.productData!.hsnCode ?? '';
+        taxValue.text = widget.productData!.taxValue ?? '';
       });
     }
   }
@@ -614,6 +649,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             productData.categoryName = categoryName.text;
             productData.delete = false;
             productData.discountLock = true;
+            productData.discount = null;
             productData.price = double.parse(price.text);
             productData.productCode = productCode.text;
             productData.productContent = productContent.text;
@@ -625,7 +661,10 @@ class _ProductDetailsState extends State<ProductDetails> {
                 productName.text.replaceAll(' ', '').trim().toLowerCase();
             productData.createdDateTime = DateTime.now();
             productData.postion = 0;
-            productData.hsnCode = hsnCode.text;
+            productData.hsnCode =
+                await FireStore().getCategoryHsn(categoryId: categoryID!);
+            productData.taxValue =
+                await FireStore().getCategoryTax(categoryId: categoryID!);
             if (productImage != null) {
               var downloadLink = await Storage().uploadImage(
                 fileData: productImage!,
@@ -635,31 +674,74 @@ class _ProductDetailsState extends State<ProductDetails> {
               productData.productImg = downloadLink;
             }
 
-            await FireStore()
-                .registerProduct(productsData: productData)
-                .then((value) {
-              Navigator.pop(context);
-              if (value.id.isNotEmpty) {
-                setState(() {
-                  categoryID = null;
-                  productName.clear();
-                  productCode.clear();
-                  productContent.clear();
-                  qrCode.clear();
-                  price.clear();
-                  videoUrl.clear();
-                  productImage = null;
+            var sameCode =
+                await FireStore().checkProductCode(code: productCode.text);
+
+            var sameQrCode = await FireStore().checkQrCode(code: qrCode.text);
+            Navigator.pop(context);
+            if (sameCode) {
+              if (qrCode.text.isEmpty) {
+                await FireStore()
+                    .registerProduct(productsData: productData)
+                    .then((value) {
+                  Navigator.pop(context);
+                  if (value.id.isNotEmpty) {
+                    setState(() {
+                      categoryID = null;
+                      productName.clear();
+                      productCode.clear();
+                      productContent.clear();
+                      qrCode.clear();
+                      price.clear();
+                      videoUrl.clear();
+                      productImage = null;
+                    });
+                    Navigator.pop(context, true);
+                    snackbar(
+                      context,
+                      true,
+                      "New Product Created Successfully",
+                    );
+                  } else {
+                    snackbar(context, false, "Failed to Create New Product");
+                  }
                 });
-                Navigator.pop(context, true);
-                snackbar(
-                  context,
-                  true,
-                  "Successfully Created New Product",
-                );
               } else {
-                snackbar(context, false, "Failed to Create New Product");
+                if (sameQrCode) {
+                  await FireStore()
+                      .registerProduct(productsData: productData)
+                      .then((value) {
+                    Navigator.pop(context);
+                    if (value.id.isNotEmpty) {
+                      setState(() {
+                        categoryID = null;
+                        productName.clear();
+                        productCode.clear();
+                        productContent.clear();
+                        qrCode.clear();
+                        price.clear();
+                        videoUrl.clear();
+                        productImage = null;
+                      });
+                      Navigator.pop(context, true);
+                      snackbar(
+                        context,
+                        true,
+                        "Successfully Created New Product",
+                      );
+                    } else {
+                      snackbar(context, false, "Failed to Create New Product");
+                    }
+                  });
+                } else {
+                  Navigator.pop(context);
+                  snackbar(context, false, "Qr code already exists");
+                }
               }
-            });
+            } else {
+              Navigator.pop(context);
+              snackbar(context, false, "Product code already exists");
+            }
           } else {
             Navigator.pop(context);
             snackbar(context, false, "Company Details Not Fetch");

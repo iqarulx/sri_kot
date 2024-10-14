@@ -4,14 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sri_kot/theme/theme_change.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../utils/utils.dart';
+import '/utils/utils.dart';
 import '/log/show_log.dart';
 import '/purchase/purchase.dart';
 import '/provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/services/services.dart';
-import '/view/auth/src/auth.dart';
+import '../../auth/src/auth/auth.dart';
 import '/view/screens/screens.dart';
 import '/view/ui/ui.dart';
 import '/constants/constants.dart';
@@ -46,6 +47,7 @@ class _SideBarState extends State<SideBar> {
   String? currentVersion;
   String? estimateCount;
   String? enquiryCount;
+  bool? testMode;
 
   changeEvent() {
     if (mounted) {
@@ -79,9 +81,11 @@ class _SideBarState extends State<SideBar> {
     var dbEnquiryCount = await helper.countEnquiries();
     var dbEstimateCount = await helper.countEstimate();
     setState(() {
-      estimateCount = "$dbEstimateCount";
-      enquiryCount = "$dbEnquiryCount";
+      estimateCount = dbEstimateCount.toString();
+      enquiryCount = dbEnquiryCount.toString();
     });
+
+    testMode = await LocalDB.checkTestMode();
 
     final connectionProvider =
         Provider.of<ConnectionProvider>(context, listen: false);
@@ -108,11 +112,13 @@ class _SideBarState extends State<SideBar> {
   void initState() {
     super.initState();
     getinfo();
+    AccountValid.accountValid(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -248,20 +254,20 @@ class _SideBarState extends State<SideBar> {
                             lable: "Customer",
                             index: 4,
                             leadingIcon: Icons.add,
-                            leadingFun: () {
-                              final connectionProvider =
-                                  Provider.of<ConnectionProvider>(context,
-                                      listen: false);
-                              if (connectionProvider.isConnected) {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  CupertinoPageRoute(
-                                    builder: (context) => const AddCustomer(),
-                                  ),
-                                );
-                              }
-                            },
+                            // leadingFun: () {
+                            //   final connectionProvider =
+                            //       Provider.of<ConnectionProvider>(context,
+                            //           listen: false);
+                            //   if (connectionProvider.isConnected) {
+                            //     Navigator.pop(context);
+                            //     Navigator.push(
+                            //       context,
+                            //       CupertinoPageRoute(
+                            //         builder: (context) => const AddCustomer(),
+                            //       ),
+                            //     );
+                            //   }
+                            // },
                           )
                         : const SizedBox(),
                     prCategory != null && prCategory == true ||
@@ -287,23 +293,23 @@ class _SideBarState extends State<SideBar> {
                             lable: "Product",
                             index: 6,
                             leadingIcon: Icons.add,
-                            leadingFun: () {
-                              final connectionProvider =
-                                  Provider.of<ConnectionProvider>(context,
-                                      listen: false);
-                              if (connectionProvider.isConnected) {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  CupertinoPageRoute(
-                                    builder: (context) => const ProductDetails(
-                                      edit: false,
-                                      title: 'Create Product',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
+                            // leadingFun: () {
+                            //   final connectionProvider =
+                            //       Provider.of<ConnectionProvider>(context,
+                            //           listen: false);
+                            //   if (connectionProvider.isConnected) {
+                            //     Navigator.pop(context);
+                            //     Navigator.push(
+                            //       context,
+                            //       CupertinoPageRoute(
+                            //         builder: (context) => const ProductDetails(
+                            //           edit: false,
+                            //           title: 'Create Product',
+                            //         ),
+                            //       ),
+                            //     );
+                            //   }
+                            // },
                           )
                         : const SizedBox(),
                     prCategory != null && prCategory == true
@@ -372,7 +378,7 @@ class _SideBarState extends State<SideBar> {
                         : const SizedBox(),
                     (prOrder != null && prOrder == true) ||
                             (prEstimate != null && prEstimate == true)
-                        ? estimateCount != "0" && enquiryCount != "0"
+                        ? estimateCount != "0" || enquiryCount != "0"
                             ? GestureDetector(
                                 onTap: () async {
                                   final connectionProvider =
@@ -466,12 +472,7 @@ class _SideBarState extends State<SideBar> {
                             : const SizedBox()
                         : const SizedBox(),
 
-                    isAdmin != null && isAdmin == true
-                        ? breakBar()
-                        : const SizedBox(),
-                    isAdmin != null && isAdmin == true
-                        ? menuTitle(data: "Settings")
-                        : const SizedBox(),
+                    breakBar(), menuTitle(data: "Settings"),
                     // isAdmin != null && isAdmin == true
                     //     ? menuView(
                     //         context,
@@ -480,15 +481,18 @@ class _SideBarState extends State<SideBar> {
                     //         index: 11,
                     //       )
                     //     : const SizedBox(),
-                    isAdmin != null && isAdmin == true
-                        ? menuView(
-                            context,
-                            icon: Icons.settings,
-                            lable: "App Settings",
-                            index: 12,
-                          )
-                        : const SizedBox(),
-
+                    menuView(
+                      context,
+                      icon: Icons.settings,
+                      lable: "App Settings",
+                      index: 12,
+                    ),
+                    menuView(
+                      context,
+                      icon: CupertinoIcons.color_filter,
+                      lable: "App Theme",
+                      index: 21,
+                    ),
                     isAdmin != null && isAdmin == true
                         ? Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -564,6 +568,20 @@ class _SideBarState extends State<SideBar> {
                             ],
                           )
                         : Container(),
+                    testMode ?? false
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                breakBar(),
+                                menuTitle(data: "Test"),
+                                menuView(
+                                  context,
+                                  icon: Icons.shield_outlined,
+                                  lable: "Test Entry",
+                                  index: 20,
+                                )
+                              ])
+                        : const SizedBox(),
                     GestureDetector(
                       onTap: () async {
                         await showDialog(
@@ -593,7 +611,7 @@ class _SideBarState extends State<SideBar> {
 
                                 Navigator.pushReplacement(
                                   context,
-                                  MaterialPageRoute(
+                                  CupertinoPageRoute(
                                     builder: (context) => const Auth(),
                                   ),
                                 );
@@ -700,7 +718,6 @@ class _SideBarState extends State<SideBar> {
     Function()? leadingFun,
   }) {
     Widget route = const UserHome();
-
     switch (index) {
       case 0:
         route = const UserHome();
@@ -729,7 +746,7 @@ class _SideBarState extends State<SideBar> {
       case 11:
         route = const InvoiceListing();
       case 12:
-        route = const AppSettings();
+        route = AppSettings(isHome: false, isAdmin: isAdmin ?? false);
       case 13:
         route = const AccountInformation();
       case 14:
@@ -738,6 +755,9 @@ class _SideBarState extends State<SideBar> {
         route = const PurchaseHistory();
       case 16:
         route = const Support();
+
+      case 21:
+        route = const ThemeChange();
 
       default:
         route = const UserHome();

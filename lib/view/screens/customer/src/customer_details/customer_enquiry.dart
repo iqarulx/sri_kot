@@ -2,8 +2,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../gen/assets.gen.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -40,9 +42,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
         if (enquiry != null && enquiry.docs.isNotEmpty) {
           for (var enquiryData in enquiry.docs) {
             var calcula = BillingCalCulationModel();
-            calcula.discount = enquiryData["price"]["discount"];
             calcula.discountValue = enquiryData["price"]["discount_value"];
-            calcula.discountsys = enquiryData["price"]["discount_sys"];
             calcula.extraDiscount = enquiryData["price"]["extra_discount"];
             calcula.extraDiscountValue =
                 enquiryData["price"]["extra_discount_value"];
@@ -144,12 +144,12 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
     }
   }
 
-  late Future enquryHandler;
+  late Future enquiryHandler;
 
   @override
   void initState() {
     super.initState();
-    enquryHandler = getEnquiryInfo();
+    enquiryHandler = getEnquiryInfo();
   }
 
   @override
@@ -171,7 +171,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
             )
           : null,
       body: FutureBuilder(
-        future: enquryHandler,
+        future: enquiryHandler,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return futureLoading(context);
@@ -215,7 +215,7 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
                       child: TextButton.icon(
                         onPressed: () {
                           setState(() {
-                            enquryHandler = getEnquiryInfo();
+                            enquiryHandler = getEnquiryInfo();
                           });
                         },
                         icon: const Icon(Icons.refresh),
@@ -229,140 +229,184 @@ class _CustomerEnquiryState extends State<CustomerEnquiry> {
               ),
             );
           } else {
-            return Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Container(
-                height: double.infinity,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.only(
-                        top: 10,
-                        right: 10,
-                        left: 10,
-                        bottom: 5,
+            return enquiryList.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Container(
+                      height: double.infinity,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: InputForm(
-                        controller: searchForm,
-                        formName: "Search Enquiry",
-                        prefixIcon: Icons.search,
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: enquiryList.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                Navigator.push(
-                                  context,
-                                  CupertinoPageRoute(
-                                    builder: (context) => EnquiryDetails(
-                                      cid: enquiryList[index].docID ?? '',
-                                    ),
-                                  ),
-                                );
-                                // crtlistview =
-                                //     orderlist[index];
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: index > 0
-                                    ? const Border(
-                                        top: BorderSide(
-                                          width: 0.5,
-                                          color: Color(0xffE0E0E0),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(
+                              top: 10,
+                              right: 10,
+                              left: 10,
+                              bottom: 5,
+                            ),
+                            child: InputForm(
+                              controller: searchForm,
+                              formName: "Search Enquiry",
+                              prefixIcon: Icons.search,
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: enquiryList.length,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      Navigator.push(
+                                        context,
+                                        CupertinoPageRoute(
+                                          builder: (context) => EnquiryDetails(
+                                            cid: enquiryList[index].docID ?? '',
+                                          ),
                                         ),
-                                      )
-                                    : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    height: 40,
-                                    width: 40,
+                                      );
+                                      // crtlistview =
+                                      //     orderlist[index];
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade300,
-                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                      border: index > 0
+                                          ? const Border(
+                                              top: BorderSide(
+                                                width: 0.5,
+                                                color: Color(0xffE0E0E0),
+                                              ),
+                                            )
+                                          : null,
                                     ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.shopping_cart,
-                                        color: Colors.grey,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          "ORDERID - ${enquiryList[index].enquiryid}",
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                        Container(
+                                          height: 40,
+                                          width: 40,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade300,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.shopping_cart,
+                                              color: Colors.grey,
+                                              size: 20,
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(
-                                          height: 3,
+                                          width: 10,
                                         ),
-                                        Text(
-                                          "CUSTOMER - ${enquiryList[index].customer != null ? enquiryList[index].customer!.customerName : ""}",
-                                          style: const TextStyle(
-                                            fontSize: 13,
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "ORDERID - ${enquiryList[index].enquiryid}",
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 3,
+                                              ),
+                                              Text(
+                                                "CUSTOMER - ${enquiryList[index].customer != null ? enquiryList[index].customer!.customerName : ""}",
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                              Text(
+                                                "DATE - ${DateFormat('dd-MM-yyyy HH:mm a').format(enquiryList[index].createddate!)}",
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        Text(
-                                          "DATE - ${DateFormat('dd-MM-yyyy HH:mm a').format(enquiryList[index].createddate!)}",
-                                          style: const TextStyle(
-                                            fontSize: 13,
+                                        Center(
+                                          child: Text(
+                                            "Rs.${enquiryList[index].price!.total}",
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.arrow_forward_ios,
+                                              size: 18,
+                                              color: Color(0xff6B6B6B),
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Center(
-                                    child: Text(
-                                      "Rs.${enquiryList[index].price!.total}",
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.arrow_forward_ios,
-                                        size: 18,
-                                        color: Color(0xff6B6B6B),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
-                          );
-                        },
+                          )
+                        ],
                       ),
-                    )
-                  ],
-                ),
-              ),
-            );
+                    ),
+                  )
+                : noData(context);
           }
         },
+      ),
+    );
+  }
+
+  Padding noData(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: SvgPicture.asset(
+              Assets.emptyList3,
+              height: 200,
+              width: 200,
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+          ),
+          Text(
+            "No Enquiry",
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(),
+          ),
+          const SizedBox(
+            height: 8,
+          ),
+          Center(
+            child: Text(
+              "Customer does not exist with any enquiry",
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall!
+                  .copyWith(color: Colors.grey),
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+          ),
+        ],
       ),
     );
   }

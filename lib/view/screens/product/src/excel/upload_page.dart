@@ -1,7 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../../../../log/log.dart';
+import '/log/log.dart';
 import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/provider/provider.dart';
@@ -237,6 +237,37 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
                             icon: const Icon(Icons.file_download_outlined),
                           ),
                         ),
+                        ListTile(
+                          onTap: () {},
+                          contentPadding: const EdgeInsets.all(0),
+                          leading: Container(
+                            height: 60,
+                            width: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Center(
+                              child: Assets.images.excel.image(
+                                height: 35,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            "Product Template With Data",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          subtitle: Text(
+                            "Download Sample Product Excel File With Dummy Data",
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          trailing: IconButton(
+                            onPressed: () {
+                              downloadTemplateWithData();
+                            },
+                            icon: const Icon(Icons.file_download_outlined),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -260,8 +291,6 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
               .readExcelData(file: value)
               .then((excelResult) {
             if (excelResult != null) {
-              print(excelResult);
-              // Navigator.pop(context);
               setState(() {
                 excelData.clear();
                 excelData.addAll(excelResult);
@@ -275,9 +304,12 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
               Navigator.pop(context);
             }
           }).catchError((onError) {
+            snackbar(context, false, onError);
             Log.addLog("${DateTime.now()} : ${onError.toString()}");
           });
         } else {
+          snackbar(context, false, "Something went wrong. Please try again");
+
           Navigator.pop(context);
         }
       });
@@ -290,11 +322,23 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
   downloadTemplate() async {
     loading(context);
     try {
-      var data = await http.get(Uri.parse(
-          'https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16'));
+      var data = await http.get(Uri.parse(Strings.productTemplate));
       var response = data.bodyBytes;
       Navigator.pop(context);
       helper.saveAndLaunchFile(response, "Product Template.xlsx");
+    } catch (e) {
+      Navigator.pop(context);
+      snackbar(context, false, e.toString());
+    }
+  }
+
+  downloadTemplateWithData() async {
+    loading(context);
+    try {
+      var data = await http.get(Uri.parse(Strings.productTemplateWithData));
+      var response = data.bodyBytes;
+      Navigator.pop(context);
+      helper.saveAndLaunchFile(response, "Product Template With Data.xlsx");
     } catch (e) {
       Navigator.pop(context);
       snackbar(context, false, e.toString());

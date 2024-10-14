@@ -6,8 +6,8 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sri_kot/model/model.dart';
-import 'package:sri_kot/view/ui/ui.dart';
+import '/model/model.dart';
+import '/view/ui/ui.dart';
 
 class DeviceModal extends StatefulWidget {
   final DeviceModel deviceModel;

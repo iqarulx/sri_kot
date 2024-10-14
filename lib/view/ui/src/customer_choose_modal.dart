@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sri_kot/view/ui/src/toast.dart';
-
-import '../../../provider/provider.dart';
+import '/view/ui/src/toast.dart';
+import '/provider/provider.dart';
 
 class CustomerChoose extends StatefulWidget {
   const CustomerChoose({super.key});

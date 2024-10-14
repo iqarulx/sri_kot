@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import '../../../services/services.dart';
+import '/services/services.dart';
 
 class InvoicePrevBillModal extends StatefulWidget {
   final bool? value;

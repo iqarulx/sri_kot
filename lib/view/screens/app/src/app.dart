@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:responsive_grid/responsive_grid.dart';
 import '/provider/provider.dart';
 import '/view/ui/ui.dart';
 import '/services/services.dart';
@@ -29,6 +31,8 @@ class _UserHomeState extends State<UserHome> {
   String? enquriy;
   String? estimate;
   String? product;
+  String? userName;
+  String? profileImg;
   bool isAdmin = false;
 
   @override
@@ -74,6 +78,7 @@ class _UserHomeState extends State<UserHome> {
       getEnquiryCount(),
       getEstimateCount(),
       getProductCount(),
+      profileImage()
     ]);
   }
 
@@ -87,13 +92,26 @@ class _UserHomeState extends State<UserHome> {
     ]);
   }
 
+  String getTime() {
+    final currentTime = DateTime.now();
+    final hour = currentTime.hour;
+
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: homeKey,
-      backgroundColor: Colors.white,
       drawer: const SideBar(),
       appBar: AppBar(
+        shadowColor: Colors.transparent,
         title: const Text("Dashboard"),
         actions: [
           IconButton(
@@ -105,183 +123,601 @@ class _UserHomeState extends State<UserHome> {
             },
             icon: const Icon(Icons.refresh_rounded),
           ),
+          IconButton(
+            onPressed: () async {
+              var isAdmin = await LocalDB.fetchInfo(type: LocalData.isAdmin);
+
+              final value = await Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) =>
+                      AppSettings(isHome: true, isAdmin: isAdmin),
+                ),
+              );
+              if (value != null) {
+                if (value) {
+                  final connectionProvider =
+                      Provider.of<ConnectionProvider>(context, listen: false);
+                  if (connectionProvider.isConnected) {
+                    setState(() {
+                      dashboardHandler = initFunction();
+                    });
+                  } else {
+                    setState(() {
+                      dashboardHandler = initFunctionOffline();
+                    });
+                  }
+                }
+              }
+            },
+            icon: const Icon(CupertinoIcons.gear),
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          // Refresh on pull down
-          setState(() {
-            dashboardHandler = initFunction();
-          });
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            homeKey.currentState!.openDrawer();
+          }
         },
-        child: FutureBuilder<void>(
-          future: dashboardHandler,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else {
-              return buildDashboardContent();
-            }
-          },
-        ),
+        child: RefreshIndicator(
+            color: Theme.of(context).primaryColor,
+            onRefresh: () async {
+              // Refresh on pull down
+              setState(() {
+                dashboardHandler = initFunction();
+              });
+            },
+            child: Column(
+              children: [
+                Container(
+                  height: 100,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(15),
+                      bottomRight: Radius.circular(15),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "${getTime()},",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              userName ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          showImage();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: profileImg ?? Strings.profileImg,
+                              placeholder: (context, url) =>
+                                  const CircularProgressIndicator(),
+                              fit: BoxFit.cover,
+                              width: 45.0,
+                              height: 45.0,
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.error),
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                FutureBuilder<void>(
+                  future: dashboardHandler,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return futureLoading(context);
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else {
+                      return buildDashboardContent();
+                    }
+                  },
+                ),
+              ],
+            )),
       ),
     );
   }
 
   Widget buildDashboardContent() {
-    return ListView(
-      padding: const EdgeInsets.all(10),
-      children: [
-        GridView(
-          primary: false,
-          shrinkWrap: true,
-          // gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          //   crossAxisCount: getTabSize(),
-          //   mainAxisSpacing: 10,
-          //   crossAxisSpacing: 10,
-          //   childAspectRatio: (1 / 1.12),
-          // ),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: (MediaQuery.of(context).size.width ~/ 150).toInt(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: (1 / 1.12),
-          ),
-          children: [
-            if (prCustomer)
-              dashboardcard(
-                title: "Customer",
-                subtitle: customer,
-                primaryColor: const Color(0xff4895ef),
-                icon: Icons.person,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (context) => const CustomerListing(),
+    return Expanded(
+      child: ListView(
+        padding: const EdgeInsets.all(10),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      "Your Feed",
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
                     ),
-                  );
-                },
-              ),
-            if (prEnquiry)
-              dashboardcard(
-                title: "Enquiry",
-                subtitle: enquriy,
-                primaryColor: const Color(0xffB284BE),
-                icon: Icons.business_outlined,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (context) => const EnquiryListing(),
+                    const SizedBox(
+                      height: 5,
                     ),
-                  );
-                },
-              ),
-            if (prEstimate)
-              dashboardcard(
-                title: "Estimate",
-                subtitle: estimate,
-                primaryColor: const Color(0xff3d348b),
-                icon: Icons.business_outlined,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (context) => const EstimateListing(),
-                    ),
-                  );
-                },
-              ),
-            if (prProduct)
-              dashboardcard(
-                title: "Product",
-                subtitle: product,
-                primaryColor: const Color(0xff6a994e),
-                icon: Icons.category,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (context) => const ProductListing(),
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-        if (prEnquiry || prEstimate)
-          GestureDetector(
-            onTap: () {
-              bilingTab == 1
-                  ? Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (context) => const BillingOne(),
+                    Container(
+                      height: 4,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     )
-                  : Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (context) => const BillingTwo(),
+                  ],
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                ResponsiveGridList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  desiredItemWidth: 150,
+                  minSpacing: 4,
+                  children: [
+                    if (prCustomer)
+                      dashboardcard(
+                        title: "Customer",
+                        subtitle: customer,
+                        primaryColor: const Color(0xff686EE2),
+                        icon: Icons.person,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const CustomerListing(),
+                            ),
+                          );
+                        },
                       ),
-                    );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 10, top: 10),
+                    if (prEnquiry)
+                      dashboardcard(
+                        title: "Enquiry",
+                        subtitle: enquriy,
+                        primaryColor: const Color(0xff5C3E84),
+                        icon: Icons.business_outlined,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const EnquiryListing(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (prEstimate)
+                      dashboardcard(
+                        title: "Estimate",
+                        subtitle: estimate,
+                        primaryColor: const Color(0xffF35C6E),
+                        icon: Icons.business_outlined,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const EstimateListing(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (prProduct)
+                      dashboardcard(
+                        title: "Product",
+                        subtitle: product,
+                        primaryColor: const Color(0xff406343),
+                        icon: Icons.category,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const ProductListing(),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+                if (prEnquiry || prEstimate)
+                  GestureDetector(
+                    onTap: () {
+                      bilingTab == 1
+                          ? Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const BillingOne(),
+                              ),
+                            )
+                          : Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const BillingTwo(),
+                              ),
+                            );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10, top: 10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                            colors: [Color(0xffFE0944), Color(0xffFEAE96)]),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 10),
+                      child: Row(
+                        children: [
+                          const Text(
+                            "Quick Billing",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 5,
+                          ),
+                          const Spacer(),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                            child: const Icon(
+                              Icons.north_east_outlined,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          if (isAdmin)
+            Container(
               decoration: BoxDecoration(
-                color: Colors.black12,
                 borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              child: Row(
+              child: Column(
                 children: [
-                  const Text(
-                    "Quick Billing",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        "Quick Access",
+                        style:
+                            Theme.of(context).textTheme.titleMedium!.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                      ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Container(
+                        height: 4,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      )
+                    ],
                   ),
                   const SizedBox(
-                    width: 5,
+                    height: 15,
                   ),
-                  // Container(
-                  //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  //   decoration: BoxDecoration(
-                  //     color: Theme.of(context).primaryColor,
-                  //     borderRadius: BorderRadius.circular(3),
-                  //   ),
-                  //   child: const Text(
-                  //     "PRO",
-                  //     style: TextStyle(
-                  //       color: Colors.white,
-                  //     ),
-                  //   ),
-                  // ),
-                  const Spacer(),
+                  ResponsiveGridList(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    desiredItemWidth: 80,
+                    minSpacing: 20,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const CompanyListing(),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xff5F6F94),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  CupertinoIcons.building_2_fill,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Company",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const InvoiceListing(),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xff5F6F94),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  CupertinoIcons.tags,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Bill of Supply",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const UserListing(),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xff5F6F94),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  CupertinoIcons.person_fill,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "User",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const StaffListing(),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xff5F6F94),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  CupertinoIcons.person_2_fill,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Staff",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const CategoryListing(),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xff5F6F94),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  CupertinoIcons.tag_solid,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Category",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) =>
+                                  const CategoryDiscountView(),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xff5F6F94),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  CupertinoIcons.percent,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Discount",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(
-                    width: 10,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: const Icon(
-                      Icons.north_east_outlined,
-                      size: 20,
-                    ),
+                    height: 15,
                   ),
                 ],
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -297,49 +733,38 @@ class _UserHomeState extends State<UserHome> {
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          color: primaryColor.withOpacity(0.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+            borderRadius: BorderRadius.circular(5), color: primaryColor),
+        child: Row(
           children: [
-            Container(
-              width: double.infinity,
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: primaryColor,
-                ),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge,
-              // style: const TextStyle(
-              //   color: Colors.black,
-              //   fontSize: 25,
-              //   fontWeight: FontWeight.bold,
-              // ),
-            ),
             const SizedBox(
-              height: 8,
+              width: 5,
             ),
             subtitle != null
-                ? Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    // style: const TextStyle(
-                    //   color: Colors.black,
-                    //   fontSize: 18,
-                    //   fontWeight: FontWeight.bold,
-                    // ),
+                ? Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                      ),
+                      // style: const TextStyle(
+                      //   color: Colors.black,
+                      //   fontSize: 18,
+                      //   fontWeight: FontWeight.bold,
+                      // ),
+                    ),
                   )
                 : const SizedBox(
                     height: 20,
@@ -373,6 +798,44 @@ class _UserHomeState extends State<UserHome> {
     } catch (e) {
       print(e);
     }
+  }
+
+  Future profileImage() async {
+    var img = await FireStore().getCompanyProfileImg();
+    if (img != null) {
+      setState(() {
+        profileImg = img;
+      });
+    }
+  }
+
+  showImage() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          content: SizedBox(
+            height: 300,
+            width: double.maxFinite,
+            child: InteractiveViewer(
+              child: Image.network(
+                profileImg ?? Strings.profileImg,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future getCustomerCountOffline() async {
@@ -508,6 +971,7 @@ class _UserHomeState extends State<UserHome> {
           prEnquiry = value["pr_order"];
           prEstimate = value["pr_estimate"];
           prProduct = value["pr_product"];
+          userName = value["user_name"];
         });
       }
     });

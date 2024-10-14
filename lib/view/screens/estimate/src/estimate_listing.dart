@@ -4,7 +4,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
@@ -120,21 +119,22 @@ class _EstimateListingState extends State<EstimateListing> {
         );
         if (enquiry.isNotEmpty) {
           for (var enquiryData in enquiry) {
-            var calcula = BillingCalCulationModel();
-            calcula.discount = enquiryData["price"]["discount"];
-            calcula.discountValue = enquiryData["price"]["discount_value"];
-            calcula.discountsys = enquiryData["price"]["discount_sys"];
-            calcula.extraDiscount = enquiryData["price"]["extra_discount"];
-            calcula.roundOff = enquiryData["price"]["round_off"];
-            calcula.extraDiscountValue =
+            var calc = BillingCalCulationModel();
+            calc.discountValue = enquiryData["price"]["discount_value"];
+            calc.extraDiscount = enquiryData["price"]["extra_discount"];
+            calc.roundOff = enquiryData["price"]["round_off"];
+            calc.extraDiscountValue =
                 enquiryData["price"]["extra_discount_value"];
-            calcula.extraDiscountsys =
-                enquiryData["price"]["extra_discount_sys"];
-            calcula.package = enquiryData["price"]["package"];
-            calcula.packageValue = enquiryData["price"]["package_value"];
-            calcula.packagesys = enquiryData["price"]["package_sys"];
-            calcula.subTotal = enquiryData["price"]["sub_total"];
-            calcula.total = enquiryData["price"]["total"];
+            calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+            calc.package = enquiryData["price"]["package"];
+            calc.packageValue = enquiryData["price"]["package_value"];
+            calc.packagesys = enquiryData["price"]["package_sys"];
+            calc.subTotal = enquiryData["price"]["sub_total"];
+            calc.total = enquiryData["price"]["total"];
+            calc.netratedTotal = enquiryData["price"]["netrated_total"];
+            calc.discountedTotal = enquiryData["price"]["discounted_total"];
+            calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+            calc.discounts = enquiryData["price"]["discounts"];
 
             var customer = CustomerDataModel();
             if (enquiryData["customer"] != null) {
@@ -174,6 +174,20 @@ class _EstimateListingState extends State<EstimateListing> {
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
                   productDataModel.videoUrl = product["video_url"];
+                  productDataModel.productType =
+                      product["discount_lock"] || product["discount"] == null
+                          ? ProductType.netRated
+                          : ProductType.discounted;
+                  if (productDataModel.productType == ProductType.discounted) {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString()) -
+                            (double.parse(product["price"].toString()) *
+                                product["discount"] /
+                                100);
+                  } else {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString());
+                  }
                   setState(() {
                     tmpProducts.add(productDataModel);
                   });
@@ -190,7 +204,7 @@ class _EstimateListingState extends State<EstimateListing> {
                   ),
                   enquiryid: enquiryData["estimate_id"],
                   estimateid: enquiryData["estimate_id"],
-                  price: calcula,
+                  price: calc,
                   customer: customer,
                   products: tmpProducts,
                   dataType: DataTypes.cloud,
@@ -227,9 +241,7 @@ class _EstimateListingState extends State<EstimateListing> {
       for (var data in localEnquiry) {
         var calcula = BillingCalCulationModel();
         var price = jsonDecode(data['price']) as Map<String, dynamic>;
-        calcula.discount = price["discount"];
         calcula.discountValue = price["discount_value"];
-        calcula.discountsys = price["discount_sys"];
         calcula.extraDiscount = price["extra_discount"];
         calcula.extraDiscountValue = price["extra_discount_value"];
         calcula.extraDiscountsys = price["extra_discount_sys"];
@@ -344,21 +356,22 @@ class _EstimateListingState extends State<EstimateListing> {
         var enquiry = await FireStore().getAllEnquiry(cid: cid);
         if (enquiry.isNotEmpty) {
           for (var enquiryData in enquiry) {
-            var calcula = BillingCalCulationModel();
-            calcula.discount = enquiryData["price"]["discount"];
-            calcula.discountValue = enquiryData["price"]["discount_value"];
-            calcula.discountsys = enquiryData["price"]["discount_sys"];
-            calcula.extraDiscount = enquiryData["price"]["extra_discount"];
-            calcula.roundOff = enquiryData["price"]["round_off"];
-            calcula.extraDiscountValue =
+            var calc = BillingCalCulationModel();
+            calc.discountValue = enquiryData["price"]["discount_value"];
+            calc.extraDiscount = enquiryData["price"]["extra_discount"];
+            calc.roundOff = enquiryData["price"]["round_off"];
+            calc.extraDiscountValue =
                 enquiryData["price"]["extra_discount_value"];
-            calcula.extraDiscountsys =
-                enquiryData["price"]["extra_discount_sys"];
-            calcula.package = enquiryData["price"]["package"];
-            calcula.packageValue = enquiryData["price"]["package_value"];
-            calcula.packagesys = enquiryData["price"]["package_sys"];
-            calcula.subTotal = enquiryData["price"]["sub_total"];
-            calcula.total = enquiryData["price"]["total"];
+            calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+            calc.package = enquiryData["price"]["package"];
+            calc.packageValue = enquiryData["price"]["package_value"];
+            calc.packagesys = enquiryData["price"]["package_sys"];
+            calc.subTotal = enquiryData["price"]["sub_total"];
+            calc.total = enquiryData["price"]["total"];
+            calc.netratedTotal = enquiryData["price"]["netrated_total"];
+            calc.discountedTotal = enquiryData["price"]["discounted_total"];
+            calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+            calc.discounts = enquiryData["price"]["discounts"];
 
             CustomerDataModel? customer = CustomerDataModel();
             if (enquiryData["customer"] != null) {
@@ -398,7 +411,20 @@ class _EstimateListingState extends State<EstimateListing> {
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
                   productDataModel.videoUrl = product["video_url"];
-
+                  productDataModel.productType =
+                      product["discount_lock"] || product["discount"] == null
+                          ? ProductType.netRated
+                          : ProductType.discounted;
+                  if (productDataModel.productType == ProductType.discounted) {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString()) -
+                            (double.parse(product["price"].toString()) *
+                                product["discount"] /
+                                100);
+                  } else {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString());
+                  }
                   setState(() {
                     tmpProducts.add(productDataModel);
                   });
@@ -415,7 +441,7 @@ class _EstimateListingState extends State<EstimateListing> {
                   ),
                   enquiryid: enquiryData['enquiry_id'],
                   estimateid: enquiryData["estimate_id"],
-                  price: calcula,
+                  price: calc,
                   customer: customer,
                   products: tmpProducts,
                   dataType: DataTypes.cloud,
@@ -495,9 +521,7 @@ class _EstimateListingState extends State<EstimateListing> {
       for (var data in localEnquiry) {
         var calcula = BillingCalCulationModel();
         var price = jsonDecode(data['price']) as Map<String, dynamic>;
-        calcula.discount = price["discount"];
         calcula.discountValue = price["discount_value"];
-        calcula.discountsys = price["discount_sys"];
         calcula.extraDiscount = price["extra_discount"];
         calcula.extraDiscountValue = price["extra_discount_value"];
         calcula.extraDiscountsys = price["extra_discount_sys"];
@@ -631,20 +655,22 @@ class _EstimateListingState extends State<EstimateListing> {
       var enquiry = await FireStore().getAllEnquiry(cid: cid);
       if (enquiry.isNotEmpty) {
         for (var enquiryData in enquiry) {
-          var calcula = BillingCalCulationModel();
-          calcula.discount = enquiryData["price"]["discount"];
-          calcula.discountValue = enquiryData["price"]["discount_value"];
-          calcula.discountsys = enquiryData["price"]["discount_sys"];
-          calcula.extraDiscount = enquiryData["price"]["extra_discount"];
-          calcula.roundOff = enquiryData["price"]["round_off"];
-          calcula.extraDiscountValue =
+          var calc = BillingCalCulationModel();
+          calc.discountValue = enquiryData["price"]["discount_value"];
+          calc.extraDiscount = enquiryData["price"]["extra_discount"];
+          calc.roundOff = enquiryData["price"]["round_off"];
+          calc.extraDiscountValue =
               enquiryData["price"]["extra_discount_value"];
-          calcula.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
-          calcula.package = enquiryData["price"]["package"];
-          calcula.packageValue = enquiryData["price"]["package_value"];
-          calcula.packagesys = enquiryData["price"]["package_sys"];
-          calcula.subTotal = enquiryData["price"]["sub_total"];
-          calcula.total = enquiryData["price"]["total"];
+          calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+          calc.package = enquiryData["price"]["package"];
+          calc.packageValue = enquiryData["price"]["package_value"];
+          calc.packagesys = enquiryData["price"]["package_sys"];
+          calc.subTotal = enquiryData["price"]["sub_total"];
+          calc.total = enquiryData["price"]["total"];
+          calc.netratedTotal = enquiryData["price"]["netrated_total"];
+          calc.discountedTotal = enquiryData["price"]["discounted_total"];
+          calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+          calc.discounts = enquiryData["price"]["discounts"];
 
           CustomerDataModel? customer = CustomerDataModel();
           if (enquiryData["customer"] != null) {
@@ -684,7 +710,20 @@ class _EstimateListingState extends State<EstimateListing> {
                 productDataModel.productImg = product["product_img"];
                 productDataModel.qrCode = product["qr_code"];
                 productDataModel.videoUrl = product["video_url"];
-
+                productDataModel.productType =
+                    product["discount_lock"] || product["discount"] == null
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+                if (productDataModel.productType == ProductType.discounted) {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString()) -
+                          (double.parse(product["price"].toString()) *
+                              product["discount"] /
+                              100);
+                } else {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString());
+                }
                 setState(() {
                   tmpProducts.add(productDataModel);
                 });
@@ -701,7 +740,7 @@ class _EstimateListingState extends State<EstimateListing> {
                 ),
                 enquiryid: enquiryData['enquiry_id'],
                 estimateid: enquiryData["estimate_id"],
-                price: calcula,
+                price: calc,
                 customer: customer,
                 products: tmpProducts,
                 dataType: DataTypes.cloud,
@@ -752,9 +791,7 @@ class _EstimateListingState extends State<EstimateListing> {
     for (var data in localEnquiry) {
       var calcula = BillingCalCulationModel();
       var price = jsonDecode(data['price']) as Map<String, dynamic>;
-      calcula.discount = price["discount"];
       calcula.discountValue = price["discount_value"];
-      calcula.discountsys = price["discount_sys"];
       calcula.extraDiscount = price["extra_discount"];
       calcula.extraDiscountValue = price["extra_discount_value"];
       calcula.extraDiscountsys = price["extra_discount_sys"];
@@ -912,7 +949,14 @@ class _EstimateListingState extends State<EstimateListing> {
     return Scaffold(
       appBar: appbar(context),
       floatingActionButton: floatingButton(context),
-      body: body(),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: body(),
+      ),
     );
   }
 
@@ -1153,6 +1197,7 @@ class _EstimateListingState extends State<EstimateListing> {
                       return enquiryList.isNotEmpty
                           ? Expanded(
                               child: RefreshIndicator(
+                                color: Theme.of(context).primaryColor,
                                 onRefresh: () async {
                                   if (connectionProvider.isConnected) {
                                     setState(() {
@@ -1213,68 +1258,18 @@ class _EstimateListingState extends State<EstimateListing> {
                                             // }
                                           },
                                           onLongPress: () {
-                                            showDialog(
-                                                context: context,
-                                                builder: (builder) {
-                                                  return BillListOptions(
-                                                    title: enquiryList[index]
-                                                                .enquiryid !=
+                                            billOptions(
+                                                enquiryList[index].enquiryid !=
+                                                        null
+                                                    ? enquiryList[index]
+                                                        .enquiryid!
+                                                    : enquiryList[index]
+                                                                .referenceId !=
                                                             null
                                                         ? enquiryList[index]
-                                                            .enquiryid!
-                                                        : enquiryList[index]
-                                                                    .referenceId !=
-                                                                null
-                                                            ? enquiryList[index]
-                                                                .referenceId!
-                                                            : "Choose an option",
-                                                  );
-                                                }).then((value) {
-                                              if (value != null) {
-                                                if (value == "1") {
-                                                  sharePDF(enquiryList[index]);
-                                                } else if (value == "2") {
-                                                  printEstimate(
-                                                      enquiryList[index]);
-                                                } else if (value == "3") {
-                                                  setState(() {
-                                                    Navigator.push(
-                                                      context,
-                                                      CupertinoPageRoute(
-                                                        builder: (context) =>
-                                                            EstimateDetails(
-                                                          cid: enquiryList[
-                                                                      index]
-                                                                  .docID ??
-                                                              enquiryList[index]
-                                                                  .referenceId ??
-                                                              '',
-                                                        ),
-                                                      ),
-                                                    ).then((value) {
-                                                      if (value != null &&
-                                                          value == true) {
-                                                        if (connectionProvider
-                                                            .isConnected) {
-                                                          setState(() {
-                                                            estimateHandler =
-                                                                getEstimateInfo();
-                                                          });
-                                                        } else {
-                                                          setState(() {
-                                                            estimateHandler =
-                                                                getOfflineEstimateInfo();
-                                                          });
-                                                        }
-                                                      }
-                                                    });
-                                                  });
-                                                } else if (value == "4") {
-                                                  deleteEnquiry(
-                                                      enquiryList[index]);
-                                                }
-                                              }
-                                            });
+                                                            .referenceId!
+                                                        : "Choose an option",
+                                                index);
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.all(10),
@@ -1658,7 +1653,7 @@ class _EstimateListingState extends State<EstimateListing> {
           //       onPressed: () async {
           //         Navigator.push(
           //           context,
-          //           MaterialPageRoute(builder: (context) {
+          //           CupertinoPageRoute(builder: (context) {
           //             return const EnquiryListing();
           //           }),
           //         );
@@ -1690,6 +1685,27 @@ class _EstimateListingState extends State<EstimateListing> {
       ),
       title: const Text("Estimate"),
       actions: [
+        IconButton(
+          tooltip: "Add Estimate",
+          onPressed: () async {
+            Navigator.pop(context);
+            await LocalDB.getBillingIndex().then((value) async {
+              if (value != null) {
+                final result = await Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (context) {
+                    if (value == 1) {
+                      return const BillingOne();
+                    } else {
+                      return const BillingTwo();
+                    }
+                  }),
+                );
+              }
+            });
+          },
+          icon: const Icon(Icons.add),
+        ),
         IconButton(
           onPressed: () {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1731,160 +1747,6 @@ class _EstimateListingState extends State<EstimateListing> {
     );
   }
 
-  printEstimate(EstimateDataModel estimateData) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                });
-
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => PrintViewEstimate(
-                      estimateData: estimateData,
-                      companyInfo: companyData,
-                    ),
-                  ),
-                );
-              } else {
-                Navigator.pop(context);
-              }
-            });
-          } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-        });
-
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => PrintViewEstimate(
-              estimateData: estimateData,
-              companyInfo: companyData,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
-  }
-
-  downloadPrintEnquiry(EstimateDataModel estimateData) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore()
-                .getCompanyDocInfo(cid: cid)
-                .then((companyInfo) async {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                });
-                var pdfAlignment = await LocalDB.getPdfAlignment();
-
-                var pdf = EnquiryPdf(
-                  pdfAlignment: pdfAlignment,
-                  estimateData: estimateData,
-                  type: PdfType.estimate,
-                  companyInfo: companyData,
-                );
-                Navigator.pop(context);
-                var dataResult = await pdf.showA4PDf();
-                var data = Uint8List.fromList(dataResult);
-                await helper.saveAndLaunchFile(data,
-                    'Estimate ${estimateData.estimateid ?? estimateData.referenceId}.pdf');
-              } else {
-                Navigator.pop(context);
-              }
-            });
-          } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-        });
-        var pdfAlignment = await LocalDB.getPdfAlignment();
-
-        var pdf = EnquiryPdf(
-          pdfAlignment: pdfAlignment,
-          estimateData: estimateData,
-          type: PdfType.estimate,
-          companyInfo: companyData,
-        );
-        Navigator.pop(context);
-
-        var dataResult = await pdf.showA4PDf();
-        var data = Uint8List.fromList(dataResult);
-        await helper.saveAndLaunchFile(data,
-            'Estimate ${estimateData.estimateid ?? estimateData.referenceId}.pdf');
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
-  }
-
-  deleteEnquiry(EstimateDataModel estimateData) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await FireStore()
-            .deleteEstimate(docID: estimateData.docID!)
-            .then((value) {
-          Navigator.pop(context);
-          Navigator.pop(context, true);
-          snackbar(context, true, "Successfully Deleted");
-        });
-      } else {
-        await LocalService.deleteEstimate(
-                referenceId: estimateData.referenceId ?? '')
-            .then((value) {
-          Navigator.pop(context);
-          Navigator.pop(context, true);
-          snackbar(context, true, "Successfully Deleted");
-        });
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
-  }
-
   duplicateEstimate(EstimateDataModel estimateData) async {
     loading(context);
     final connectionProvider =
@@ -1917,75 +1779,27 @@ class _EstimateListingState extends State<EstimateListing> {
     }
   }
 
-  sharePDF(EstimateDataModel estimateData) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore()
-                .getCompanyDocInfo(cid: cid)
-                .then((companyInfo) async {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                  companyData.contact = companyInfo["contact"];
-                });
-                var pdfAlignment = await LocalDB.getPdfAlignment();
-
-                var pdf = EnquiryPdf(
-                  pdfAlignment: pdfAlignment,
-                  estimateData: estimateData,
-                  type: PdfType.enquiry,
-                  companyInfo: companyData,
-                );
-                await pdf.showA4PDf().then((dataResult) async {
-                  await Printing.sharePdf(
-                    bytes: dataResult,
-                  ).then((value) {
-                    Navigator.pop(context);
-                  });
-                });
-                // var dataResult = await pdf.create3InchPDF();
-              } else {
-                Navigator.pop(context);
-              }
-            });
-          } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-        });
-        var pdfAlignment = await LocalDB.getPdfAlignment();
-
-        var pdf = EnquiryPdf(
-          pdfAlignment: pdfAlignment,
-          estimateData: estimateData,
-          type: PdfType.enquiry,
-          companyInfo: companyData,
+  billOptions(String title, int index) async {
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (builder) {
+        return FractionallySizedBox(
+          heightFactor: 0.4,
+          child: BillOptions(title: title, billType: BillType.estimate),
         );
-        await pdf.showA4PDf().then((dataResult) async {
-          await Printing.sharePdf(
-            bytes: dataResult,
-          ).then((value) {
-            Navigator.pop(context);
-          });
-        });
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
+      },
+    );
   }
 
   var companyData = ProfileModel();

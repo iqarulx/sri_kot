@@ -162,12 +162,8 @@ class Termal3InchPDF {
       printer.hr();
       calculationTableView3Inch(printer, "Subtotal",
           estimateData.price!.subTotal!.toStringAsFixed(2));
-      estimateData.price!.discount != 0
-          ? calculationTableView3Inch(
-              printer,
-              "Discount (${estimateData.price!.discount}${estimateData.price!.discountsys})",
-              estimateData.price!.discountValue!.toStringAsFixed(2))
-          : null;
+      calculationTableView3Inch(printer, "Discount",
+          estimateData.price!.discountValue!.toStringAsFixed(2));
       estimateData.price!.extraDiscount != 0
           ? calculationTableView3Inch(
               printer,

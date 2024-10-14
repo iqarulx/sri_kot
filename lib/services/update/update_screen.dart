@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sri_kot/constants/constants.dart';
@@ -10,7 +11,7 @@ import 'package:sri_kot/view/ui/src/modal.dart';
 import 'package:sri_kot/view/ui/src/access_code_modal.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../local/messaging.dart';
+import '../firebase/messaging.dart';
 
 class AppUpdateScreen extends StatefulWidget {
   const AppUpdateScreen({super.key});
@@ -57,7 +58,7 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
                           .then((value) {
                         Navigator.pop(context);
                         Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (builder) {
+                            CupertinoPageRoute(builder: (builder) {
                           return const Auth();
                         }));
                       });

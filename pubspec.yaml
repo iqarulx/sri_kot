@@ -6,7 +6,7 @@ publish_to: 'none'
 # Testing Environtment. Version starts with 0
 # Production Environment. Version starts with 1
 # Previous Test version 0.0.1
-version: 0.0.1
+version: 1.0.10
 
 environment:
   sdk: '>=3.4.3 <4.0.0'
@@ -17,7 +17,7 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   esc_pos_printer_new:
-    path: ./package/esc_pos_printer_new
+    path: ./package/esc_pos_printer_new  
   shared_preferences: ^2.3.2
   image_picker: ^1.1.2
   device_info_plus: ^10.1.2
@@ -57,7 +57,7 @@ dependencies:
   firebase_core: ^3.5.0
   firebase_storage: ^12.3.1
   firebase_auth: ^5.3.0
-  in_app_purchase: ^3.2.0
+  in_app_purchase: ^3.0.7 
   pinput: ^5.0.0
   firebase_messaging: ^15.1.2
   googleapis_auth: ^1.6.0
@@ -65,6 +65,14 @@ dependencies:
   toastification: ^2.2.0
   image: ^4.2.0
   flutter_image_compress: ^2.3.0
+  iconsax: ^0.0.8
+  responsive_grid: ^2.4.4
+  social_sharing_plus: ^1.2.3
+  purchases_flutter: ^8.1.4
+  purchases_ui_flutter: ^8.1.4
+  in_app_purchase_android: ^0.3.6+7
+  in_app_purchase_storekit: ^0.3.18+1
+  whatsapp_share: ^2.0.2
   # firebase_core: ^2.24.2
   # cloud_firestore: ^4.14.0
   # firebase_storage: ^11.6.0
@@ -76,7 +84,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   build_runner: ^2.4.11
   flutter_gen_runner: ^5.6.0  #If you want to generate assets then run this -> dart pub global activate flutter_gen, dart run build_runner build
-  json_serializable: ^6.8.0
   msix: ^3.16.8
 
 flutter_gen:
@@ -104,6 +111,18 @@ flutter:
     - assets/images/
     - assets/audio/store-scanner.mp3
     - assets/secure/
+    - assets/fonts/
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+    - family: Times
+      fonts:
+        - asset: assets/fonts/Times New Roman.ttf
 
 # dart pub run msix:create
 

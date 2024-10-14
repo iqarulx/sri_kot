@@ -82,147 +82,154 @@ class _PurchaseHistoryState extends State<PurchaseHistory> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: purchaseHandler,
-        builder: (builder, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return futureLoading(context);
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: FutureBuilder(
+          future: purchaseHandler,
+          builder: (builder, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return futureLoading(context);
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Center(
+                        child: Text(
+                          "Failed",
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      Text(
+                        snapshot.error.toString() == "null"
+                            ? "Something went Wrong"
+                            : snapshot.error.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              purchaseHandler = getPayments();
+                            });
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text(
+                            "Refresh",
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                margin: const EdgeInsets.all(20),
+              );
+            } else {
+              return ListView.builder(
                 padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Failed",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                itemCount: purchaseHistory.length,
+                itemBuilder: (context, index) {
+                  return Column(
+                    children: [
+                      const SizedBox(
+                        height: 5,
                       ),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      snapshot.error.toString() == "null"
-                          ? "Something went Wrong"
-                          : snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            purchaseHandler = getPayments();
-                          });
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(context,
+                              CupertinoPageRoute(builder: (builder) {
+                            return PurchaseDetailsView(
+                                model: purchaseHistory[index]);
+                          }));
                         },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text(
-                          "Refresh",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return ListView.builder(
-              padding: const EdgeInsets.all(10),
-              itemCount: purchaseHistory.length,
-              itemBuilder: (context, index) {
-                return Column(
-                  children: [
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(context,
-                            CupertinoPageRoute(builder: (builder) {
-                          return PurchaseDetailsView(
-                              model: purchaseHistory[index]);
-                        }));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Container(
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      purchaseHistory[index].productName ?? '',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      DateFormat('dd-MM-yyyy hh:mm a').format(
+                                          purchaseHistory[index].createdAt ??
+                                              DateTime.now()),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
                                 children: [
                                   Text(
-                                    purchaseHistory[index].productName ?? '',
+                                    purchaseHistory[index].amount ?? '',
                                     style: TextStyle(
                                       color: Theme.of(context).primaryColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
                                   ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    DateFormat('dd-MM-yyyy hh:mm a').format(
-                                        purchaseHistory[index].createdAt ??
-                                            DateTime.now()),
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 13,
+                                  if (purchaseHistory[index].status !=
+                                      "purchased")
+                                    const Text(
+                                      "Failed",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 13,
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              children: [
-                                Text(
-                                  purchaseHistory[index].amount ?? '',
-                                  style: TextStyle(
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                if (purchaseHistory[index].status !=
-                                    "purchased")
-                                  const Text(
-                                    "Failed",
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            );
-          }
-        },
+                    ],
+                  );
+                },
+              );
+            }
+          },
+        ),
       ),
     );
   }

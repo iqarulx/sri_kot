@@ -8,7 +8,6 @@ export 'src/excel_reader_provider.dart';
 export 'src/file_picker_provider.dart';
 export 'src/file_provider.dart';
 export 'src/imagepickerprovider.dart';
-export 'src/logger.dart';
 export 'src/page_provider.dart';
 export 'src/pdf_creation_provider.dart';
 export 'src/permission_provider.dart';

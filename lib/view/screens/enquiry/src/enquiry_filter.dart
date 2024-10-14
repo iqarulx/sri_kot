@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../../provider/provider.dart';
 import '../../../ui/ui.dart';
-import '/constants/constants.dart';
 import '/services/services.dart';
 
 class EnquiryFilter extends StatefulWidget {
@@ -22,31 +21,28 @@ class _EnquiryFilterState extends State<EnquiryFilter> {
   Future getCustomerInfo() async {
     try {
       FireStore provider = FireStore();
-      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       final connectionProvider =
           Provider.of<ConnectionProvider>(context, listen: false);
       if (connectionProvider.isConnected) {
-        if (cid != null) {
-          final result = await provider.customerListing(cid: cid);
-          if (result!.docs.isNotEmpty) {
+        final result = await provider.customerListing();
+        if (result!.docs.isNotEmpty) {
+          setState(() {
+            customerList.clear();
+          });
+          for (var element in result.docs) {
             setState(() {
-              customerList.clear();
-            });
-            for (var element in result.docs) {
-              setState(() {
-                customerList.add(
-                  DropdownMenuItem(
-                    value: element.id,
-                    child: Text(
-                      "${element["customer_name"].toString()} - (${element["mobile_no"].toString()})",
-                    ),
+              customerList.add(
+                DropdownMenuItem(
+                  value: element.id,
+                  child: Text(
+                    "${element["customer_name"].toString()} - (${element["mobile_no"].toString()})",
                   ),
-                );
-              });
-            }
-
-            return customerList;
+                ),
+              );
+            });
           }
+
+          return customerList;
         }
       } else {
         setState(() {

@@ -18,6 +18,8 @@ class _AddCustomerState extends State<AddCustomer> {
   TextEditingController mobileNo = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController address = TextEditingController();
+  TextEditingController pincode = TextEditingController();
+  TextEditingController identificationNo = TextEditingController();
 
   var addCustomerKey = GlobalKey<FormState>();
 
@@ -25,44 +27,6 @@ class _AddCustomerState extends State<AddCustomer> {
   String? state;
   List<DropdownMenuItem<String>> stateMenuList = [];
   List<DropdownMenuItem<String>> cityMenuList = [];
-
-  getState() {
-    setState(() {
-      stateMenuList.clear();
-    });
-    for (var element in stateMapList.keys) {
-      setState(() {
-        stateMenuList.add(
-          DropdownMenuItem(
-            value: element,
-            child: Text(
-              element.toString(),
-            ),
-          ),
-        );
-      });
-    }
-  }
-
-  getcity() {
-    if (state != null && state!.isNotEmpty) {
-      setState(() {
-        cityMenuList.clear();
-      });
-      for (var element in stateMapList[state]!) {
-        setState(() {
-          cityMenuList.add(
-            DropdownMenuItem(
-              value: element,
-              child: Text(
-                element.toString(),
-              ),
-            ),
-          );
-        });
-      }
-    }
-  }
 
   checkValidation() async {
     loading(context);
@@ -74,29 +38,64 @@ class _AddCustomerState extends State<AddCustomer> {
             var customerData = CustomerDataModel();
             customerData.companyID = cid;
             customerData.address = address.text;
-            customerData.city = city;
+            customerData.companyName = customerData.city = city;
             customerData.customerName = customerName.text;
             customerData.email = email.text;
             customerData.mobileNo = mobileNo.text;
             customerData.state = state;
-
+            if (identificationType != null) {
+              customerData.identificationType = identificationType;
+              customerData.identificationNo = identificationNo.text;
+            }
+            customerData.isCompany = customerType == "1" ? false : true;
+            Navigator.pop(context);
             await FireStore()
-                .registerCustomer(customerData: customerData)
-                .then((value) {
-              Navigator.pop(context);
-              if (value.id.isNotEmpty) {
-                setState(() {
-                  customerName.clear();
-                  mobileNo.clear();
-                  email.clear();
-                  address.clear();
-                  state = null;
-                  city = null;
-                  cityMenuList.clear();
-                });
-                snackbar(context, true, "Successfully Created New Customer");
+                .checkCustomerMobileNoRegistered(mobileNo: mobileNo.text)
+                .then((value) async {
+              if (value) {
+                if (identificationType != null &&
+                    identificationNo.text.isNotEmpty) {
+                  await FireStore()
+                      .checkCustomerIdentityRegistered(
+                          identificationNo: identificationNo.text)
+                      .then((value) async {
+                    if (value) {
+                      await FireStore()
+                          .registerCustomer(customerData: customerData)
+                          .then((value) {
+                        Navigator.pop(context);
+                        if (value.id.isNotEmpty) {
+                          Navigator.pop(context, true);
+                          snackbar(context, true,
+                              "Successfully Created New Customer");
+                        } else {
+                          snackbar(
+                              context, false, "Failed to Create New Customer");
+                        }
+                      });
+                    } else {
+                      Navigator.pop(context);
+                      snackbar(context, false,
+                          "Customer identity already registered");
+                    }
+                  });
+                } else {
+                  await FireStore()
+                      .registerCustomer(customerData: customerData)
+                      .then((value) {
+                    Navigator.pop(context);
+                    if (value.id.isNotEmpty) {
+                      Navigator.pop(context, true);
+                      snackbar(
+                          context, true, "New Customer Created Successfully");
+                    } else {
+                      snackbar(context, false, "Failed to Create New Customer");
+                    }
+                  });
+                }
               } else {
-                snackbar(context, false, "Failed to Create New Customer");
+                Navigator.pop(context);
+                snackbar(context, false, "Customer mobile no already exist");
               }
             });
           } else {
@@ -113,45 +112,116 @@ class _AddCustomerState extends State<AddCustomer> {
     }
   }
 
-  showStateAlert() async {
-    await showDialog(
+  chooseState() async {
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
       context: context,
-      builder: (context) {
-        return const StateAlert();
+      builder: (builder) {
+        return const FractionallySizedBox(
+          heightFactor: 0.9,
+          child: StateSearch(),
+        );
       },
-    ).then((value) {
-      if (value != null) {
-        setState(() {
+    ).then(
+      (value) {
+        if (value != null) {
           state = value;
-          city = null;
-        });
-      }
-    });
+          setState(() {});
+        }
+      },
+    );
   }
 
-  showCityAlert() async {
-    if (state != null && state!.isNotEmpty) {
-      await showDialog(
+  chooseCity() async {
+    if (state != null) {
+      await showModalBottomSheet(
+        backgroundColor: Colors.white,
+        useSafeArea: true,
+        showDragHandle: true,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          side: BorderSide.none,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
+        ),
         context: context,
-        builder: (context) {
-          return CityAlert(
-            state: state!,
+        builder: (builder) {
+          return FractionallySizedBox(
+            heightFactor: 0.9,
+            child: CitySearch(
+              state: state!,
+            ),
           );
         },
-      ).then((value) {
-        if (value != null) {
-          setState(() {
+      ).then(
+        (value) {
+          if (value != null) {
             city = value;
-          });
-        }
-      });
+            setState(() {});
+          }
+        },
+      );
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    getState();
+  String customerType = "1";
+  List<DropdownMenuItem<String>> identificationTypeList = [
+    const DropdownMenuItem(
+      value: null,
+      child: Text(
+        "Select identification type",
+        style: TextStyle(color: Colors.grey),
+      ),
+    ),
+    const DropdownMenuItem(
+      value: "Adhaar No",
+      child: Text("Adhaar No"),
+    ),
+    const DropdownMenuItem(
+      value: "Pan No",
+      child: Text("Pan No"),
+    ),
+    const DropdownMenuItem(
+      value: "Others",
+      child: Text("Others"),
+    ),
+  ];
+
+  String? identificationType;
+  bool isGstAdded = false;
+
+  addGstIfNotPresent() {
+    if (!isGstAdded) {
+      identificationTypeList.add(const DropdownMenuItem(
+        value: "GST No",
+        child: Text("GST No"),
+      ));
+      isGstAdded = true;
+    }
+  }
+
+  void removeGstIfPresent() {
+    if (isGstAdded) {
+      setState(() {
+        if (identificationType == "GST No") {
+          identificationType = null;
+        }
+        identificationTypeList.removeWhere((item) => item.value == "GST No");
+        isGstAdded = false;
+      });
+    }
   }
 
   @override
@@ -165,113 +235,238 @@ class _AddCustomerState extends State<AddCustomer> {
         ),
         title: const Text("Add Customer"),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10),
-        child: Container(
-          width: double.infinity,
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Form(
-            key: addCustomerKey,
-            child: Column(
-              children: [
-                InputForm(
-                  controller: customerName,
-                  lableName: "Name",
-                  formName: "Customer Name",
-                  prefixIcon: Icons.person,
-                  validation: (p0) {
-                    return FormValidation().commonValidation(
-                      input: p0,
-                      isMandorty: true,
-                      formName: 'Customer Name',
-                      isOnlyCharter: false,
-                    );
-                  },
-                ),
-                InputForm(
-                  controller: mobileNo,
-                  lableName: "Mobile No",
-                  formName: "Mobile Number",
-                  prefixIcon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                  validation: (p0) {
-                    return FormValidation().phoneValidation(
-                      input: p0.toString(),
-                      isMandorty: true,
-                      lableName: 'Mobile Number',
-                    );
-                  },
-                ),
-                InputForm(
-                  controller: email,
-                  lableName: "Email",
-                  formName: "Email Address",
-                  prefixIcon: Icons.alternate_email,
-                  keyboardType: TextInputType.emailAddress,
-                  validation: (p0) {
-                    return FormValidation().emailValidation(
-                      input: p0.toString(),
-                      lableName: "Email Address",
-                      isMandorty: false,
-                    );
-                  },
-                ),
-                InputForm(
-                  controller: address,
-                  lableName: "Address",
-                  formName: "Address",
-                  prefixIcon: Icons.place_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validation: (p0) {
-                    return FormValidation().commonValidation(
-                      input: p0,
-                      isMandorty: false,
-                      formName: 'Address',
-                      isOnlyCharter: false,
-                    );
-                  },
-                ),
-                InputForm(
-                  onTap: () {
-                    showStateAlert();
-                  },
-                  lableName: "State",
-                  controller: TextEditingController(text: state),
-                  formName: "State",
-                  readOnly: true,
-                  prefixIcon: Icons.map_outlined,
-                  validation: (input) {
-                    return FormValidation().commonValidation(
-                      input: input,
-                      isMandorty: true,
-                      formName: "State",
-                      isOnlyCharter: false,
-                    );
-                  },
-                ),
-                InputForm(
-                  onTap: () {
-                    showCityAlert();
-                  },
-                  lableName: "City",
-                  controller: TextEditingController(text: city),
-                  formName: "City",
-                  readOnly: true,
-                  prefixIcon: Icons.explore_outlined,
-                  validation: (input) {
-                    return FormValidation().commonValidation(
-                      input: input,
-                      isMandorty: true,
-                      formName: "City",
-                      isOnlyCharter: false,
-                    );
-                  },
-                ),
-              ],
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Form(
+              key: addCustomerKey,
+              child: Column(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Customer Type",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text('Customer'),
+                              value: '1',
+                              toggleable: true,
+                              groupValue: customerType,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    customerType = value;
+                                    removeGstIfPresent();
+                                  });
+                                }
+                              },
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text('Company'),
+                              value: '2',
+                              groupValue: customerType,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    customerType = value;
+                                    addGstIfNotPresent();
+                                  });
+                                }
+                              },
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  InputForm(
+                    controller: customerName,
+                    labelName:
+                        customerType == "1" ? "Customer Name" : "Company Name",
+                    formName:
+                        customerType == "1" ? "Customer Name" : "Company Name",
+                    prefixIcon: Icons.person,
+                    validation: (p0) {
+                      return FormValidation().commonValidation(
+                        input: p0,
+                        isMandatory: false,
+                        formName: customerType == "1"
+                            ? "Customer Name"
+                            : "Company Name",
+                        isOnlyCharter: false,
+                      );
+                    },
+                  ),
+                  InputForm(
+                    controller: mobileNo,
+                    labelName: "Mobile No (*)",
+                    formName: "Mobile Number",
+                    prefixIcon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                    validation: (p0) {
+                      return FormValidation().phoneValidation(
+                        input: p0.toString(),
+                        isMandatory: true,
+                        labelName: 'Mobile Number',
+                      );
+                    },
+                  ),
+                  InputForm(
+                    controller: email,
+                    labelName: "Email",
+                    formName: "Email Address",
+                    prefixIcon: Icons.alternate_email,
+                    keyboardType: TextInputType.emailAddress,
+                    validation: (p0) {
+                      return FormValidation().emailValidation(
+                        input: p0.toString(),
+                        labelName: "Email Address",
+                        isMandatory: false,
+                      );
+                    },
+                  ),
+                  InputForm(
+                    controller: address,
+                    labelName: "Address",
+                    formName: "Address",
+                    prefixIcon: Icons.pin_drop_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                    validation: (p0) {
+                      return FormValidation().commonValidation(
+                        input: p0,
+                        isMandatory: false,
+                        formName: 'Address',
+                        isOnlyCharter: false,
+                      );
+                    },
+                  ),
+                  InputForm(
+                    onTap: () {
+                      chooseState();
+                    },
+                    labelName: "State",
+                    controller: TextEditingController(text: state),
+                    formName: "State",
+                    readOnly: true,
+                    prefixIcon: Icons.map_outlined,
+                    validation: (input) {
+                      return FormValidation().commonValidation(
+                        input: input,
+                        isMandatory: false,
+                        formName: "State",
+                        isOnlyCharter: false,
+                      );
+                    },
+                  ),
+                  InputForm(
+                    onTap: () {
+                      chooseCity();
+                    },
+                    labelName: "City",
+                    controller: TextEditingController(text: city),
+                    formName: "City",
+                    readOnly: true,
+                    prefixIcon: Icons.explore_outlined,
+                    validation: (input) {
+                      return FormValidation().commonValidation(
+                        input: input,
+                        isMandatory: false,
+                        formName: "City",
+                        isOnlyCharter: false,
+                      );
+                    },
+                  ),
+                  InputForm(
+                    controller: pincode,
+                    labelName: "Pin code",
+                    formName: "Pin code",
+                    prefixIcon: Icons.pin_drop_rounded,
+                    keyboardType: TextInputType.number,
+                    validation: (p0) {
+                      return FormValidation().pincodeValidation(
+                        input: p0 ?? '',
+                        isMandatory: false,
+                      );
+                    },
+                  ),
+                  DropDownForm(
+                    formName: "Identification",
+                    onChange: (v) {
+                      setState(() {
+                        identificationType = v;
+                      });
+                    },
+                    labelName: "Identification Type",
+                    value: identificationType,
+                    isMandatory: false,
+                    listItems: identificationTypeList,
+                  ),
+                  if (identificationType != null)
+                    Column(
+                      children: [
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        InputForm(
+                          controller: identificationNo,
+                          labelName: identificationType,
+                          formName: identificationType ?? '',
+                          prefixIcon: Icons.shield_rounded,
+                          keyboardType: TextInputType.text,
+                          validation: (p0) {
+                            if (identificationType == "Adhaar No") {
+                              return FormValidation()
+                                  .aadhaarValidation(p0 ?? '', true);
+                            } else if (identificationType == "Pan No") {
+                              return FormValidation()
+                                  .panValidation(p0 ?? '', true);
+                            } else if (identificationType == "GST No") {
+                              return FormValidation().gstValidation(
+                                  input: p0 ?? '', isMandatory: true);
+                            } else if (identificationType == "Others") {
+                              return FormValidation().commonValidation(
+                                formName: "Identity",
+                                isOnlyCharter: false,
+                                input: p0 ?? '',
+                                isMandatory: true,
+                              );
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),

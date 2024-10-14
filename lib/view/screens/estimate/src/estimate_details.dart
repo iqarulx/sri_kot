@@ -51,9 +51,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           if (value != null) {
             if (value.exists) {
               var calcula = BillingCalCulationModel();
-              calcula.discount = value["price"]["discount"];
               calcula.discountValue = value["price"]["discount_value"];
-              calcula.discountsys = value["price"]["discount_sys"];
               calcula.extraDiscount = value["price"]["extra_discount"];
               calcula.roundOff = value["price"]["round_off"];
               calcula.extraDiscountValue =
@@ -67,8 +65,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
 
               CustomerDataModel? customer = CustomerDataModel();
               if (value["customer"] != null) {
-                customer.docID = value.id;
-                customer.address = value["customer"]["customer_id"];
+                customer.docID = value["customer"]["customer_id"];
                 customer.address = value["customer"]["address"];
                 customer.state = value["customer"]["state"];
                 customer.city = value["customer"]["city"];
@@ -78,11 +75,13 @@ class _EstimateDetailsState extends State<EstimateDetails> {
               } else {
                 customer = null;
               }
+
               List<ProductDataModel> tmpProducts = [];
 
               setState(() {
                 tmpProducts.clear();
               });
+
               await FireStore()
                   .getEstimateProducts(docid: value.id)
                   .then((products) {
@@ -97,7 +96,13 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                     productDataModel.qty = product["qty"];
                     productDataModel.productCode =
                         product["product_code"] ?? "";
+                    productDataModel.productType =
+                        product["discount_lock"] || product["discount"] == null
+                            ? ProductType.netRated
+                            : ProductType.discounted;
                     productDataModel.discountLock = product["discount_lock"];
+                    productDataModel.hsnCode = product["hsn_code"];
+                    productDataModel.taxValue = product["tax_value"];
                     if (productDataModel.categoryid != null &&
                         productDataModel.categoryid!.isNotEmpty) {
                       var getCategoryid = categoryList.indexWhere((elements) =>
@@ -158,9 +163,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
               await DatabaseHelper().getEstimateWithId(widget.cid);
           var calcula = BillingCalCulationModel();
           var price = jsonDecode(localEnquiry['price']) as Map<String, dynamic>;
-          calcula.discount = price["discount"];
           calcula.discountValue = price["discount_value"];
-          calcula.discountsys = price["discount_sys"];
           calcula.extraDiscount = price["extra_discount"];
           calcula.extraDiscountValue = price["extra_discount_value"];
           calcula.extraDiscountsys = price["extra_discount_sys"];
@@ -242,14 +245,17 @@ class _EstimateDetailsState extends State<EstimateDetails> {
   }
 
   var companyData = ProfileModel();
-  TableRow tableRow(String? title, String? value, bool bold) {
+  TableRow tableRow(String? title, String? value, bool bold, Function()? func) {
     return TableRow(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(3),
-          child: Text(
-            title ?? "",
-            style: Theme.of(context).textTheme.titleSmall,
+        GestureDetector(
+          onTap: func,
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child: Text(
+              title ?? "",
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
         ),
         Padding(
@@ -286,64 +292,217 @@ class _EstimateDetailsState extends State<EstimateDetails> {
   }
 
   printEstimate() async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (builder) {
+        return const FractionallySizedBox(
+          heightFactor: 0.25,
+          child: PdfPreviewModal(),
+        );
+      },
+    ).then((value) async {
+      if (value == 1) {
+        loading(context);
+        final connectionProvider =
+            Provider.of<ConnectionProvider>(context, listen: false);
 
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                  companyData.contact = companyInfo["contact"];
+        try {
+          if (connectionProvider.isConnected) {
+            await LocalDB.fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                await FireStore()
+                    .getCompanyDocInfo(cid: cid)
+                    .then((companyInfo) {
+                  if (companyInfo != null) {
+                    setState(() {
+                      companyData.companyName = companyInfo["company_name"];
+                      companyData.address = companyInfo["address"];
+                    });
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => PrintViewA4(
+                          estimateData: estimateData,
+                          companyInfo: companyData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
                 });
-
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => PrintViewEstimate(
-                      estimateData: estimateData,
-                      companyInfo: companyData,
-                    ),
-                  ),
-                );
               } else {
                 Navigator.pop(context);
               }
             });
           } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-          companyData.contact = {"phone_no": ""};
-        });
+            var companyName =
+                await LocalDB.fetchInfo(type: LocalData.companyName);
+            var address =
+                await LocalDB.fetchInfo(type: LocalData.companyAddress);
+            setState(() {
+              companyData.companyName = companyName;
+              companyData.address = address;
+            });
 
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => PrintViewEstimate(
-              estimateData: estimateData,
-              companyInfo: companyData,
-            ),
-          ),
-        );
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => PrintViewA4(
+                  estimateData: estimateData,
+                  companyInfo: companyData,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
+      } else if (value == 2) {
+        loading(context);
+        final connectionProvider =
+            Provider.of<ConnectionProvider>(context, listen: false);
+
+        try {
+          if (connectionProvider.isConnected) {
+            await LocalDB.fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                await FireStore()
+                    .getCompanyDocInfo(cid: cid)
+                    .then((companyInfo) {
+                  if (companyInfo != null) {
+                    setState(() {
+                      companyData.companyName = companyInfo["company_name"];
+                      companyData.address = companyInfo["address"];
+                    });
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => PrintViewA5(
+                          estimateData: estimateData,
+                          companyInfo: companyData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
+                });
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            var companyName =
+                await LocalDB.fetchInfo(type: LocalData.companyName);
+            var address =
+                await LocalDB.fetchInfo(type: LocalData.companyAddress);
+            setState(() {
+              companyData.companyName = companyName;
+              companyData.address = address;
+            });
+
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => PrintViewA5(
+                  estimateData: estimateData,
+                  companyInfo: companyData,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
+      } else if (value == 3) {
+        loading(context);
+        final connectionProvider =
+            Provider.of<ConnectionProvider>(context, listen: false);
+
+        try {
+          if (connectionProvider.isConnected) {
+            await LocalDB.fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                await FireStore()
+                    .getCompanyDocInfo(cid: cid)
+                    .then((companyInfo) {
+                  if (companyInfo != null) {
+                    setState(() {
+                      companyData.companyName = companyInfo["company_name"];
+                      companyData.address = companyInfo["address"];
+                      companyData.contact = companyInfo["contact"];
+                    });
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => PrintView3inch(
+                          estimateData: estimateData,
+                          companyInfo: companyData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
+                });
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            var companyName =
+                await LocalDB.fetchInfo(type: LocalData.companyName);
+            var address =
+                await LocalDB.fetchInfo(type: LocalData.companyAddress);
+            // add contact
+            setState(() {
+              companyData.companyName = companyName;
+              companyData.address = address;
+              // add also
+            });
+
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => PrintView3inch(
+                  estimateData: estimateData,
+                  companyInfo: companyData,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
       }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
+    });
   }
 
   downloadPrintEnquiry() async {
@@ -372,7 +531,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                     companyInfo: companyData,
                     pdfAlignment: pdfAlignment);
                 Navigator.pop(context);
-                var dataResult = await pdf.showA4PDf();
+                var dataResult = await pdf.format1A4();
                 var data = Uint8List.fromList(dataResult);
                 await helper.saveAndLaunchFile(data,
                     'Estimate ${estimateData.estimateid ?? estimateData.referenceId}.pdf');
@@ -401,7 +560,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
         );
         Navigator.pop(context);
 
-        var dataResult = await pdf.showA4PDf();
+        var dataResult = await pdf.format1A4();
         var data = Uint8List.fromList(dataResult);
         await helper.saveAndLaunchFile(data,
             'Estimate ${estimateData.estimateid ?? estimateData.referenceId}.pdf');
@@ -587,7 +746,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                     type: PdfType.estimate,
                     companyInfo: companyData,
                     pdfAlignment: pdfAlignment);
-                await pdf.showA4PDf().then((dataResult) async {
+                await pdf.format1A4().then((dataResult) async {
                   await Printing.sharePdf(
                     bytes: dataResult,
                   ).then((value) {
@@ -618,7 +777,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
           type: PdfType.estimate,
           companyInfo: companyData,
         );
-        await pdf.showA4PDf().then((dataResult) async {
+        await pdf.format1A4().then((dataResult) async {
           await Printing.sharePdf(
             bytes: dataResult,
           ).then((value) {
@@ -660,9 +819,9 @@ class _EstimateDetailsState extends State<EstimateDetails> {
               if (value != null) {
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) {
+                  CupertinoPageRoute(builder: (context) {
                     if (value == 1) {
-                      return BillingOne(
+                      return BillingOneEdit(
                         isEdit: true,
                         estimateData: estimateData,
                       );
@@ -698,391 +857,460 @@ class _EstimateDetailsState extends State<EstimateDetails> {
             ],
           ),
         ),
-        body: FutureBuilder(
-            future: enquiryDetailsHandler,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else {
-                return RefreshIndicator(
-                    onRefresh: () async {
-                      setState(() {
-                        enquiryDetailsHandler = getEnquiryData();
-                      });
-                    },
-                    child: ListView(
-                      padding: const EdgeInsets.all(10),
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Options",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium!
-                                    .copyWith(
-                                      fontWeight: FontWeight.bold,
+        body: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (details.velocity.pixelsPerSecond.dx > 0) {
+              Navigator.of(context).pop();
+            }
+          },
+          child: FutureBuilder(
+              future: enquiryDetailsHandler,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else {
+                  return RefreshIndicator(
+                      color: Theme.of(context).primaryColor,
+                      onRefresh: () async {
+                        setState(() {
+                          enquiryDetailsHandler = getEnquiryData();
+                        });
+                      },
+                      child: ListView(
+                        padding: const EdgeInsets.all(10),
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Options",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium!
+                                      .copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    IconButton(
+                                      onPressed: sharePDF,
+                                      icon: const Icon(Icons.share),
                                     ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  IconButton(
-                                    onPressed: sharePDF,
-                                    icon: const Icon(Icons.share),
-                                  ),
-                                  IconButton(
-                                    tooltip: "Print Enquiry",
-                                    splashRadius: 29,
-                                    onPressed: () {
-                                      printEstimate();
-                                    },
-                                    icon: const Icon(
-                                      Icons.print,
+                                    IconButton(
+                                      tooltip: "Print Enquiry",
+                                      splashRadius: 29,
+                                      onPressed: () {
+                                        printEstimate();
+                                      },
+                                      icon: const Icon(
+                                        Icons.print,
+                                      ),
                                     ),
-                                  ),
-                                  IconButton(
-                                    tooltip: "Copy Enquiry",
-                                    splashRadius: 29,
-                                    onPressed: () async {
-                                      await confirmationDialog(
-                                        context,
-                                        title: "Alert",
-                                        message:
-                                            "Do you want Duplicate Estimate?",
-                                      ).then((value) {
-                                        if (value != null && value == true) {
-                                          duplicateEstimate();
-                                        }
-                                      });
-                                    },
-                                    icon: const Icon(
-                                      Icons.copy,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: "Download PDF",
-                                    splashRadius: 29,
-                                    onPressed: () async {
-                                      await confirmationDialog(
-                                        context,
-                                        title: "Alert",
-                                        message:
-                                            "Do you want Download Estimate?",
-                                      ).then((value) {
-                                        if (value != null && value == true) {
-                                          downloadPrintEnquiry();
-                                        }
-                                      });
-                                    },
-                                    icon: const Icon(
-                                      Icons.file_download_outlined,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: "Delete Enquiry",
-                                    splashRadius: 29,
-                                    onPressed: () async {
-                                      await confirmationDialog(
-                                        context,
-                                        title: "Alert",
-                                        message: "Do you want delete enquiry?",
-                                      ).then((value) {
-                                        if (value != null && value == true) {
-                                          deleteEnquiry();
-                                        }
-                                      });
-                                    },
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "Estimate Details",
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Table(
-                                children: [
-                                  tableRow(
-                                      "Estimate No",
-                                      estimateData.estimateid ??
-                                          estimateData.referenceId,
-                                      true),
-                                  tableRow(
-                                      "Estimate Date",
-                                      DateFormat('dd-MM-yyyy HH:mm a')
-                                          .format(estimateData.createddate!),
-                                      false),
-                                ],
-                              ),
-                              if (connectionProvider.isConnected)
-                                Visibility(
-                                  visible: invoiceEntry,
-                                  child: Center(
-                                    child: TextButton(
+                                    IconButton(
+                                      tooltip: "Copy Enquiry",
+                                      splashRadius: 29,
                                       onPressed: () async {
                                         await confirmationDialog(
                                           context,
                                           title: "Alert",
                                           message:
-                                              "Do you want Convert the Bill of Supply?",
+                                              "Do you want Duplicate Estimate?",
                                         ).then((value) {
                                           if (value != null && value == true) {
-                                            InvoiceModel model = InvoiceModel();
-                                            model.isEstimateConverted = true;
-                                            model.address = estimateData
-                                                    .customer?.address ??
-                                                "";
-                                            model.deliveryaddress = estimateData
-                                                    .customer?.address ??
-                                                "";
-                                            model.partyName = estimateData
-                                                    .customer?.customerName ??
-                                                "";
-                                            model.phoneNumber = estimateData
-                                                    .customer?.mobileNo ??
-                                                "";
-                                            model.totalBillAmount = estimateData
-                                                    .price?.total
-                                                    ?.toStringAsFixed(2) ??
-                                                "";
-
-                                            model.price = estimateData.price;
-                                            model.listingProducts = [];
-                                            for (var element
-                                                in estimateData.products!) {
-                                              InvoiceProductModel
-                                                  productElement =
-                                                  InvoiceProductModel();
-                                              productElement.productID =
-                                                  element.productId;
-                                              productElement.productName =
-                                                  element.productName;
-                                              productElement.qty = element.qty;
-                                              productElement.rate =
-                                                  element.price;
-                                              productElement.total =
-                                                  element.qty!.toDouble() *
-                                                      element.price!;
-                                              productElement.unit =
-                                                  element.productContent;
-                                              productElement.discountLock =
-                                                  element.discountLock;
-                                              productElement.discount =
-                                                  element.discount;
-
-                                              productElement.categoryID =
-                                                  element.categoryid;
-                                              model.listingProducts!
-                                                  .add(productElement);
-                                            }
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    InvoiceCreation(
-                                                        invoice: model),
-                                              ),
-                                            );
+                                            duplicateEstimate();
                                           }
                                         });
                                       },
-                                      child: const Text(
-                                          "Convert to Bill of Supply"),
+                                      icon: const Icon(
+                                        Icons.copy,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "Price",
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Table(
-                                children: [
-                                  tableRow(
-                                      "Sub Total",
-                                      "Rs.${estimateData.price!.subTotal}",
-                                      false),
-                                  tableRow(
-                                      "Discount",
-                                      "Rs.${estimateData.price!.discountValue}",
-                                      false),
-                                  tableRow(
-                                      "Extra Discount (${estimateData.price!.extraDiscountsys == "%" ? '${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}'})",
-                                      "Rs.${estimateData.price!.extraDiscountValue}",
-                                      false),
-                                  tableRow(
-                                      "Package Charge (${estimateData.price!.packagesys == "%" ? '${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}%' : 'Rs ${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}'})",
-                                      "Rs.${estimateData.price!.packageValue}",
-                                      false),
-                                  tableRow(
-                                      "Round Off",
-                                      "Rs.${estimateData.price!.roundOff}",
-                                      false),
-                                  tableRow("Total",
-                                      "Rs.${estimateData.price!.total}", true),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        estimateData.customer != null
-                            ? Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      "Customer",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge,
+                                    IconButton(
+                                      tooltip: "Download PDF",
+                                      splashRadius: 29,
+                                      onPressed: () async {
+                                        await confirmationDialog(
+                                          context,
+                                          title: "Alert",
+                                          message:
+                                              "Do you want Download Estimate?",
+                                        ).then((value) {
+                                          if (value != null && value == true) {
+                                            downloadPrintEnquiry();
+                                          }
+                                        });
+                                      },
+                                      icon: const Icon(
+                                        Icons.file_download_outlined,
+                                      ),
                                     ),
-                                    const SizedBox(
-                                      height: 10,
-                                    ),
-                                    Table(
-                                      children: [
-                                        tableRow(
-                                            "Customer Name",
-                                            estimateData.customer!.customerName,
-                                            true),
-                                        tableRow("City",
-                                            estimateData.customer!.city, false),
-                                        tableRow(
-                                            "Address",
-                                            estimateData.customer!.address,
-                                            false),
-                                        tableRow(
-                                            "Email",
-                                            estimateData.customer!.email,
-                                            false),
-                                        tableRow(
-                                            "Mobile No",
-                                            estimateData.customer!.mobileNo,
-                                            false),
-                                      ],
+                                    IconButton(
+                                      tooltip: "Delete Enquiry",
+                                      splashRadius: 29,
+                                      onPressed: () async {
+                                        await confirmationDialog(
+                                          context,
+                                          title: "Alert",
+                                          message:
+                                              "Do you want delete enquiry?",
+                                        ).then((value) {
+                                          if (value != null && value == true) {
+                                            deleteEnquiry();
+                                          }
+                                        });
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
                                     ),
                                   ],
                                 ),
-                              )
-                            : const SizedBox(),
-                        estimateData.customer != null
-                            ? const SizedBox(
-                                height: 10,
-                              )
-                            : const SizedBox(),
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                              ],
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Products(${estimateData.products!.length})",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Estimate Details",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Table(
+                                  children: [
+                                    tableRow(
+                                        "Estimate No",
+                                        estimateData.estimateid ??
+                                            estimateData.referenceId,
+                                        true,
+                                        () {}),
+                                    tableRow(
+                                        "Estimate Date",
+                                        DateFormat('dd-MM-yyyy HH:mm a')
+                                            .format(estimateData.createddate!),
+                                        false,
+                                        () {}),
+                                  ],
+                                ),
+                                if (connectionProvider.isConnected)
+                                  Visibility(
+                                    visible: invoiceEntry,
+                                    child: Center(
+                                      child: TextButton(
+                                        onPressed: () async {
+                                          await confirmationDialog(
+                                            context,
+                                            title: "Alert",
+                                            message:
+                                                "Do you want Convert the Bill of Supply?",
+                                          ).then((value) {
+                                            if (value != null &&
+                                                value == true) {
+                                              InvoiceModel model =
+                                                  InvoiceModel();
+                                              model.state =
+                                                  estimateData.customer?.state!;
+                                              model.city =
+                                                  estimateData.customer?.city!;
+                                              model.gstType = null;
+                                              model.isEstimateConverted = true;
+                                              model.address = estimateData
+                                                      .customer?.address ??
+                                                  "";
+                                              model.deliveryaddress =
+                                                  estimateData
+                                                          .customer?.address ??
+                                                      "";
+                                              model.partyName = estimateData
+                                                      .customer?.customerName ??
+                                                  "";
+                                              model.phoneNumber = estimateData
+                                                      .customer?.mobileNo ??
+                                                  "";
+                                              model.totalBillAmount =
+                                                  estimateData.price?.total
+                                                          ?.toStringAsFixed(
+                                                              2) ??
+                                                      "";
+
+                                              model.price = estimateData.price;
+                                              model.listingProducts = [];
+                                              for (var element
+                                                  in estimateData.products!) {
+                                                InvoiceProductModel
+                                                    productElement =
+                                                    InvoiceProductModel();
+                                                productElement.productID =
+                                                    element.productId;
+                                                productElement.productName =
+                                                    element.productName;
+                                                productElement.qty =
+                                                    element.qty;
+                                                productElement.rate =
+                                                    element.price;
+                                                productElement.hsnCode =
+                                                    element.hsnCode;
+                                                productElement.taxValue =
+                                                    element.taxValue;
+                                                productElement.productType =
+                                                    element.productType;
+                                                productElement.total =
+                                                    element.qty!.toDouble() *
+                                                        element.price!;
+                                                productElement.unit =
+                                                    element.productContent;
+                                                productElement.discountLock =
+                                                    element.discountLock;
+                                                productElement.discount =
+                                                    element.discount;
+
+                                                productElement.categoryID =
+                                                    element.categoryid;
+                                                model.listingProducts!
+                                                    .add(productElement);
+                                              }
+                                              Navigator.push(
+                                                context,
+                                                CupertinoPageRoute(
+                                                  builder: (context) =>
+                                                      InvoiceCreation(
+                                                    fromEstimate: true,
+                                                    estimateNo:
+                                                        estimateData.estimateid,
+                                                    invoice: model,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          });
+                                        },
+                                        child: const Text(
+                                            "Convert to Bill of Supply"),
+                                      ),
+                                    ),
                                   ),
-                                  Text(
-                                    "Items(${itemCount()})",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall!
-                                        .copyWith(
-                                          color: Colors.grey,
-                                        ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Price",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Table(
+                                  children: [
+                                    tableRow(
+                                        "Sub Total",
+                                        "Rs.${estimateData.price!.subTotal}",
+                                        false,
+                                        () {}),
+                                    tableRow(
+                                        "Discount",
+                                        "Rs.${estimateData.price!.discountValue}",
+                                        false, () async {
+                                      await showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return DiscountDetailProduct(
+                                              productData:
+                                                  estimateData.products!);
+                                        },
+                                      );
+                                    }),
+                                    tableRow(
+                                        "Extra Discount (${estimateData.price!.extraDiscountsys == "%" ? '${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}'})",
+                                        "Rs.${estimateData.price!.extraDiscountValue}",
+                                        false,
+                                        () {}),
+                                    tableRow(
+                                        "Package Charge (${estimateData.price!.packagesys == "%" ? '${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}%' : 'Rs ${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}'})",
+                                        "Rs.${estimateData.price!.packageValue}",
+                                        false,
+                                        () {}),
+                                    tableRow(
+                                        "Round Off",
+                                        "Rs.${estimateData.price!.roundOff}",
+                                        false,
+                                        () {}),
+                                    tableRow(
+                                        "Total",
+                                        "Rs.${estimateData.price!.total}",
+                                        true,
+                                        () {}),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          estimateData.customer != null
+                              ? Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Table(
-                                columnWidths: const {
-                                  0: FlexColumnWidth(1.5),
-                                  1: FlexColumnWidth(7),
-                                  2: FlexColumnWidth(1.5),
-                                  3: FlexColumnWidth(4),
-                                  4: FlexColumnWidth(4),
-                                },
-                                children: [
-                                  TableRow(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Center(
-                                        child: Padding(
+                                      Text(
+                                        "Customer",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge,
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Table(
+                                        children: [
+                                          tableRow(
+                                              "Customer Name",
+                                              estimateData
+                                                  .customer!.customerName,
+                                              true,
+                                              () {}),
+                                          tableRow(
+                                              "City",
+                                              estimateData.customer!.city,
+                                              false,
+                                              () {}),
+                                          tableRow(
+                                              "Address",
+                                              estimateData.customer!.address,
+                                              false,
+                                              () {}),
+                                          tableRow(
+                                              "Email",
+                                              estimateData.customer!.email,
+                                              false,
+                                              () {}),
+                                          tableRow(
+                                              "Mobile No",
+                                              estimateData.customer!.mobileNo,
+                                              false,
+                                              () {}),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : const SizedBox(),
+                          estimateData.customer != null
+                              ? const SizedBox(
+                                  height: 10,
+                                )
+                              : const SizedBox(),
+                          Container(
+                            margin: const EdgeInsets.only(top: 10),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Products(${estimateData.products!.length})",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    Text(
+                                      "Items(${itemCount()})",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall!
+                                          .copyWith(
+                                            color: Colors.grey,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Table(
+                                  columnWidths: const {
+                                    0: FlexColumnWidth(1.5),
+                                    1: FlexColumnWidth(7),
+                                    2: FlexColumnWidth(1.5),
+                                    3: FlexColumnWidth(4),
+                                    4: FlexColumnWidth(4),
+                                  },
+                                  children: [
+                                    TableRow(
+                                      children: [
+                                        Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 2, vertical: 5),
+                                            child: Text(
+                                              "#",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge!
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 2, vertical: 5),
                                           child: Text(
-                                            "#",
+                                            "Name",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodyLarge!
@@ -1091,138 +1319,126 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                                 ),
                                           ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 2, vertical: 5),
-                                        child: Text(
-                                          "Name",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 2, vertical: 5),
-                                        child: Text(
-                                          "Qty",
-                                          textAlign: TextAlign.center,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 2, vertical: 5),
-                                        child: Text(
-                                          "Rate",
-                                          textAlign: TextAlign.right,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 2, vertical: 5),
-                                        child: Text(
-                                          "Total",
-                                          textAlign: TextAlign.right,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  for (int index = 0;
-                                      index < estimateData.products!.length;
-                                      index++)
-                                    TableRow(
-                                      decoration: BoxDecoration(
-                                        border: estimateData.products!.length !=
-                                                (index + 1)
-                                            ? Border(
-                                                bottom: BorderSide(
-                                                  color: Colors.grey.shade300,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      children: [
-                                        Center(
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(2),
-                                            child: Text(
-                                              (index + 1).toString(),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                        ),
                                         Padding(
-                                          padding: const EdgeInsets.all(2),
-                                          child: Text(estimateData
-                                                  .products![index]
-                                                  .productName ??
-                                              ""),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 2, vertical: 5),
                                           child: Text(
-                                            estimateData.products![index].qty
-                                                .toString(),
+                                            "Qty",
                                             textAlign: TextAlign.center,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.all(2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 2, vertical: 5),
                                           child: Text(
-                                            double.parse(estimateData
-                                                    .products![index].price
-                                                    .toString())
-                                                .toStringAsFixed(2),
+                                            "Rate",
                                             textAlign: TextAlign.right,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.all(2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 2, vertical: 5),
                                           child: Text(
-                                            double.parse((estimateData
-                                                            .products![index]
-                                                            .qty! *
-                                                        estimateData
-                                                            .products![index]
-                                                            .price!)
-                                                    .toString())
-                                                .toStringAsFixed(2),
+                                            "Total",
                                             textAlign: TextAlign.right,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                ],
-                              ),
-                            ],
+                                    for (int index = 0;
+                                        index < estimateData.products!.length;
+                                        index++)
+                                      TableRow(
+                                        decoration: BoxDecoration(
+                                          border: estimateData
+                                                      .products!.length !=
+                                                  (index + 1)
+                                              ? Border(
+                                                  bottom: BorderSide(
+                                                    color: Colors.grey.shade300,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        children: [
+                                          Center(
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(2),
+                                              child: Text(
+                                                (index + 1).toString(),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(2),
+                                            child: Text(estimateData
+                                                    .products![index]
+                                                    .productName ??
+                                                ""),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(2),
+                                            child: Text(
+                                              estimateData.products![index].qty
+                                                  .toString(),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(2),
+                                            child: Text(
+                                              double.parse(estimateData
+                                                      .products![index].price
+                                                      .toString())
+                                                  .toStringAsFixed(2),
+                                              textAlign: TextAlign.right,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(2),
+                                            child: Text(
+                                              double.parse((estimateData
+                                                              .products![index]
+                                                              .qty! *
+                                                          estimateData
+                                                              .products![index]
+                                                              .price!)
+                                                      .toString())
+                                                  .toStringAsFixed(2),
+                                              textAlign: TextAlign.right,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 80),
-                      ],
-                    ));
-              }
-            }));
+                          const SizedBox(height: 80),
+                        ],
+                      ));
+                }
+              }),
+        ));
   }
 }

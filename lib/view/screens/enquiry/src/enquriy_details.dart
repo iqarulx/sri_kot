@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
-import 'package:sri_kot/view/ui/src/customer_choose_modal.dart';
+import 'package:sri_kot/view/screens/enquiry/src/print_view/print_enquiry_3inch.dart';
+
+import '../../../ui/src/customer_search_view.dart';
+import '../../billing/src/utils/add_customer_box.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
 import '/services/services.dart';
@@ -14,6 +17,7 @@ import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
 import '/provider/src/file_open.dart' as helper;
+import 'print_view/print_enquiry_a5.dart';
 
 class EnquiryDetails extends StatefulWidget {
   final String cid;
@@ -51,25 +55,26 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
           await FireStore().getEnquiryInfo(cid: widget.cid).then((value) async {
             if (value != null) {
               if (value.exists) {
-                var calcula = BillingCalCulationModel();
-                calcula.discount = value["price"]["discount"];
-                calcula.discountValue = value["price"]["discount_value"];
-                calcula.discountsys = value["price"]["discount_sys"];
-                calcula.extraDiscount = value["price"]["extra_discount"];
-                calcula.roundOff = value["price"]["round_off"];
-                calcula.extraDiscountValue =
+                var calc = BillingCalCulationModel();
+                calc.discountValue = value["price"]["discount_value"];
+                calc.extraDiscount = value["price"]["extra_discount"];
+                calc.roundOff = value["price"]["round_off"];
+                calc.extraDiscountValue =
                     value["price"]["extra_discount_value"];
-                calcula.extraDiscountsys = value["price"]["extra_discount_sys"];
-                calcula.package = value["price"]["package"];
-                calcula.packageValue = value["price"]["package_value"];
-                calcula.packagesys = value["price"]["package_sys"];
-                calcula.subTotal = value["price"]["sub_total"];
-                calcula.total = value["price"]["total"];
+                calc.extraDiscountsys = value["price"]["extra_discount_sys"];
+                calc.package = value["price"]["package"];
+                calc.packageValue = value["price"]["package_value"];
+                calc.packagesys = value["price"]["package_sys"];
+                calc.subTotal = value["price"]["sub_total"];
+                calc.total = value["price"]["total"];
+                calc.netratedTotal = value["price"]["netrated_total"];
+                calc.discountedTotal = value["price"]["discounted_total"];
+                calc.netPlusDisTotal = value["price"]["net_plus_dis_total"];
+                calc.discounts = value["price"]["discounts"];
 
                 CustomerDataModel? customer = CustomerDataModel();
                 if (value["customer"] != null) {
-                  customer.docID = value.id;
-                  customer.address = value["customer"]["customer_id"];
+                  customer.docID = value["customer"]["customer_id"];
                   customer.address = value["customer"]["address"];
                   customer.state = value["customer"]["state"];
                   customer.city = value["customer"]["city"];
@@ -80,7 +85,6 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                   customer = null;
                 }
                 List<ProductDataModel> tmpProducts = [];
-
                 setState(() {
                   tmpProducts.clear();
                 });
@@ -102,20 +106,19 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                       productDataModel.discountLock = product["discount_lock"];
                       productDataModel.docid = product.id;
                       productDataModel.name = product["name"];
+                      productDataModel.hsnCode = product["hsn_code"];
+                      productDataModel.taxValue = product["tax_value"];
+                      productDataModel.productType = product["discount_lock"] ||
+                              product["discount"] == null
+                          ? ProductType.netRated
+                          : ProductType.discounted;
                       productDataModel.productContent =
                           product["product_content"];
                       productDataModel.productImg = product["product_img"];
                       productDataModel.qrCode = product["qr_code"];
                       productDataModel.videoUrl = product["video_url"];
-                      if (productDataModel.categoryid != null &&
-                          productDataModel.categoryid!.isNotEmpty) {
-                        var getCategoryid = categoryList.indexWhere(
-                            (elements) =>
-                                elements.tmpcatid ==
-                                productDataModel.categoryid);
-                        productDataModel.discount =
-                            categoryList[getCategoryid].discount;
-                      }
+                      productDataModel.discount = product["discount"];
+
                       setState(() {
                         tmpProducts.add(productDataModel);
                       });
@@ -131,7 +134,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     ),
                     enquiryid: value['enquiry_id'],
                     estimateid: value["estimate_id"],
-                    price: calcula,
+                    price: calc,
                     customer: customer,
                     products: tmpProducts,
                   );
@@ -162,9 +165,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
               await DatabaseHelper().getEnquiryWithId(widget.cid);
           var calcula = BillingCalCulationModel();
           var price = jsonDecode(localEnquiry['price']) as Map<String, dynamic>;
-          calcula.discount = price["discount"];
           calcula.discountValue = price["discount_value"];
-          calcula.discountsys = price["discount_sys"];
           calcula.extraDiscount = price["extra_discount"];
           calcula.extraDiscountValue = price["extra_discount_value"];
           calcula.extraDiscountsys = price["extra_discount_sys"];
@@ -245,14 +246,17 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
   }
 
   var companyData = ProfileModel();
-  TableRow tableRow(String? title, String? value, bool bold) {
+  TableRow tableRow(String? title, String? value, bool bold, Function()? func) {
     return TableRow(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(3),
-          child: Text(
-            title ?? "",
-            style: Theme.of(context).textTheme.titleSmall,
+        GestureDetector(
+          onTap: func,
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child: Text(
+              title ?? "",
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
         ),
         Padding(
@@ -279,65 +283,223 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
   }
 
   printEnquiry() async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (builder) {
+        return const FractionallySizedBox(
+          heightFactor: 0.25,
+          child: PdfPreviewModal(),
+        );
+      },
+    ).then((value) async {
+      if (value == 1) {
+        loading(context);
+        final connectionProvider =
+            Provider.of<ConnectionProvider>(context, listen: false);
 
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                  companyData.contact = companyInfo["contact"];
+        try {
+          if (connectionProvider.isConnected) {
+            await LocalDB.fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                await FireStore()
+                    .getCompanyDocInfo(cid: cid)
+                    .then((companyInfo) {
+                  if (companyInfo != null) {
+                    setState(() {
+                      companyData.companyName = companyInfo["company_name"];
+                      companyData.address = companyInfo["address"];
+                      companyData.contact = companyInfo["contact"];
+                    });
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => PrintEnquiryA4(
+                          estimateData: enquiryData,
+                          companyInfo: companyData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
                 });
-
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => PrintView(
-                      estimateData: enquiryData,
-                      companyInfo: companyData,
-                    ),
-                  ),
-                );
               } else {
                 Navigator.pop(context);
               }
             });
           } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        // add contact
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-          // add also
-        });
+            var companyName =
+                await LocalDB.fetchInfo(type: LocalData.companyName);
+            var address =
+                await LocalDB.fetchInfo(type: LocalData.companyAddress);
+            // add contact
+            setState(() {
+              companyData.companyName = companyName;
+              companyData.address = address;
+              // add also
+            });
 
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => PrintView(
-              estimateData: enquiryData,
-              companyInfo: companyData,
-            ),
-          ),
-        );
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => PrintEnquiryA4(
+                  estimateData: enquiryData,
+                  companyInfo: companyData,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
+      } else if (value == 2) {
+        loading(context);
+        final connectionProvider =
+            Provider.of<ConnectionProvider>(context, listen: false);
+
+        try {
+          if (connectionProvider.isConnected) {
+            await LocalDB.fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                await FireStore()
+                    .getCompanyDocInfo(cid: cid)
+                    .then((companyInfo) {
+                  if (companyInfo != null) {
+                    setState(() {
+                      companyData.companyName = companyInfo["company_name"];
+                      companyData.address = companyInfo["address"];
+                      companyData.contact = companyInfo["contact"];
+                    });
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => PrintEnquiryA5(
+                          estimateData: enquiryData,
+                          companyInfo: companyData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
+                });
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            var companyName =
+                await LocalDB.fetchInfo(type: LocalData.companyName);
+            var address =
+                await LocalDB.fetchInfo(type: LocalData.companyAddress);
+            // add contact
+            setState(() {
+              companyData.companyName = companyName;
+              companyData.address = address;
+              // add also
+            });
+
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => PrintEnquiryA5(
+                  estimateData: enquiryData,
+                  companyInfo: companyData,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
+      } else if (value == 3) {
+        loading(context);
+        final connectionProvider =
+            Provider.of<ConnectionProvider>(context, listen: false);
+
+        try {
+          if (connectionProvider.isConnected) {
+            await LocalDB.fetchInfo(type: LocalData.companyid)
+                .then((cid) async {
+              if (cid != null) {
+                await FireStore()
+                    .getCompanyDocInfo(cid: cid)
+                    .then((companyInfo) {
+                  if (companyInfo != null) {
+                    setState(() {
+                      companyData.companyName = companyInfo["company_name"];
+                      companyData.address = companyInfo["address"];
+                      companyData.contact = companyInfo["contact"];
+                    });
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => PrintEnquiry3inch(
+                          estimateData: enquiryData,
+                          companyInfo: companyData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
+                });
+              } else {
+                Navigator.pop(context);
+              }
+            });
+          } else {
+            var companyName =
+                await LocalDB.fetchInfo(type: LocalData.companyName);
+            var address =
+                await LocalDB.fetchInfo(type: LocalData.companyAddress);
+            // add contact
+            setState(() {
+              companyData.companyName = companyName;
+              companyData.address = address;
+              // add also
+            });
+
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => PrintEnquiry3inch(
+                  estimateData: enquiryData,
+                  companyInfo: companyData,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
       }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
+    });
   }
 
   downloadPrintEnquiry() async {
@@ -365,7 +527,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     type: PdfType.enquiry,
                     companyInfo: companyData,
                     pdfAlignment: pdfAlignment);
-                var dataResult = await pdf.showA4PDf();
+                var dataResult = await pdf.format1A4();
                 // var dataResult = await pdf.create3InchPDF();
                 var data = Uint8List.fromList(dataResult);
                 Navigator.pop(context);
@@ -393,7 +555,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
             type: PdfType.enquiry,
             companyInfo: companyData,
             pdfAlignment: pdfAlignment);
-        var dataResult = await pdf.showA4PDf();
+        var dataResult = await pdf.format1A4();
         // var dataResult = await pdf.create3InchPDF();
         var data = Uint8List.fromList(dataResult);
         Navigator.pop(context);
@@ -458,11 +620,18 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 //     .deleteEnquiry(docID: enquiryData.docID!)
                 //     .then((value) {
                 Navigator.pop(context);
-                Navigator.pop(context, true);
+                Navigator.pop(context);
+                Navigator.pop(context);
                 snackbar(
                   context,
                   true,
                   "Successfully Enquiry Converted to Estimate",
+                );
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => const EstimateListing(),
+                  ),
                 );
                 // });
               });
@@ -470,15 +639,22 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
           });
         } else {
           Navigator.pop(context);
-          Navigator.pop(context, true);
+          Navigator.pop(context);
+          Navigator.pop(context);
+          LocalService.enquiryToEstimate(
+              referenceId: enquiryData.referenceId ?? '',
+              cid: await LocalDB.fetchInfo(type: LocalData.companyid));
           snackbar(
             context,
             true,
             "Successfully Enquiry Converted to Estimate",
           );
-          LocalService.enquiryToEstimate(
-              referenceId: enquiryData.referenceId ?? '',
-              cid: await LocalDB.fetchInfo(type: LocalData.companyid));
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => const EstimateListing(),
+            ),
+          );
         }
       } else {
         showDialog(
@@ -550,9 +726,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 barrierDismissible: false,
                 context: context,
                 builder: (context) {
-                  return CustomerSearch(
-                    isConnected: connectionProvider.isConnected,
-                  );
+                  return const CustomerSearchView();
                 },
               ).then((value) async {
                 if (value != null) {
@@ -646,47 +820,6 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
 
   bool isloading = false;
 
-  // checkProductsList() async {
-  //   final connectionProvider =
-  //       Provider.of<ConnectionProvider>(context, listen: false);
-  //   if (connectionProvider.isConnected) {
-  //     if (enquiryData.products!.isEmpty) {
-  //       setState(() {
-  //         isloading = true;
-  //       });
-  //       await FireStore()
-  //           .getEnquiryProducts(docid: enquiryData.docID!)
-  //           .then((products) {
-  //         if (products != null && products.docs.isNotEmpty) {
-  //           for (var product in products.docs) {
-  //             var productDataModel = ProductDataModel();
-  //             productDataModel.categoryid = product["category_id"];
-  //             productDataModel.categoryName = product["category_name"];
-  //             productDataModel.price = product["price"];
-  //             productDataModel.productId = product["product_id"];
-  //             productDataModel.productName = product["product_name"];
-  //             productDataModel.qty = product["qty"];
-  //             productDataModel.productCode = product["product_code"] ?? "";
-  //             productDataModel.discountLock = product["discount_lock"];
-  //             productDataModel.docid = product.id;
-  //             productDataModel.name = product["name"];
-  //             productDataModel.productContent = product["product_content"];
-  //             productDataModel.productImg = product["product_img"];
-  //             productDataModel.qrCode = product["qr_code"];
-  //             productDataModel.videoUrl = product["video_url"];
-  //             setState(() {
-  //               enquiryData.products!.add(productDataModel);
-  //             });
-  //           }
-  //           setState(() {
-  //             isloading = false;
-  //           });
-  //         }
-  //       });
-  //     }
-  //   }
-  // }
-
   sharePDF() async {
     loading(context);
     final connectionProvider =
@@ -713,7 +846,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     companyInfo: companyData,
                     pdfAlignment: pdfAlignment);
 
-                await pdf.showA4PDf().then((dataResult) async {
+                await pdf.format1A4().then((dataResult) async {
                   await Printing.sharePdf(
                     bytes: dataResult,
                   ).then((value) {
@@ -743,7 +876,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
             type: PdfType.enquiry,
             companyInfo: companyData,
             pdfAlignment: pdfAlignment);
-        await pdf.showA4PDf().then((dataResult) async {
+        await pdf.format1A4().then((dataResult) async {
           await Printing.sharePdf(
             bytes: dataResult,
           ).then((value) {
@@ -780,178 +913,166 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
     return Scaffold(
       appBar: appbar(),
       floatingActionButton: floatingButton(context),
-      body: FutureBuilder(
-        future: enquiryDetailsHandler,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return RefreshIndicator(
-              onRefresh: () async {
-                setState(() {
-                  enquiryDetailsHandler = getEnquiryData();
-                });
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(10),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Options",
-                          style:
-                              Theme.of(context).textTheme.titleMedium!.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              onPressed: sharePDF,
-                              icon: const Icon(Icons.share),
-                            ),
-                            IconButton(
-                              tooltip: "Print Enquiry",
-                              splashRadius: 29,
-                              onPressed: () {
-                                printEnquiry();
-                              },
-                              icon: const Icon(
-                                Icons.print,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: "Copy Enquiry",
-                              splashRadius: 29,
-                              onPressed: () async {
-                                await confirmationDialog(
-                                  context,
-                                  title: "Alert",
-                                  message: "Do you want Duplicate enquiry?",
-                                ).then((value) {
-                                  if (value != null && value == true) {
-                                    duplicateEnquiry();
-                                  }
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.copy,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: "Download PDF",
-                              splashRadius: 29,
-                              onPressed: () async {
-                                await confirmationDialog(
-                                  context,
-                                  title: "Alert",
-                                  message: "Do you want Download enquiry?",
-                                ).then((value) {
-                                  if (value != null && value == true) {
-                                    downloadPrintEnquiry();
-                                  }
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.file_download_outlined,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: "Delete Enquiry",
-                              splashRadius: 29,
-                              onPressed: () async {
-                                await confirmationDialog(
-                                  context,
-                                  title: "Alert",
-                                  message: "Do you want delete enquiry?",
-                                ).then((value) {
-                                  if (value != null && value == true) {
-                                    deleteEnquiry();
-                                  }
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Order Details",
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Table(
-                          children: [
-                            tableRow(
-                                "Order No",
-                                enquiryData.enquiryid ??
-                                    enquiryData.referenceId,
-                                true),
-                            tableRow(
-                                "Order Date",
-                                DateFormat('dd-MM-yyyy hh:mm a')
-                                    .format(enquiryData.createddate!),
-                                false),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        enquiryData.estimateid == null
-                            ? Center(
-                                child: TextButton(
-                                  onPressed: () async {
-                                    await confirmationDialog(
-                                      context,
-                                      title: "Alert",
-                                      message:
-                                          "Do you want Convert the Estimate?",
-                                    ).then((value) {
-                                      if (value != null && value == true) {
-                                        convertEstimate();
-                                      }
-                                    });
-                                  },
-                                  child: const Text("Convert to Estimate"),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: FutureBuilder(
+          future: enquiryDetailsHandler,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else {
+              return RefreshIndicator(
+                color: Theme.of(context).primaryColor,
+                onRefresh: () async {
+                  setState(() {
+                    enquiryDetailsHandler = getEnquiryData();
+                  });
+                },
+                child: ListView(
+                  padding: const EdgeInsets.all(10),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Options",
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium!
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              )
-                            : Center(
-                                child: Column(
-                                children: [
-                                  const Text(
-                                    "Already converted to estimate",
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                  TextButton(
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              IconButton(
+                                onPressed: sharePDF,
+                                icon: const Icon(Icons.share),
+                              ),
+                              IconButton(
+                                tooltip: "Print Enquiry",
+                                splashRadius: 29,
+                                onPressed: () {
+                                  printEnquiry();
+                                },
+                                icon: const Icon(
+                                  Icons.print,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: "Copy Enquiry",
+                                splashRadius: 29,
+                                onPressed: () async {
+                                  await confirmationDialog(
+                                    context,
+                                    title: "Alert",
+                                    message: "Do you want Duplicate enquiry?",
+                                  ).then((value) {
+                                    if (value != null && value == true) {
+                                      duplicateEnquiry();
+                                    }
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.copy,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: "Download PDF",
+                                splashRadius: 29,
+                                onPressed: () async {
+                                  await confirmationDialog(
+                                    context,
+                                    title: "Alert",
+                                    message: "Do you want Download enquiry?",
+                                  ).then((value) {
+                                    if (value != null && value == true) {
+                                      downloadPrintEnquiry();
+                                    }
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.file_download_outlined,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: "Delete Enquiry",
+                                splashRadius: 29,
+                                onPressed: () async {
+                                  await confirmationDialog(
+                                    context,
+                                    title: "Alert",
+                                    message: "Do you want delete enquiry?",
+                                  ).then((value) {
+                                    if (value != null && value == true) {
+                                      deleteEnquiry();
+                                    }
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Order Details",
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Table(
+                            children: [
+                              tableRow(
+                                  "Order No",
+                                  enquiryData.enquiryid ??
+                                      enquiryData.referenceId,
+                                  true,
+                                  () {}),
+                              tableRow(
+                                  "Order Date",
+                                  DateFormat('dd-MM-yyyy hh:mm a')
+                                      .format(enquiryData.createddate!),
+                                  false,
+                                  () {}),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          enquiryData.estimateid == null
+                              ? Center(
+                                  child: TextButton(
                                     onPressed: () async {
                                       await confirmationDialog(
                                         context,
@@ -964,156 +1085,227 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                                         }
                                       });
                                     },
-                                    child: const Text(
-                                        "Convert to Another Estimate"),
+                                    child: const Text("Convert to Estimate"),
                                   ),
-                                ],
-                              )),
-                      ],
+                                )
+                              : Center(
+                                  child: Column(
+                                  children: [
+                                    const Text(
+                                      "Already converted to estimate",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        await confirmationDialog(
+                                          context,
+                                          title: "Alert",
+                                          message:
+                                              "Do you want Convert the Estimate?",
+                                        ).then((value) {
+                                          if (value != null && value == true) {
+                                            convertEstimate();
+                                          }
+                                        });
+                                      },
+                                      child: const Text(
+                                          "Convert to Another Estimate"),
+                                    ),
+                                  ],
+                                )),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+                    const SizedBox(
+                      height: 10,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Price",
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Table(
-                          children: [
-                            tableRow("Sub Total",
-                                "Rs.${enquiryData.price!.subTotal}", false),
-                            tableRow(
-                                "Discount",
-                                "Rs.${enquiryData.price!.discountValue}",
-                                false),
-                            tableRow(
-                                "Extra Discount (${enquiryData.price!.extraDiscountsys == "%" ? '${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}'})",
-                                "Rs.${enquiryData.price!.extraDiscountValue}",
-                                false),
-                            tableRow(
-                                "Package Charge (${enquiryData.price!.packagesys == "%" ? '${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}%' : 'Rs ${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}'})",
-                                "Rs.${enquiryData.price!.packageValue}",
-                                false),
-                            tableRow("Round Off",
-                                "Rs.${enquiryData.price!.roundOff}", false),
-                            tableRow("Total", "Rs.${enquiryData.price!.total}",
-                                true),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  enquiryData.customer != null
-                      ? Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Price",
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Table(
+                            children: [
+                              tableRow(
+                                  "Sub Total",
+                                  "Rs.${enquiryData.price!.subTotal}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Discount",
+                                  "Rs.${enquiryData.price!.discountValue}",
+                                  false, () async {
+                                await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return DiscountDetailProduct(
+                                        productData: enquiryData.products!);
+                                  },
+                                );
+                              }),
+                              tableRow(
+                                  "Extra Discount (${enquiryData.price!.extraDiscountsys == "%" ? '${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}'})",
+                                  "Rs.${enquiryData.price!.extraDiscountValue}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Package Charge (${enquiryData.price!.packagesys == "%" ? '${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}%' : 'Rs ${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}'})",
+                                  "Rs.${enquiryData.price!.packageValue}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Round Off",
+                                  "Rs.${enquiryData.price!.roundOff}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Total",
+                                  "Rs.${enquiryData.price!.total}",
+                                  true,
+                                  () {}),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    enquiryData.customer != null
+                        ? Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Customer",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Table(
+                                  children: [
+                                    tableRow(
+                                        "Customer Name",
+                                        enquiryData.customer!.customerName,
+                                        true,
+                                        () {}),
+                                    tableRow(
+                                        "Address",
+                                        enquiryData.customer!.address,
+                                        false,
+                                        () {}),
+                                    tableRow("City", enquiryData.customer!.city,
+                                        false, () {}),
+                                    tableRow(
+                                        "State",
+                                        enquiryData.customer!.state,
+                                        false,
+                                        () {}),
+                                    tableRow(
+                                        "Email",
+                                        enquiryData.customer!.email,
+                                        false,
+                                        () {}),
+                                    tableRow(
+                                        "Mobile No",
+                                        enquiryData.customer!.mobileNo,
+                                        false,
+                                        () {}),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                        : const SizedBox(),
+                    enquiryData.customer != null
+                        ? const SizedBox(
+                            height: 10,
+                          )
+                        : const SizedBox(),
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Customer",
-                                style: Theme.of(context).textTheme.titleLarge,
+                                "Products(${enquiryData.products!.length})",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Table(
-                                children: [
-                                  tableRow("Customer Name",
-                                      enquiryData.customer!.customerName, true),
-                                  tableRow("Address",
-                                      enquiryData.customer!.address, false),
-                                  tableRow("City", enquiryData.customer!.city,
-                                      false),
-                                  tableRow("State", enquiryData.customer!.state,
-                                      false),
-                                  tableRow("Email", enquiryData.customer!.email,
-                                      false),
-                                  tableRow("Mobile No",
-                                      enquiryData.customer!.mobileNo, false),
-                                ],
+                              Text(
+                                "Items(${itemCount()})",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall!
+                                    .copyWith(
+                                      color: Colors.grey,
+                                    ),
                               ),
                             ],
                           ),
-                        )
-                      : const SizedBox(),
-                  enquiryData.customer != null
-                      ? const SizedBox(
-                          height: 10,
-                        )
-                      : const SizedBox(),
-                  Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Products(${enquiryData.products!.length})",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge!
-                                  .copyWith(
-                                    fontWeight: FontWeight.bold,
+                          const SizedBox(height: 10),
+                          Table(
+                            columnWidths: const {
+                              0: FlexColumnWidth(1.5),
+                              1: FlexColumnWidth(7),
+                              2: FlexColumnWidth(1.5),
+                              3: FlexColumnWidth(4),
+                              4: FlexColumnWidth(4),
+                            },
+                            children: [
+                              TableRow(
+                                children: [
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 2, vertical: 5),
+                                      child: Text(
+                                        "#",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge!
+                                            .copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ),
                                   ),
-                            ),
-                            Text(
-                              "Items(${itemCount()})",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall!
-                                  .copyWith(
-                                    color: Colors.grey,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Table(
-                          columnWidths: const {
-                            0: FlexColumnWidth(1.5),
-                            1: FlexColumnWidth(7),
-                            2: FlexColumnWidth(1.5),
-                            3: FlexColumnWidth(4),
-                            4: FlexColumnWidth(4),
-                          },
-                          children: [
-                            TableRow(
-                              children: [
-                                Center(
-                                  child: Padding(
+                                  Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 2, vertical: 5),
                                     child: Text(
-                                      "#",
+                                      "Name",
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyLarge!
@@ -1122,139 +1314,126 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                                           ),
                                     ),
                                   ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 2, vertical: 5),
-                                  child: Text(
-                                    "Name",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 2, vertical: 5),
-                                  child: Text(
-                                    "Qty",
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 2, vertical: 5),
-                                  child: Text(
-                                    "Rate",
-                                    textAlign: TextAlign.right,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 2, vertical: 5),
-                                  child: Text(
-                                    "Total",
-                                    textAlign: TextAlign.right,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            for (int index = 0;
-                                index < enquiryData.products!.length;
-                                index++)
-                              TableRow(
-                                decoration: BoxDecoration(
-                                  border: enquiryData.products!.length !=
-                                          (index + 1)
-                                      ? Border(
-                                          bottom: BorderSide(
-                                            color: Colors.grey.shade300,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                children: [
-                                  Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(2),
-                                      child: Text(
-                                        (index + 1).toString(),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
                                   Padding(
-                                    padding: const EdgeInsets.all(2),
-                                    child: Text(enquiryData
-                                            .products![index].productName ??
-                                        ""),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 2, vertical: 5),
                                     child: Text(
-                                      enquiryData.products![index].qty
-                                          .toString(),
+                                      "Qty",
                                       textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.all(2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 2, vertical: 5),
                                     child: Text(
-                                      double.parse(enquiryData
-                                              .products![index].price
-                                              .toString())
-                                          .toStringAsFixed(2),
+                                      "Rate",
                                       textAlign: TextAlign.right,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.all(2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 2, vertical: 5),
                                     child: Text(
-                                      double.parse((enquiryData
-                                                      .products![index].qty! *
-                                                  enquiryData
-                                                      .products![index].price!)
-                                              .toString())
-                                          .toStringAsFixed(2),
+                                      "Total",
                                       textAlign: TextAlign.right,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                   ),
                                 ],
                               ),
-                          ],
-                        ),
-                      ],
+                              for (int index = 0;
+                                  index < enquiryData.products!.length;
+                                  index++)
+                                TableRow(
+                                  decoration: BoxDecoration(
+                                    border: enquiryData.products!.length !=
+                                            (index + 1)
+                                        ? Border(
+                                            bottom: BorderSide(
+                                              color: Colors.grey.shade300,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  children: [
+                                    Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2),
+                                        child: Text(
+                                          (index + 1).toString(),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: Text(enquiryData
+                                              .products![index].productName ??
+                                          ""),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: Text(
+                                        enquiryData.products![index].qty
+                                            .toString(),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: Text(
+                                        double.parse(enquiryData
+                                                .products![index].price
+                                                .toString())
+                                            .toStringAsFixed(2),
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: Text(
+                                        double.parse((enquiryData
+                                                        .products![index].qty! *
+                                                    enquiryData.products![index]
+                                                        .price!)
+                                                .toString())
+                                            .toStringAsFixed(2),
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 70,
-                  ),
-                ],
-              ),
-            );
-          }
-        },
+                    const SizedBox(
+                      height: 70,
+                    ),
+                  ],
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -1271,9 +1450,9 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
           if (value != null) {
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) {
+              CupertinoPageRoute(builder: (context) {
                 if (value == 1) {
-                  return BillingOne(
+                  return BillingOneEdit(
                     isEdit: true,
                     enquiryData: enquiryData,
                   );

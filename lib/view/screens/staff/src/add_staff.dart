@@ -157,13 +157,13 @@ class _AddStaffState extends State<AddStaff> {
                               children: [
                                 InputForm(
                                   controller: fullName,
-                                  lableName: "Staff Name",
+                                  labelName: "Staff Name",
                                   formName: "Full Name",
                                   prefixIcon: Icons.person,
                                   validation: (input) {
                                     return FormValidation().commonValidation(
                                       input: input,
-                                      isMandorty: true,
+                                      isMandatory: true,
                                       formName: "Staff Name",
                                       isOnlyCharter: false,
                                     );
@@ -171,15 +171,15 @@ class _AddStaffState extends State<AddStaff> {
                                 ),
                                 InputForm(
                                   controller: phoneNo,
-                                  lableName: "Phone Number",
+                                  labelName: "Phone Number",
                                   formName: "Phone No",
                                   prefixIcon: Icons.phone,
                                   keyboardType: TextInputType.phone,
                                   validation: (input) {
                                     return FormValidation().phoneValidation(
                                       input: input.toString(),
-                                      isMandorty: true,
-                                      lableName: "Phone Number",
+                                      isMandatory: true,
+                                      labelName: "Phone Number",
                                     );
                                   },
                                 ),
@@ -218,7 +218,7 @@ class _AddStaffState extends State<AddStaff> {
                                               return FormValidation()
                                                   .commonValidation(
                                                 input: input,
-                                                isMandorty: true,
+                                                isMandatory: true,
                                                 formName: "userid",
                                                 isOnlyCharter: false,
                                               );
@@ -249,7 +249,7 @@ class _AddStaffState extends State<AddStaff> {
                                 ),
                                 InputForm(
                                   controller: password,
-                                  lableName: "Passsword",
+                                  labelName: "Passsword",
                                   formName: "Passsword",
                                   isPasswordForm: true,
                                   prefixIcon: Icons.key,
@@ -491,9 +491,9 @@ class _AddStaffState extends State<AddStaff> {
         if (!product && !category && !customer && !orders && !estimate) {
           Navigator.pop(context);
           setState(() {
-            permissionError = "Permission is Must";
+            permissionError = "Permission is must";
           });
-          snackbar(context, false, "Permission is Must");
+          snackbar(context, false, "Permission is must");
         } else {
           setState(() {
             imageError = null;
@@ -598,9 +598,9 @@ class _AddStaffState extends State<AddStaff> {
         Navigator.pop(context);
         if (profileImage == null) {
           setState(() {
-            imageError = "Profile Image is Must";
+            imageError = "Profile Image is must";
           });
-          snackbar(context, false, "Profile Image is Must");
+          snackbar(context, false, "Profile Image is must");
         }
       }
     } catch (e) {

@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import '../../../../provider/provider.dart';
+import '/provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -39,6 +39,9 @@ class _CategoryListingState extends State<CategoryListing> {
             model.categoryName = element["category_name"].toString();
             model.postion = element["postion"];
             model.tmpcatid = element.id;
+            model.hsnCode = element["hsn_code"];
+            model.taxValue = element["tax_value"];
+
             setState(() {
               categoryList.add(model);
             });
@@ -55,62 +58,6 @@ class _CategoryListingState extends State<CategoryListing> {
       return null;
     }
   }
-
-  // Future rearrangecatvalid({
-  //   required int newIndex,
-  //   required int oldIndex,
-  //   required String categoryid,
-  // }) async {
-  //   loading(context);
-  //   try {
-  //     await LocalDB
-  //         .fetchInfo(type: LocalData.companyid)
-  //         .then((cid) async {
-  //       if (cid != null) {
-  //         log("NewIndex - $newIndex OldIndex - $oldIndex");
-  //         if (newIndex > oldIndex) {
-  //           await FireStore()
-  //               .getcategoryLimit(
-  //             startPostion: oldIndex,
-  //             endPostion: newIndex,
-  //             cid: cid,
-  //           )
-  //               .then((value) {
-  //             Navigator.pop(context);
-  //             log("is Worked");
-  //             if (value != null && value.docs.isNotEmpty) {
-  //               for (var element in value.docs) {
-  //                 log(element.data().toString());
-  //               }
-  //             }
-  //           });
-  //         } else {
-  //           log("is Lessthen");
-  //           await FireStore()
-  //               .getcategoryLimit(
-  //             startPostion: newIndex,
-  //             endPostion: oldIndex,
-  //             cid: cid,
-  //           )
-  //               .then((value) {
-  //             Navigator.pop(context);
-  //             log("is Worked");
-  //             if (value != null && value.docs.isNotEmpty) {
-  //               for (var element in value.docs) {
-  //                 log(element.data().toString());
-  //               }
-  //             }
-  //           });
-  //         }
-  //       }
-  //     });
-
-  //     // await FireStore().
-  //   } catch (e) {
-  //     Navigator.pop(context);
-  //     snackbar(context, false, e.toString());
-  //   }
-  // }
 
   Future rearrangecatvalid({
     required int newIndex,
@@ -189,7 +136,7 @@ class _CategoryListingState extends State<CategoryListing> {
               )
                   .then((value) {
                 Navigator.pop(context);
-                snackbar(context, true, "Successfully Updated");
+                snackbar(context, true, "Position updated successfully");
               });
             } else {
               Navigator.pop(context);
@@ -197,8 +144,6 @@ class _CategoryListingState extends State<CategoryListing> {
           });
         }
       });
-
-      // await FireStore().
     } catch (e) {
       Navigator.pop(context);
       snackbar(context, false, e.toString());
@@ -272,23 +217,22 @@ class _CategoryListingState extends State<CategoryListing> {
   }
 
   @override
-  void dispose() {
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-    connectionProvider.removeListener(_connectionListener);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appbar(context),
-      body: Consumer<ConnectionProvider>(
-        builder: (context, connectionProvider, child) {
-          return connectionProvider.isConnected
-              ? screenView()
-              : noInternet(context);
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
         },
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return connectionProvider.isConnected
+                ? screenView()
+                : noInternet(context);
+          },
+        ),
       ),
     );
   }
@@ -382,6 +326,7 @@ class _CategoryListingState extends State<CategoryListing> {
                   ),
                   Expanded(
                     child: RefreshIndicator(
+                      color: Theme.of(context).primaryColor,
                       onRefresh: () async {
                         setState(() {
                           categoryHandler = getCategoryInfo();
@@ -473,6 +418,10 @@ class _CategoryListingState extends State<CategoryListing> {
                                                   .categoryName,
                                               docID:
                                                   categoryList[index].tmpcatid,
+                                              taxValue:
+                                                  categoryList[index].taxValue,
+                                              hsnCode:
+                                                  categoryList[index].hsnCode,
                                             ).then((value) {
                                               if (value != null &&
                                                   value == true) {
@@ -484,7 +433,7 @@ class _CategoryListingState extends State<CategoryListing> {
                                             });
                                             // Navigator.push(
                                             //   context,
-                                            //   MaterialPageRoute(
+                                            //   CupertinoPageRoute(
                                             //     builder: (context) =>
                                             //         AddCategory(
                                             //       category: CategoryClass(

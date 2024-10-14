@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -103,12 +104,19 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appbar(context),
-      body: Consumer<ConnectionProvider>(
-        builder: (context, connectionProvider, child) {
-          return connectionProvider.isConnected
-              ? screenView()
-              : noInternet(context);
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
         },
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return connectionProvider.isConnected
+                ? screenView()
+                : noInternet(context);
+          },
+        ),
       ),
     );
   }
@@ -125,6 +133,7 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
           );
         } else {
           return RefreshIndicator(
+            color: Theme.of(context).primaryColor,
             onRefresh: () async {
               setState(() {
                 getDiscountHandler = getCategory();
@@ -139,7 +148,7 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
+                            CupertinoPageRoute(
                               builder: (context) => CategoryDiscountDetailsView(
                                 categoryList: categoryList,
                                 discount:
@@ -241,7 +250,7 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  CupertinoPageRoute(
                                     builder: (context) =>
                                         CategoryDiscountDetailsView(
                                             categoryList: categoryList),
@@ -316,7 +325,7 @@ class _CategoryDiscountViewState extends State<CategoryDiscountView> {
             if (connectionProvider.isConnected) {
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                CupertinoPageRoute(
                   builder: (context) =>
                       CategoryDiscountDetailsView(categoryList: categoryList),
                 ),

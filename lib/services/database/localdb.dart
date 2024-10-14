@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '/constants/constants.dart';
 
@@ -16,6 +18,17 @@ class LocalDB {
   static Future setTestMode() async {
     var db = await _connect();
     var result = db.setBool('test_mode', true);
+  }
+
+  static Future setTheme({required String theme}) async {
+    var db = await _connect();
+    var result = db.setString('theme', theme);
+  }
+
+  static Future<String?> getTheme() async {
+    var db = await _connect();
+    var result = db.getString('theme');
+    return result;
   }
 
   static Future<bool> createNewUser({
@@ -91,6 +104,16 @@ class LocalDB {
   static Future<bool?> getPdfType() async {
     var db = await _connect();
     return db.getBool('invoice_pdf_type');
+  }
+
+  static Future setProductCodeDisplay(bool type) async {
+    var db = await _connect();
+    return db.setBool('product_code_display', type);
+  }
+
+  static Future<bool?> getProductCodeDisplay() async {
+    var db = await _connect();
+    return db.getBool('product_code_display');
   }
 
   static Future setPdfAlignment(int type) async {
@@ -183,6 +206,21 @@ class LocalDB {
       };
       return data;
     }
+  }
+
+  static Future setInvoiceParty(Map<String, dynamic> data) async {
+    var db = await _connect();
+    return db.setString('invoice_party', jsonEncode(data));
+  }
+
+  static Future<String?> getInvoiceParty() async {
+    var db = await _connect();
+    return db.getString('invoice_party');
+  }
+
+  static Future clearInvoiceParty() async {
+    var db = await _connect();
+    return db.remove('invoice_party');
   }
 
   static Future<bool> logout() async {

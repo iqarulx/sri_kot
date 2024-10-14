@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../log/log.dart';
+import '/log/log.dart';
 import '/constants/constants.dart';
 
 class ImagePickerProvider {

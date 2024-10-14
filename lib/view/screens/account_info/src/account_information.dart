@@ -68,138 +68,145 @@ class _AccountInformationState extends State<AccountInformation> {
               icon: const Icon(Icons.refresh),
             ),
           ]),
-      body: FutureBuilder(
-        future: userHandler,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return futureLoading(context);
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Failed",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      snapshot.error.toString() == "null"
-                          ? "Something went Wrong"
-                          : snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            userHandler = getUserInfo();
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text(
-                          "Refresh",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return ListView(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(15),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: FutureBuilder(
+          future: userHandler,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return futureLoading(context);
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                   ),
+                  margin: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
-                        height: 10,
+                      const Center(
+                        child: Text(
+                          "Failed",
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                      Text("Account Information",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge!
-                              .copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black)),
                       const SizedBox(
                         height: 15,
                       ),
-                      Table(
-                          columnWidths: const {
-                            0: FlexColumnWidth(2),
-                            1: FlexColumnWidth(3),
+                      Text(
+                        snapshot.error.toString() == "null"
+                            ? "Something went Wrong"
+                            : snapshot.error.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              userHandler = getUserInfo();
+                            });
                           },
-                          border: TableBorder(
-                            horizontalInside: BorderSide(
-                                color: Colors.grey.shade300, width: 1),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text(
+                            "Refresh",
                           ),
-                          children: [
-                            _buildTableRow(
-                              context,
-                              "Company Name",
-                              companyName ?? '',
-                            ),
-                            _buildTableRow(
-                              context,
-                              "Created at",
-                              DateFormat('dd-MM-yyyy hh:mm a')
-                                  .format(createdAt ?? DateTime.now()),
-                            ),
-                            _buildTableRow(
-                              context,
-                              "Users License",
-                              userCount ?? '',
-                            ),
-                            _buildTableRow(
-                              context,
-                              "Staff License",
-                              staffCount ?? '',
-                            ),
-                            _buildTableRow(
-                              context,
-                              "Invoice Entry",
-                              invoiceEntry ?? '',
-                            ),
-                            _buildTableRow(
-                              context,
-                              "Expired On",
-                              DateFormat('dd-MM-yyyy hh:mm a')
-                                  .format(expiredOn ?? DateTime.now()),
-                            ),
-                          ])
+                        ),
+                      ),
                     ],
                   ),
-                )
-              ],
-            );
-          }
-        },
+                ),
+              );
+            } else {
+              return ListView(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text("Account Information",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge!
+                                .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black)),
+                        const SizedBox(
+                          height: 15,
+                        ),
+                        Table(
+                            columnWidths: const {
+                              0: FlexColumnWidth(2),
+                              1: FlexColumnWidth(3),
+                            },
+                            border: TableBorder(
+                              horizontalInside: BorderSide(
+                                  color: Colors.grey.shade300, width: 1),
+                            ),
+                            children: [
+                              _buildTableRow(
+                                context,
+                                "Company Name",
+                                companyName ?? '',
+                              ),
+                              _buildTableRow(
+                                context,
+                                "Created at",
+                                DateFormat('dd-MM-yyyy hh:mm a')
+                                    .format(createdAt ?? DateTime.now()),
+                              ),
+                              _buildTableRow(
+                                context,
+                                "Users License",
+                                userCount ?? '',
+                              ),
+                              _buildTableRow(
+                                context,
+                                "Staff License",
+                                staffCount ?? '',
+                              ),
+                              _buildTableRow(
+                                context,
+                                "Invoice Entry",
+                                invoiceEntry ?? '',
+                              ),
+                              _buildTableRow(
+                                context,
+                                "Expired On",
+                                DateFormat('dd-MM-yyyy hh:mm a')
+                                    .format(expiredOn ?? DateTime.now()),
+                              ),
+                            ])
+                      ],
+                    ),
+                  )
+                ],
+              );
+            }
+          },
+        ),
       ),
     );
   }

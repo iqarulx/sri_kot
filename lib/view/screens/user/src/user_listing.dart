@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +11,6 @@ import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
-
-PageController userListingcontroller = PageController();
 
 class UserListing extends StatefulWidget {
   const UserListing({super.key});
@@ -90,12 +89,19 @@ class _UserListingState extends State<UserListing> {
               : Container()
         ],
       ),
-      body: Consumer<ConnectionProvider>(
-        builder: (context, connectionProvider, child) {
-          return connectionProvider.isConnected
-              ? screenView()
-              : noInternet(context);
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
         },
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return connectionProvider.isConnected
+                ? screenView()
+                : noInternet(context);
+          },
+        ),
       ),
     );
   }
@@ -160,173 +166,152 @@ class _UserListingState extends State<UserListing> {
             ),
           );
         } else {
-          return PageView(
-            physics: const NeverScrollableScrollPhysics(),
-            controller: userListingcontroller,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Container(
-                  height: double.infinity,
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: userListData.isNotEmpty
-                      ? RefreshIndicator(
-                          onRefresh: () async {
-                            setState(() {
-                              userlistingHandler = getUserInfo();
-                            });
-                          },
-                          child: ListView.builder(
-                            itemCount: userListData.length,
-                            itemBuilder: (context, index) {
-                              return Column(
-                                children: [
-                                  ListTile(
-                                    onTap: () {
-                                      setState(() {
-                                        adminuid = userListData[index].uid;
-                                        adminDocId = userListData[index].docid;
-                                        adminPagetitle =
-                                            userListData[index].adminName;
-                                        adminuserName.text =
-                                            userListData[index].adminName ?? "";
-                                        adminphoneno.text =
-                                            userListData[index].phoneNo ?? "";
-                                        adminuserid.text =
-                                            userListData[index].adminLoginId ??
-                                                "";
-                                        adminpassword.text =
-                                            userListData[index].password ?? "";
-                                        adminProfileImage =
-                                            userListData[index].imageUrl;
-                                        adminDevice =
-                                            userListData[index].deviceModel;
-                                        userListingcontroller.animateToPage(
-                                          1,
-                                          duration: const Duration(
-                                            milliseconds: 600,
-                                          ),
-                                          curve: Curves.linear,
-                                        );
-                                      });
-                                    },
-                                    leading: ClipOval(
-                                      child: CachedNetworkImage(
-                                        imageUrl:
-                                            userListData[index].imageUrl ??
-                                                Strings.productImg,
-                                        placeholder: (context, url) =>
-                                            const CircularProgressIndicator(),
-                                        fit: BoxFit.cover,
-                                        width: 45.0,
-                                        height: 45.0,
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(Icons.error),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      userListData[index].adminName.toString(),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge!
-                                          .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    subtitle: Text(
-                                      userListData[index]
-                                          .adminLoginId
-                                          .toString(),
-                                      style: TextStyle(
-                                        color: Colors.grey.shade400,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    trailing: const Icon(
-                                        Icons.keyboard_arrow_right_outlined),
-                                  ),
-                                  Divider(
-                                    height: 0,
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+          return Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Container(
+              height: double.infinity,
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: userListData.isNotEmpty
+                  ? RefreshIndicator(
+                      color: Theme.of(context).primaryColor,
+                      onRefresh: () async {
+                        setState(() {
+                          userlistingHandler = getUserInfo();
+                        });
+                      },
+                      child: ListView.builder(
+                        itemCount: userListData.length,
+                        itemBuilder: (context, index) {
+                          return Column(
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: SvgPicture.asset(
-                                  Assets.emptyList3,
-                                  height: 200,
-                                  width: 200,
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 15,
-                              ),
-                              Text(
-                                "No Users",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge!
-                                    .copyWith(),
-                              ),
-                              const SizedBox(
-                                height: 8,
-                              ),
-                              Center(
-                                child: Text(
-                                  "You have not create any user, so first you have create user using add user button below",
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall!
-                                      .copyWith(color: Colors.grey),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 15,
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  TextButton.icon(
-                                    onPressed: () {
-                                      openModelBottomSheat(context);
-                                    },
-                                    icon: const Icon(Icons.add),
-                                    label: const Text("Add User"),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () {
+                              ListTile(
+                                onTap: () async {
+                                  var result = await Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                      builder: (context) => UserDetails(
+                                          userAdminModel: userListData[index]),
+                                    ),
+                                  );
+
+                                  if (result != null) {
+                                    if (result) {
                                       setState(() {
                                         userlistingHandler = getUserInfo();
                                       });
-                                    },
-                                    icon: const Icon(Icons.refresh),
-                                    label: const Text("Refresh"),
+                                    }
+                                  }
+                                },
+                                leading: ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: userListData[index].imageUrl ??
+                                        Strings.productImg,
+                                    placeholder: (context, url) =>
+                                        const CircularProgressIndicator(),
+                                    fit: BoxFit.cover,
+                                    width: 45.0,
+                                    height: 45.0,
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.error),
                                   ),
-                                ],
+                                ),
+                                title: Text(
+                                  userListData[index].adminName.toString(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge!
+                                      .copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                subtitle: Text(
+                                  userListData[index].adminLoginId.toString(),
+                                  style: TextStyle(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                trailing: const Icon(
+                                    Icons.keyboard_arrow_right_outlined),
+                              ),
+                              Divider(
+                                height: 0,
+                                color: Colors.grey.shade300,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: SvgPicture.asset(
+                              Assets.emptyList3,
+                              height: 200,
+                              width: 200,
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 15,
+                          ),
+                          Text(
+                            "No Users",
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge!
+                                .copyWith(),
+                          ),
+                          const SizedBox(
+                            height: 8,
+                          ),
+                          Center(
+                            child: Text(
+                              "You have not create any user, so first you have create user using add user button below",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall!
+                                  .copyWith(color: Colors.grey),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 15,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  openModelBottomSheat(context);
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text("Add User"),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    userlistingHandler = getUserInfo();
+                                  });
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text("Refresh"),
                               ),
                             ],
                           ),
-                        ),
-                ),
-              ),
-              const UserDetails(),
-            ],
+                        ],
+                      ),
+                    ),
+            ),
           );
         }
       },

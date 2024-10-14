@@ -1,4 +1,4 @@
-export 'local/local_service.dart';
+export 'firebase/local_service.dart';
 export 'firebase/firebase_auth.dart';
 export 'firebase/storage.dart';
 export 'firebase/firestore.dart';

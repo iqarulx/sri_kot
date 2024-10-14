@@ -44,6 +44,10 @@ class _UploadExcelState extends State<UploadExcel>
   AppBar appbar() {
     return AppBar(
       title: const Text("Upload Excel"),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       bottom: PreferredSize(
         preferredSize: const Size(double.infinity, 50),
         child: Container(

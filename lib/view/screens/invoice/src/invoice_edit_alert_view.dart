@@ -189,7 +189,7 @@ class _InvoiceEditAlertViewState extends State<InvoiceEditAlertView> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return "Product Name is Must";
+                                return "Product Name is must";
                               } else {
                                 return null;
                               }
@@ -251,7 +251,7 @@ class _InvoiceEditAlertViewState extends State<InvoiceEditAlertView> {
                             controller: qty,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return "QTY is Must";
+                                return "QTY is must";
                               } else {
                                 return null;
                               }
@@ -289,7 +289,7 @@ class _InvoiceEditAlertViewState extends State<InvoiceEditAlertView> {
                             controller: unit,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return "Unit is Must";
+                                return "Unit is must";
                               } else {
                                 return null;
                               }
@@ -328,7 +328,7 @@ class _InvoiceEditAlertViewState extends State<InvoiceEditAlertView> {
                       controller: rate,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Rate is Must";
+                          return "Rate is must";
                         } else {
                           return null;
                         }

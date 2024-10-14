@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sri_kot/constants/constants.dart';
-import 'package:sri_kot/utils/utils.dart';
-import 'package:sri_kot/view/ui/ui.dart';
-
-import '../../../services/services.dart';
+import '/constants/constants.dart';
+import '/utils/utils.dart';
+import '/view/ui/ui.dart';
+import '/services/services.dart';
 
 class HsnModal extends StatefulWidget {
   const HsnModal({super.key});
@@ -17,9 +16,9 @@ class _HsnModalState extends State<HsnModal> {
   bool? commonSelected;
   TextEditingController hsn = TextEditingController();
   var formKey = GlobalKey<FormState>();
-
   Future? hsnHandler;
-
+  bool taxType = false;
+  String? taxValue;
   @override
   void initState() {
     hsnHandler = getHSN();
@@ -28,6 +27,8 @@ class _HsnModalState extends State<HsnModal> {
 
   getHSN() async {
     try {
+      taxType = await FireStore().getCompanyTax();
+      setState(() {});
       await LocalService.getHSN().then((value) {
         if (value.isNotEmpty) {
           if (value["common_hsn"]) {
@@ -91,30 +92,85 @@ class _HsnModalState extends State<HsnModal> {
                       contentPadding: EdgeInsets.zero,
                     ),
                     if (commonSelected ?? false)
-                      TextFormField(
-                        controller: hsn,
-                        cursorColor: Theme.of(context).primaryColor,
-                        textInputAction: TextInputAction.next,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          hintText: "Enter HSN",
-                          filled: true,
-                          fillColor: Color(0xfff1f5f9),
-                          prefixIcon: Icon(
-                            Icons.numbers,
+                      Column(
+                        children: [
+                          TextFormField(
+                            controller: hsn,
+                            cursorColor: Theme.of(context).primaryColor,
+                            textInputAction: TextInputAction.next,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              hintText: "Enter HSN",
+                              filled: true,
+                              fillColor: Color(0xfff1f5f9),
+                              prefixIcon: Icon(
+                                Icons.numbers,
+                              ),
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return "HSN is must";
+                              } else if (value.contains(RegExp(r'\s'))) {
+                                return 'White spaces not allowed';
+                              }
+                              return null;
+                            },
                           ),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
+                          const SizedBox(
+                            height: 10,
                           ),
-                        ),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "HSN is Must";
-                          } else if (value.contains(RegExp(r'\s'))) {
-                            return 'White spaces not allowed';
-                          }
-                          return null;
-                        },
+                          if (taxType)
+                            DropDownForm(
+                              formName: "Tax Value",
+                              onChange: (v) {
+                                if (v != null) {
+                                  setState(() {
+                                    taxValue = v;
+                                  });
+                                }
+                              },
+                              labelName: "Tax Value",
+                              value: null,
+                              validator: (p0) {
+                                if (p0 == null) {
+                                  return "Tax Value is must";
+                                }
+                                return null;
+                              },
+                              listItems: const [
+                                DropdownMenuItem(
+                                  value: null,
+                                  child: Text(
+                                    "Select tax value",
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: "0%",
+                                  child: Text("0%"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "5%",
+                                  child: Text("5%"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "12%",
+                                  child: Text("12%"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "18%",
+                                  child: Text("18%"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "28%",
+                                  child: Text("28%"),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                     RadioListTile<String>(
                       title: const Text('Individual HSN'),
@@ -168,14 +224,15 @@ class _HsnModalState extends State<HsnModal> {
                                     return const Modal(
                                         title: "HSN Change",
                                         content:
-                                            "Your common hsn value applied for your all products! Are you sure want to change HSN?",
+                                            "Your common hsn value applied for your all products!\nAre you sure want to change HSN?",
                                         type: ModalType.danger);
                                   },
                                 ).then((value) async {
                                   if (value != null) {
                                     if (value) {
                                       loading(context);
-                                      await LocalService.updateHSN(hsn.text,
+                                      await LocalService.updateHSN(
+                                              hsn.text, taxValue ?? '',
                                               value:
                                                   option == "1" ? true : false)
                                           .then(

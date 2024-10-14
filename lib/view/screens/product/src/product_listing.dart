@@ -26,10 +26,19 @@ class _ProductListingState extends State<ProductListing> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appbar(context),
-      body: Consumer<ConnectionProvider>(
-        builder: (context, connectionProvider, child) {
-          return connectionProvider.isConnected ? body() : noInternet(context);
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
         },
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return connectionProvider.isConnected
+                ? body()
+                : noInternet(context);
+          },
+        ),
       ),
     );
   }
@@ -135,6 +144,7 @@ class _ProductListingState extends State<ProductListing> {
   Expanded productList(BuildContext context) {
     return Expanded(
       child: RefreshIndicator(
+        color: Theme.of(context).primaryColor,
         onRefresh: () async {
           setState(() {
             productHandler = getProductInfo();
@@ -340,6 +350,7 @@ class _ProductListingState extends State<ProductListing> {
                 child: SizedBox(
                   height: 45,
                   child: DropdownButtonFormField(
+                    menuMaxHeight: 400,
                     isExpanded: true,
                     items: categorylist,
                     onChanged: (v) {
@@ -389,6 +400,7 @@ class _ProductListingState extends State<ProductListing> {
                 child: SizedBox(
                   height: 45,
                   child: DropdownButtonFormField(
+                    menuMaxHeight: 400,
                     isExpanded: true,
                     items: noofpage,
                     value: crtpagenumber != 0 ? crtpagenumber : null,
@@ -591,25 +603,43 @@ class _ProductListingState extends State<ProductListing> {
           });
           for (var element in result.docs) {
             ProductDataModel model = ProductDataModel();
-            model.categoryid = element["category_id"] ?? "";
-            // model.categoryName = element["category_name"] ?? "";
-            model.categoryName = "";
-            model.productName = element["product_name"] ?? "";
-            model.productCode = element["product_code"] ?? "";
-            model.productContent = element["product_content"] ?? "";
-            model.qrCode = element["qr_code"] ?? "";
-            model.price = double.parse(element["price"].toString());
-            model.videoUrl = element["video_url"] ?? "";
-            model.productImg = element["product_img"];
-            model.active = element["active"];
+
+            Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+
+            model.categoryid =
+                data.containsKey("category_id") ? data["category_id"] : null;
+            model.categoryName =
+                data.containsKey("category_name") ? data["category_name"] : "";
+            model.productName =
+                data.containsKey("product_name") ? data["product_name"] : "";
+            model.productCode =
+                data.containsKey("product_code") ? data["product_code"] : "";
+            model.productContent = data.containsKey("product_content")
+                ? data["product_content"]
+                : "";
+            model.qrCode = data.containsKey("qr_code") ? data["qr_code"] : "";
+            model.price = data.containsKey("price")
+                ? double.parse(data["price"].toString())
+                : 0.0;
+            model.videoUrl =
+                data.containsKey("video_url") ? data["video_url"] : "";
+            model.productImg =
+                data.containsKey("product_img") ? data["product_img"] : null;
+            model.active = data.containsKey("active") ? data["active"] : false;
             model.productId = element.id;
-            model.discountLock = element['discount_lock'];
-            model.hsnCode = element['hsn_code'] ?? '';
+            model.discountLock = data.containsKey('discount_lock')
+                ? data['discount_lock']
+                : false;
+            model.hsnCode =
+                data.containsKey('hsn_code') ? data['hsn_code'] : '';
+            model.taxValue =
+                data.containsKey('tax_value') ? data['tax_value'] : '';
 
             setState(() {
               productDataList.add(model);
             });
           }
+
           categorylist.add(
             const DropdownMenuItem(
               value: "all",
@@ -666,8 +696,7 @@ class _ProductListingState extends State<ProductListing> {
   downloadTemplate() async {
     loading(context);
     try {
-      var data = await http.get(Uri.parse(
-          'https://firebasestorage.googleapis.com/v0/b/srisoftpos.appspot.com/o/product_templete%2Fproduct_template.xlsx?alt=media&token=a9aa597d-9bc2-4d79-b978-476bf0942e16'));
+      var data = await http.get(Uri.parse(Strings.productTemplate));
       var response = data.bodyBytes;
       Navigator.pop(context);
       helper.saveAndLaunchFile(response, "Product Template.xlsx");

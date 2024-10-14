@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:toastification/toastification.dart';
+import '../../../theme/theme_change.dart';
+import '/theme/theme.dart';
 import '/services/services.dart';
 import '/app/src/life_cycle/app_lifecycle.dart';
 import '/view/screens/screens.dart';
-import '/view/auth/src/auth.dart';
+import '../../../view/auth/src/auth/auth.dart';
 
-class MyApp extends StatelessWidget {
+ChangeThemeApp changeThemeApp = ChangeThemeApp();
+
+class MyApp extends StatefulWidget {
   final bool login;
   final bool appUpdate;
   const MyApp({
@@ -16,35 +19,56 @@ class MyApp extends StatelessWidget {
   });
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeData appTheme = AppThemeUI().theme1;
+  getcurrentTheme() {
+    setState(() {
+      if (changeThemeApp.theme.toString().toLowerCase() == "theme1") {
+        appTheme = AppThemeUI().theme1;
+      } else if (changeThemeApp.theme.toString().toLowerCase() == "theme2") {
+        appTheme = AppThemeUI().theme2;
+      } else if (changeThemeApp.theme.toString().toLowerCase() == "theme3") {
+        appTheme = AppThemeUI().theme3;
+      } else if (changeThemeApp.theme.toString().toLowerCase() == "theme4") {
+        appTheme = AppThemeUI().theme4;
+      } else {
+        appTheme = AppThemeUI().theme1;
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    getcurrentTheme();
+    changeThemeApp.addListener(themeChanger);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    changeThemeApp.addListener(themeChanger);
+    super.dispose();
+  }
+
+  themeChanger() {
+    if (mounted) {
+      getcurrentTheme();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AppLifecycleObserver(
       child: ToastificationWrapper(
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Sri KOT',
-          theme: ThemeData(
-            primaryColor: const Color(0xff003049),
-            useMaterial3: false,
-            appBarTheme: const AppBarTheme(
-              centerTitle: false,
-              backgroundColor: Color(0xff003049),
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.light,
-                statusBarBrightness: Brightness.dark,
-              ),
-            ),
-            inputDecorationTheme: const InputDecorationTheme(
-              filled: true,
-              fillColor: Color(0xfff1f5f9),
-              border: OutlineInputBorder(
-                borderSide: BorderSide.none,
-              ),
-            ),
-            scaffoldBackgroundColor: const Color(0xffEEEEEE),
-          ),
-          home: appUpdate
-              ? login
+          theme: appTheme,
+          home: widget.appUpdate
+              ? widget.login
                   ? const UserHome()
                   : const Auth()
               : const AppUpdateScreen(),

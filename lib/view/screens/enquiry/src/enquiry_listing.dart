@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import '/gen/assets.gen.dart';
 import '/model/model.dart';
@@ -101,21 +100,22 @@ class _EnquiryListingState extends State<EnquiryListing> {
             await FireStore().getEnquiry(cid: cid, start: start, end: end);
         if (enquiry.isNotEmpty) {
           for (var enquiryData in enquiry) {
-            var calcula = BillingCalCulationModel();
-            calcula.discount = enquiryData["price"]["discount"];
-            calcula.discountValue = enquiryData["price"]["discount_value"];
-            calcula.discountsys = enquiryData["price"]["discount_sys"];
-            calcula.extraDiscount = enquiryData["price"]["extra_discount"];
-            calcula.roundOff = enquiryData["price"]["round_off"];
-            calcula.extraDiscountValue =
+            var calc = BillingCalCulationModel();
+            calc.discountValue = enquiryData["price"]["discount_value"];
+            calc.extraDiscount = enquiryData["price"]["extra_discount"];
+            calc.roundOff = enquiryData["price"]["round_off"];
+            calc.extraDiscountValue =
                 enquiryData["price"]["extra_discount_value"];
-            calcula.extraDiscountsys =
-                enquiryData["price"]["extra_discount_sys"];
-            calcula.package = enquiryData["price"]["package"];
-            calcula.packageValue = enquiryData["price"]["package_value"];
-            calcula.packagesys = enquiryData["price"]["package_sys"];
-            calcula.subTotal = enquiryData["price"]["sub_total"];
-            calcula.total = enquiryData["price"]["total"];
+            calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+            calc.package = enquiryData["price"]["package"];
+            calc.packageValue = enquiryData["price"]["package_value"];
+            calc.packagesys = enquiryData["price"]["package_sys"];
+            calc.subTotal = enquiryData["price"]["sub_total"];
+            calc.total = enquiryData["price"]["total"];
+            calc.netratedTotal = enquiryData["price"]["netrated_total"];
+            calc.discountedTotal = enquiryData["price"]["discounted_total"];
+            calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+            calc.discounts = enquiryData["price"]["discounts"];
 
             CustomerDataModel? customer = CustomerDataModel();
             if (enquiryData["customer"] != null) {
@@ -154,7 +154,20 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   productDataModel.productContent = product["product_content"];
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
-                  productDataModel.videoUrl = product["video_url"];
+                  productDataModel.productType =
+                      product["discount_lock"] || product["discount"] == null
+                          ? ProductType.netRated
+                          : ProductType.discounted;
+                  if (productDataModel.productType == ProductType.discounted) {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString()) -
+                            (double.parse(product["price"].toString()) *
+                                product["discount"] /
+                                100);
+                  } else {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString());
+                  }
 
                   setState(() {
                     tmpProducts.add(productDataModel);
@@ -172,7 +185,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   ),
                   enquiryid: enquiryData['enquiry_id'],
                   estimateid: enquiryData["estimate_id"],
-                  price: calcula,
+                  price: calc,
                   customer: customer,
                   products: tmpProducts,
                   dataType: DataTypes.cloud,
@@ -203,38 +216,39 @@ class _EnquiryListingState extends State<EnquiryListing> {
 
       var localEnquiry = await DatabaseHelper()
           .getEnquiry(start: start, end: end, limitApplied: true);
-      for (var data in localEnquiry) {
-        var calcula = BillingCalCulationModel();
-        var price = jsonDecode(data['price']) as Map<String, dynamic>;
-        calcula.discount = price["discount"];
-        calcula.discountValue = price["discount_value"];
-        calcula.discountsys = price["discount_sys"];
-        calcula.extraDiscount = price["extra_discount"];
-        calcula.extraDiscountValue = price["extra_discount_value"];
-        calcula.extraDiscountsys = price["extra_discount_sys"];
-        calcula.package = price["package"];
-        calcula.packageValue = price["package_value"];
-        calcula.packagesys = price["package_sys"];
-        calcula.subTotal = price["sub_total"];
-        calcula.total = price["total"];
-        calcula.roundOff = price["round_off"];
+      for (var enquiryData in localEnquiry) {
+        var calc = BillingCalCulationModel();
+        calc.discountValue = enquiryData["price"]["discount_value"];
+        calc.extraDiscount = enquiryData["price"]["extra_discount"];
+        calc.roundOff = enquiryData["price"]["round_off"];
+        calc.extraDiscountValue = enquiryData["price"]["extra_discount_value"];
+        calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+        calc.package = enquiryData["price"]["package"];
+        calc.packageValue = enquiryData["price"]["package_value"];
+        calc.packagesys = enquiryData["price"]["package_sys"];
+        calc.subTotal = enquiryData["price"]["sub_total"];
+        calc.total = enquiryData["price"]["total"];
+        calc.netratedTotal = enquiryData["price"]["netrated_total"];
+        calc.discountedTotal = enquiryData["price"]["discounted_total"];
+        calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+        calc.discounts = enquiryData["price"]["discounts"];
 
         CustomerDataModel? customer = CustomerDataModel();
-        if (data["customer"] != null) {
-          var customerData =
-              jsonDecode(data['customer']) as Map<String, dynamic>;
-          customer.address = customerData["address"] ?? "";
-          customer.state = customerData["state"] ?? "";
-          customer.city = customerData["city"] ?? "";
-          customer.customerName = customerData["customer_name"] ?? "";
-          customer.email = customerData["email"] ?? "";
-          customer.mobileNo = customerData["mobile_no"] ?? "";
+        if (enquiryData["customer"] != null) {
+          customer.docID = enquiryData["customer"]["customer_id"];
+          customer.address = enquiryData["customer"]["address"];
+          customer.state = enquiryData["customer"]["state"];
+          customer.city = enquiryData["customer"]["city"];
+          customer.customerName = enquiryData["customer"]["customer_name"];
+          customer.email = enquiryData["customer"]["email"];
+          customer.mobileNo = enquiryData["customer"]["mobile_no"];
         }
 
         List<ProductDataModel> tmpProducts = [];
 
-        if (data["products"] != null) {
-          var productData = jsonDecode(data['products']) as List<dynamic>;
+        if (enquiryData["products"] != null) {
+          var productData =
+              jsonDecode(enquiryData['products']) as List<dynamic>;
           for (var product in productData) {
             var productDataModel = ProductDataModel();
             productDataModel.categoryid = product["category_id"];
@@ -258,14 +272,14 @@ class _EnquiryListingState extends State<EnquiryListing> {
         enquiryList.add(
           EstimateDataModel(
             docID: null,
-            createddate: DateTime.parse(data['created_date']),
+            createddate: DateTime.parse(enquiryData['created_date']),
             enquiryid: null,
             estimateid: null,
-            price: calcula,
+            price: calc,
             customer: customer,
             products: tmpProducts,
             dataType: DataTypes.local,
-            referenceId: data["reference_id"],
+            referenceId: enquiryData["reference_id"],
           ),
         );
       }
@@ -291,21 +305,22 @@ class _EnquiryListingState extends State<EnquiryListing> {
         var enquiry = await FireStore().getAllEnquiry(cid: cid);
         if (enquiry.isNotEmpty) {
           for (var enquiryData in enquiry) {
-            var calcula = BillingCalCulationModel();
-            calcula.discount = enquiryData["price"]["discount"];
-            calcula.discountValue = enquiryData["price"]["discount_value"];
-            calcula.discountsys = enquiryData["price"]["discount_sys"];
-            calcula.extraDiscount = enquiryData["price"]["extra_discount"];
-            calcula.roundOff = enquiryData["price"]["round_off"];
-            calcula.extraDiscountValue =
+            var calc = BillingCalCulationModel();
+            calc.discountValue = enquiryData["price"]["discount_value"];
+            calc.extraDiscount = enquiryData["price"]["extra_discount"];
+            calc.roundOff = enquiryData["price"]["round_off"];
+            calc.extraDiscountValue =
                 enquiryData["price"]["extra_discount_value"];
-            calcula.extraDiscountsys =
-                enquiryData["price"]["extra_discount_sys"];
-            calcula.package = enquiryData["price"]["package"];
-            calcula.packageValue = enquiryData["price"]["package_value"];
-            calcula.packagesys = enquiryData["price"]["package_sys"];
-            calcula.subTotal = enquiryData["price"]["sub_total"];
-            calcula.total = enquiryData["price"]["total"];
+            calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+            calc.package = enquiryData["price"]["package"];
+            calc.packageValue = enquiryData["price"]["package_value"];
+            calc.packagesys = enquiryData["price"]["package_sys"];
+            calc.subTotal = enquiryData["price"]["sub_total"];
+            calc.total = enquiryData["price"]["total"];
+            calc.netratedTotal = enquiryData["price"]["netrated_total"];
+            calc.discountedTotal = enquiryData["price"]["discounted_total"];
+            calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+            calc.discounts = enquiryData["price"]["discounts"];
 
             CustomerDataModel? customer = CustomerDataModel();
             if (enquiryData["customer"] != null) {
@@ -345,7 +360,20 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
                   productDataModel.videoUrl = product["video_url"];
-
+                  productDataModel.productType =
+                      product["discount_lock"] || product["discount"] == null
+                          ? ProductType.netRated
+                          : ProductType.discounted;
+                  if (productDataModel.productType == ProductType.discounted) {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString()) -
+                            (double.parse(product["price"].toString()) *
+                                product["discount"] /
+                                100);
+                  } else {
+                    productDataModel.discountedPrice =
+                        double.parse(product["price"].toString());
+                  }
                   setState(() {
                     tmpProducts.add(productDataModel);
                   });
@@ -362,7 +390,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   ),
                   enquiryid: enquiryData['enquiry_id'],
                   estimateid: enquiryData["estimate_id"],
-                  price: calcula,
+                  price: calc,
                   customer: customer,
                   products: tmpProducts,
                   dataType: DataTypes.cloud,
@@ -440,20 +468,18 @@ class _EnquiryListingState extends State<EnquiryListing> {
       var localEnquiry = await DatabaseHelper()
           .getEnquiry(start: 0, end: 0, limitApplied: false);
       for (var data in localEnquiry) {
-        var calcula = BillingCalCulationModel();
+        var calc = BillingCalCulationModel();
         var price = jsonDecode(data['price']) as Map<String, dynamic>;
-        calcula.discount = price["discount"];
-        calcula.discountValue = price["discount_value"];
-        calcula.discountsys = price["discount_sys"];
-        calcula.extraDiscount = price["extra_discount"];
-        calcula.extraDiscountValue = price["extra_discount_value"];
-        calcula.extraDiscountsys = price["extra_discount_sys"];
-        calcula.package = price["package"];
-        calcula.packageValue = price["package_value"];
-        calcula.packagesys = price["package_sys"];
-        calcula.subTotal = price["sub_total"];
-        calcula.total = price["total"];
-        calcula.roundOff = price["round_off"];
+        calc.discountValue = price["discount_value"];
+        calc.extraDiscount = price["extra_discount"];
+        calc.extraDiscountValue = price["extra_discount_value"];
+        calc.extraDiscountsys = price["extra_discount_sys"];
+        calc.package = price["package"];
+        calc.packageValue = price["package_value"];
+        calc.packagesys = price["package_sys"];
+        calc.subTotal = price["sub_total"];
+        calc.total = price["total"];
+        calc.roundOff = price["round_off"];
 
         CustomerDataModel? customer = CustomerDataModel();
         if (data["customer"] != null) {
@@ -497,7 +523,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
             createddate: DateTime.parse(data['created_date']),
             enquiryid: null,
             estimateid: null,
-            price: calcula,
+            price: calc,
             customer: customer,
             products: tmpProducts,
             dataType: DataTypes.local,
@@ -578,20 +604,22 @@ class _EnquiryListingState extends State<EnquiryListing> {
       var enquiry = await FireStore().getAllEnquiry(cid: cid);
       if (enquiry.isNotEmpty) {
         for (var enquiryData in enquiry) {
-          var calcula = BillingCalCulationModel();
-          calcula.discount = enquiryData["price"]["discount"];
-          calcula.discountValue = enquiryData["price"]["discount_value"];
-          calcula.discountsys = enquiryData["price"]["discount_sys"];
-          calcula.extraDiscount = enquiryData["price"]["extra_discount"];
-          calcula.roundOff = enquiryData["price"]["round_off"];
-          calcula.extraDiscountValue =
+          var calc = BillingCalCulationModel();
+          calc.discountValue = enquiryData["price"]["discount_value"];
+          calc.extraDiscount = enquiryData["price"]["extra_discount"];
+          calc.roundOff = enquiryData["price"]["round_off"];
+          calc.extraDiscountValue =
               enquiryData["price"]["extra_discount_value"];
-          calcula.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
-          calcula.package = enquiryData["price"]["package"];
-          calcula.packageValue = enquiryData["price"]["package_value"];
-          calcula.packagesys = enquiryData["price"]["package_sys"];
-          calcula.subTotal = enquiryData["price"]["sub_total"];
-          calcula.total = enquiryData["price"]["total"];
+          calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+          calc.package = enquiryData["price"]["package"];
+          calc.packageValue = enquiryData["price"]["package_value"];
+          calc.packagesys = enquiryData["price"]["package_sys"];
+          calc.subTotal = enquiryData["price"]["sub_total"];
+          calc.total = enquiryData["price"]["total"];
+          calc.netratedTotal = enquiryData["price"]["netrated_total"];
+          calc.discountedTotal = enquiryData["price"]["discounted_total"];
+          calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+          calc.discounts = enquiryData["price"]["discounts"];
 
           CustomerDataModel? customer = CustomerDataModel();
           if (enquiryData["customer"] != null) {
@@ -631,7 +659,20 @@ class _EnquiryListingState extends State<EnquiryListing> {
                 productDataModel.productImg = product["product_img"];
                 productDataModel.qrCode = product["qr_code"];
                 productDataModel.videoUrl = product["video_url"];
-
+                productDataModel.productType =
+                    product["discount_lock"] || product["discount"] == null
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+                if (productDataModel.productType == ProductType.discounted) {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString()) -
+                          (double.parse(product["price"].toString()) *
+                              product["discount"] /
+                              100);
+                } else {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString());
+                }
                 setState(() {
                   tmpProducts.add(productDataModel);
                 });
@@ -648,7 +689,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
                 ),
                 enquiryid: enquiryData['enquiry_id'],
                 estimateid: enquiryData["estimate_id"],
-                price: calcula,
+                price: calc,
                 customer: customer,
                 products: tmpProducts,
                 dataType: DataTypes.cloud,
@@ -697,20 +738,18 @@ class _EnquiryListingState extends State<EnquiryListing> {
     var localEnquiry = await DatabaseHelper()
         .getEnquiry(start: 0, end: 0, limitApplied: false);
     for (var data in localEnquiry) {
-      var calcula = BillingCalCulationModel();
+      var calc = BillingCalCulationModel();
       var price = jsonDecode(data['price']) as Map<String, dynamic>;
-      calcula.discount = price["discount"];
-      calcula.discountValue = price["discount_value"];
-      calcula.discountsys = price["discount_sys"];
-      calcula.extraDiscount = price["extra_discount"];
-      calcula.extraDiscountValue = price["extra_discount_value"];
-      calcula.extraDiscountsys = price["extra_discount_sys"];
-      calcula.package = price["package"];
-      calcula.packageValue = price["package_value"];
-      calcula.packagesys = price["package_sys"];
-      calcula.subTotal = price["sub_total"];
-      calcula.total = price["total"];
-      calcula.roundOff = price["round_off"];
+      calc.discountValue = price["discount_value"];
+      calc.extraDiscount = price["extra_discount"];
+      calc.extraDiscountValue = price["extra_discount_value"];
+      calc.extraDiscountsys = price["extra_discount_sys"];
+      calc.package = price["package"];
+      calc.packageValue = price["package_value"];
+      calc.packagesys = price["package_sys"];
+      calc.subTotal = price["sub_total"];
+      calc.total = price["total"];
+      calc.roundOff = price["round_off"];
 
       CustomerDataModel? customer = CustomerDataModel();
       if (data["customer"] != null) {
@@ -754,7 +793,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
           createddate: DateTime.parse(data['created_date']),
           enquiryid: null,
           estimateid: null,
-          price: calcula,
+          price: calc,
           customer: customer,
           products: tmpProducts,
           dataType: DataTypes.local,
@@ -885,241 +924,251 @@ class _EnquiryListingState extends State<EnquiryListing> {
     return Scaffold(
       appBar: appbar(context),
       floatingActionButton: floatingButtons(context),
-      body: Consumer<ConnectionProvider>(
-        builder: (context, connectionProvider, child) {
-          return Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                height: double.infinity,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.velocity.pixelsPerSecond.dx > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  height: double.infinity,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Overall Bill Total",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "($totalBills Bills)",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              "\u{20B9}${overallTotal ?? 0}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            )
+                          ],
+                        ),
                       ),
-                      child: Row(
+                      Container(
+                        padding: const EdgeInsets.only(
+                          top: 10,
+                          right: 10,
+                          left: 10,
+                          bottom: 10,
+                        ),
+                        child: TextFormField(
+                          controller: searchForm,
+                          cursorColor: Theme.of(context).primaryColor,
+                          textInputAction: TextInputAction.next,
+                          onChanged: (value) => {
+                            if (searchForm.text.isNotEmpty)
+                              {
+                                setState(() {
+                                  searchTriggred = true;
+                                })
+                              }
+                            else
+                              {
+                                setState(() {
+                                  searchTriggred = false;
+                                })
+                              }
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Search",
+                            filled: true,
+                            fillColor: const Color(0xfff1f5f9),
+                            border: const OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: searchTriggred
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            searchForm.text = "";
+                                            searchTriggred = false;
+                                            FocusManager.instance.primaryFocus!
+                                                .unfocus();
+                                          });
+                                          if (connectionProvider.isConnected) {
+                                            setState(() {
+                                              enquiryHandler = getEnquiryInfo();
+                                            });
+                                          } else {
+                                            setState(() {
+                                              enquiryHandler =
+                                                  getOfflineEnquiryInfo();
+                                            });
+                                          }
+                                        },
+                                        icon: const Icon(
+                                          Icons.clear_rounded,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () {
+                                          if (connectionProvider.isConnected) {
+                                            setState(() {
+                                              enquiryHandler =
+                                                  searchEnquiryFun();
+                                              FocusManager
+                                                  .instance.primaryFocus!
+                                                  .unfocus();
+                                            });
+                                          } else {
+                                            setState(() {
+                                              enquiryHandler =
+                                                  searchEnquiryFunOffline();
+                                              FocusManager
+                                                  .instance.primaryFocus!
+                                                  .unfocus();
+                                            });
+                                          }
+                                        },
+                                        icon: const Icon(Icons.search_rounded),
+                                      ),
+                                    ],
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                      Row(
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Overall Bill Total",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge!
-                                      .copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                            flex: 2,
+                            child: Container(
+                              padding: const EdgeInsets.only(
+                                top: 0,
+                                left: 10,
+                                bottom: 5,
+                              ),
+                              child: DropdownButtonFormField(
+                                value: selectedPageLimit,
+                                isExpanded: true,
+                                items: pagelimit,
+                                onChanged: (value) {
+                                  setState(() {
+                                    setState(() {
+                                      selectedPageLimit = value;
+                                      currentPage = 0;
+                                    });
+                                  });
+                                  if (connectionProvider.isConnected) {
+                                    setState(() {
+                                      getEnquiryTotal();
+                                      enquiryHandler = getEnquiryInfo();
+                                    });
+                                  } else {
+                                    setState(() {
+                                      enquiryHandler = getOfflineEnquiryInfo();
+                                      getOfflineTotal();
+                                    });
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 10),
+                                  labelText: "Limit",
+                                  labelStyle: TextStyle(color: Colors.black),
                                 ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  "($totalBills Bills)",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                          Text(
-                            "\u{20B9}${overallTotal ?? 0}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge!
-                                .copyWith(
-                                  fontWeight: FontWeight.bold,
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              padding: const EdgeInsets.only(
+                                top: 0,
+                                right: 10,
+                                bottom: 5,
+                              ),
+                              child: DropdownButtonFormField(
+                                isExpanded: true,
+                                items: noofpage,
+                                value: currentPage != 0 ? currentPage : null,
+                                onChanged: (value) {
+                                  setState(() {
+                                    currentPage = value;
+                                  });
+                                  if (connectionProvider.isConnected) {
+                                    setState(() {
+                                      enquiryHandler = getEnquiryInfo();
+                                    });
+                                  } else {
+                                    setState(() {
+                                      enquiryHandler = getOfflineEnquiryInfo();
+                                    });
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 10),
+                                  labelText: "Page",
+                                  labelStyle: TextStyle(color: Colors.black),
                                 ),
+                              ),
+                            ),
                           )
                         ],
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.only(
-                        top: 10,
-                        right: 10,
-                        left: 10,
-                        bottom: 10,
-                      ),
-                      child: TextFormField(
-                        controller: searchForm,
-                        cursorColor: Theme.of(context).primaryColor,
-                        textInputAction: TextInputAction.next,
-                        onChanged: (value) => {
-                          if (searchForm.text.isNotEmpty)
-                            {
-                              setState(() {
-                                searchTriggred = true;
-                              })
-                            }
-                          else
-                            {
-                              setState(() {
-                                searchTriggred = false;
-                              })
-                            }
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Search",
-                          filled: true,
-                          fillColor: const Color(0xfff1f5f9),
-                          border: const OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                          ),
-                          suffixIcon: searchTriggred
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          searchForm.text = "";
-                                          searchTriggred = false;
-                                          FocusManager.instance.primaryFocus!
-                                              .unfocus();
-                                        });
-                                        if (connectionProvider.isConnected) {
-                                          setState(() {
-                                            enquiryHandler = getEnquiryInfo();
-                                          });
-                                        } else {
-                                          setState(() {
-                                            enquiryHandler =
-                                                getOfflineEnquiryInfo();
-                                          });
-                                        }
-                                      },
-                                      icon: const Icon(
-                                        Icons.clear_rounded,
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        if (connectionProvider.isConnected) {
-                                          setState(() {
-                                            enquiryHandler = searchEnquiryFun();
-                                            FocusManager.instance.primaryFocus!
-                                                .unfocus();
-                                          });
-                                        } else {
-                                          setState(() {
-                                            enquiryHandler =
-                                                searchEnquiryFunOffline();
-                                            FocusManager.instance.primaryFocus!
-                                                .unfocus();
-                                          });
-                                        }
-                                      },
-                                      icon: const Icon(Icons.search_rounded),
-                                    ),
-                                  ],
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.only(
-                              top: 0,
-                              left: 10,
-                              bottom: 5,
-                            ),
-                            child: DropdownButtonFormField(
-                              value: selectedPageLimit,
-                              isExpanded: true,
-                              items: pagelimit,
-                              onChanged: (value) {
-                                setState(() {
-                                  setState(() {
-                                    selectedPageLimit = value;
-                                    currentPage = 0;
-                                  });
-                                });
-                                if (connectionProvider.isConnected) {
-                                  setState(() {
-                                    getEnquiryTotal();
-                                    enquiryHandler = getEnquiryInfo();
-                                  });
-                                } else {
-                                  setState(() {
-                                    enquiryHandler = getOfflineEnquiryInfo();
-                                    getOfflineTotal();
-                                  });
-                                }
-                              },
-                              decoration: const InputDecoration(
-                                contentPadding:
-                                    EdgeInsets.symmetric(horizontal: 10),
-                                labelText: "Limit",
-                                labelStyle: TextStyle(color: Colors.black),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.only(
-                              top: 0,
-                              right: 10,
-                              bottom: 5,
-                            ),
-                            child: DropdownButtonFormField(
-                              isExpanded: true,
-                              items: noofpage,
-                              value: currentPage != 0 ? currentPage : null,
-                              onChanged: (value) {
-                                setState(() {
-                                  currentPage = value;
-                                });
-                                if (connectionProvider.isConnected) {
-                                  setState(() {
-                                    enquiryHandler = getEnquiryInfo();
-                                  });
-                                } else {
-                                  setState(() {
-                                    enquiryHandler = getOfflineEnquiryInfo();
-                                  });
-                                }
-                              },
-                              decoration: const InputDecoration(
-                                contentPadding:
-                                    EdgeInsets.symmetric(horizontal: 10),
-                                labelText: "Page",
-                                labelStyle: TextStyle(color: Colors.black),
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    body(connectionProvider)
-                  ],
+                      body(connectionProvider)
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1136,6 +1185,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
           return enquiryList.isNotEmpty
               ? Expanded(
                   child: RefreshIndicator(
+                    color: Theme.of(context).primaryColor,
                     onRefresh: () async {
                       setState(() {
                         if (connectionProvider.isConnected) {
@@ -1187,60 +1237,13 @@ class _EnquiryListingState extends State<EnquiryListing> {
                                 // }
                               },
                               onLongPress: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (builder) {
-                                      return BillListOptions(
-                                        title: enquiryList[index].enquiryid !=
-                                                null
-                                            ? enquiryList[index].enquiryid!
-                                            : enquiryList[index].referenceId !=
-                                                    null
-                                                ? enquiryList[index]
-                                                    .referenceId!
-                                                : "Choose an option",
-                                      );
-                                    }).then((value) {
-                                  if (value != null) {
-                                    if (value == "1") {
-                                      sharePDF(enquiryList[index]);
-                                    } else if (value == "2") {
-                                      printEnquiry(enquiryList[index]);
-                                    } else if (value == "3") {
-                                      setState(() {
-                                        Navigator.push(
-                                          context,
-                                          CupertinoPageRoute(
-                                            builder: (context) =>
-                                                EnquiryDetails(
-                                              cid: enquiryList[index].docID ??
-                                                  '',
-                                            ),
-                                          ),
-                                        ).then((value) {
-                                          if (value != null && value == true) {
-                                            setState(() {
-                                              if (connectionProvider
-                                                  .isConnected) {
-                                                enquiryHandler =
-                                                    getEnquiryInfo();
-                                              } else {
-                                                enquiryHandler =
-                                                    getOfflineEnquiryInfo();
-                                              }
-                                            });
-                                          }
-                                        });
-                                        // crtlistview =
-                                        //     orderlist[index];
-                                      });
-                                    } else if (value == "4") {
-                                      deleteEnquiry(
-                                          enquiryList[index].docID ?? '',
-                                          enquiryList[index].referenceId ?? '');
-                                    }
-                                  }
-                                });
+                                billOptions(
+                                    enquiryList[index].enquiryid != null
+                                        ? enquiryList[index].enquiryid!
+                                        : enquiryList[index].referenceId != null
+                                            ? enquiryList[index].referenceId!
+                                            : "Choose an option",
+                                    index);
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(10),
@@ -1328,7 +1331,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
                                               children: [
                                                 TextSpan(
                                                   text:
-                                                      "${enquiryList[index].customer != null && enquiryList[index].customer!.customerName != null ? enquiryList[index].customer!.customerName : ""}",
+                                                      "${enquiryList[index].customer != null && enquiryList[index].customer!.customerName != null ? enquiryList[index].customer!.customerName : "Counter Sales"}",
                                                   style: const TextStyle(
                                                     color: Colors.black,
                                                     fontWeight: FontWeight.bold,
@@ -1563,7 +1566,7 @@ class _EnquiryListingState extends State<EnquiryListing> {
           //           if (value != null) {
           //             Navigator.push(
           //               context,
-          //               MaterialPageRoute(builder: (context) {
+          //               CupertinoPageRoute(builder: (context) {
           //                 if (value == 1) {
           //                   return const BillingOne(
           //                     isEdit: true,
@@ -1631,6 +1634,27 @@ class _EnquiryListingState extends State<EnquiryListing> {
       title: const Text("Enquiry"),
       actions: [
         IconButton(
+          tooltip: "Add Enquiry",
+          onPressed: () async {
+            Navigator.pop(context);
+            await LocalDB.getBillingIndex().then((value) async {
+              if (value != null) {
+                final result = await Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (context) {
+                    if (value == 1) {
+                      return const BillingOne();
+                    } else {
+                      return const BillingTwo();
+                    }
+                  }),
+                );
+              }
+            });
+          },
+          icon: const Icon(Icons.add),
+        ),
+        IconButton(
           onPressed: () {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               final connectionProvider =
@@ -1671,166 +1695,6 @@ class _EnquiryListingState extends State<EnquiryListing> {
     );
   }
 
-  deleteEnquiry(String docId, String referenceId) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await FireStore().deleteEnquiry(docID: docId).then((value) {
-          Navigator.pop(context);
-          Navigator.pop(context, true);
-          snackbar(context, true, "Successfully Deleted");
-        });
-      } else {
-        await LocalService.deleteEnquiry(referenceId: referenceId)
-            .then((value) {
-          Navigator.pop(context);
-          Navigator.pop(context, true);
-          snackbar(context, true, "Successfully Deleted");
-        });
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
-  }
-
-  sharePDF(EstimateDataModel estimateData) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore()
-                .getCompanyDocInfo(cid: cid)
-                .then((companyInfo) async {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                  companyData.contact = companyInfo["contact"];
-                });
-
-                var pdfAlignment = await LocalDB.getPdfAlignment();
-
-                var pdf = EnquiryPdf(
-                  estimateData: estimateData,
-                  type: PdfType.enquiry,
-                  companyInfo: companyData,
-                  pdfAlignment: pdfAlignment,
-                );
-                await pdf.showA4PDf().then((dataResult) async {
-                  await Printing.sharePdf(
-                    bytes: dataResult,
-                  ).then((value) {
-                    Navigator.pop(context);
-                  });
-                });
-                // var dataResult = await pdf.create3InchPDF();
-              } else {
-                Navigator.pop(context);
-              }
-            });
-          } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-        });
-        var pdfAlignment = await LocalDB.getPdfAlignment();
-
-        var pdf = EnquiryPdf(
-          estimateData: estimateData,
-          type: PdfType.enquiry,
-          companyInfo: companyData,
-          pdfAlignment: pdfAlignment,
-        );
-        await pdf.showA4PDf().then((dataResult) async {
-          await Printing.sharePdf(
-            bytes: dataResult,
-          ).then((value) {
-            Navigator.pop(context);
-          });
-        });
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
-  }
-
-  printEnquiry(EstimateDataModel estimateData) async {
-    loading(context);
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-
-    try {
-      if (connectionProvider.isConnected) {
-        await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
-          if (cid != null) {
-            await FireStore().getCompanyDocInfo(cid: cid).then((companyInfo) {
-              if (companyInfo != null) {
-                setState(() {
-                  companyData.companyName = companyInfo["company_name"];
-                  companyData.address = companyInfo["address"];
-                  companyData.contact = companyInfo["contact"];
-                });
-
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => PrintView(
-                      estimateData: estimateData,
-                      companyInfo: companyData,
-                    ),
-                  ),
-                );
-              } else {
-                Navigator.pop(context);
-              }
-            });
-          } else {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        var companyName = await LocalDB.fetchInfo(type: LocalData.companyName);
-        var address = await LocalDB.fetchInfo(type: LocalData.companyAddress);
-        // add contact
-        setState(() {
-          companyData.companyName = companyName;
-          companyData.address = address;
-          // add also
-        });
-
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => PrintView(
-              estimateData: estimateData,
-              companyInfo: companyData,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      snackbar(context, false, e.toString());
-    }
-  }
-
   var companyData = ProfileModel();
   int start = 0, end = 10, currentPage = 0, totalBills = 0;
   List<DropdownMenuItem> noofpage = [];
@@ -1853,4 +1717,31 @@ class _EnquiryListingState extends State<EnquiryListing> {
       child: Text("100"),
     ),
   ];
+
+  billOptions(String title, int index) async {
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (builder) {
+        return FractionallySizedBox(
+          heightFactor: 0.4,
+          child: BillOptions(
+            title: title,
+            billType: BillType.enquiry,
+            enquiry: enquiryList[index],
+          ),
+        );
+      },
+    );
+  }
 }

@@ -14,6 +14,9 @@ class ExcelProductClass {
   final String price;
   final String discountlock;
   final String qrcode;
+  String? discount;
+  String? taxValue;
+  String? hsnCode;
   ExcelProductClass({
     required this.productno,
     required this.productname,
@@ -21,5 +24,8 @@ class ExcelProductClass {
     required this.price,
     required this.discountlock,
     required this.qrcode,
+    required this.discount,
+    required this.taxValue,
+    required this.hsnCode,
   });
 }

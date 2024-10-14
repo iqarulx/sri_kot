@@ -3,9 +3,8 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:sri_kot/services/local/firebase.dart';
-import 'package:sri_kot/services/local/local_service.dart';
-
+import '/services/firebase/firebase.dart';
+import '/services/firebase/local_service.dart';
 import '../../log/log.dart';
 import '../../model/model.dart';
 import '../../provider/provider.dart';

@@ -119,7 +119,7 @@ Widget freeTrial(context, String date) {
 Widget inputForm(
   context, {
   required TextEditingController controller,
-  required String lableName,
+  required String labelName,
   required String formName,
   TextInputType? keyboardType,
   IconData? prefixIcon,
@@ -133,7 +133,7 @@ Widget inputForm(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            lableName,
+            labelName,
             style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.w500,
@@ -193,7 +193,8 @@ class DropDownForm extends StatefulWidget {
   final String? Function(String?)? validator;
   final void Function()? onTap;
   final String formName;
-  final bool? isMandorty;
+  final bool? isMandatory;
+  final bool? enabled;
   const DropDownForm({
     super.key,
     required this.onChange,
@@ -204,7 +205,8 @@ class DropDownForm extends StatefulWidget {
     this.validator,
     this.onTap,
     required this.formName,
-    this.isMandorty,
+    this.isMandatory,
+    this.enabled,
   });
 
   @override
@@ -234,7 +236,9 @@ class _DropDownFormState extends State<DropDownForm> {
             onTap: widget.onTap,
             value: widget.value,
             items: widget.listItems,
-            onChanged: widget.onChange,
+            onChanged: widget.enabled != null && widget.enabled == false
+                ? null
+                : widget.onChange,
             isExpanded: true,
             decoration: InputDecoration(
               fillColor: const Color(0xfff1f5f9),
@@ -251,9 +255,9 @@ class _DropDownFormState extends State<DropDownForm> {
                   : null,
             ),
             validator: (value) {
-              if (widget.isMandorty ?? true) {
+              if (widget.isMandatory ?? true) {
                 if (value == null || value.isEmpty) {
-                  return "${widget.formName} is Must";
+                  return "${widget.formName} is must";
                 } else {
                   return null;
                 }
@@ -270,7 +274,7 @@ class _DropDownFormState extends State<DropDownForm> {
 
 class InputForm extends StatefulWidget {
   final TextEditingController controller;
-  final String? lableName;
+  final String? labelName;
   final String formName;
   final TextInputType? keyboardType;
   final IconData? prefixIcon;
@@ -281,11 +285,13 @@ class InputForm extends StatefulWidget {
   final bool? readOnly;
   final Function()? onTap;
   final bool? autofocus;
-
+  final Widget? suffixIcon;
+  final bool? enabled;
+  final int? maxLines;
   const InputForm({
     super.key,
     required this.controller,
-    this.lableName,
+    this.labelName,
     required this.formName,
     this.keyboardType,
     this.prefixIcon,
@@ -296,6 +302,9 @@ class InputForm extends StatefulWidget {
     this.readOnly,
     this.onTap,
     this.autofocus,
+    this.suffixIcon,
+    this.enabled,
+    this.maxLines,
   });
 
   @override
@@ -312,12 +321,12 @@ class _InputFormState extends State<InputForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            widget.lableName != null
+            widget.labelName != null
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.lableName!.toString(),
+                        widget.labelName!.toString(),
                         style: const TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
@@ -337,6 +346,7 @@ class _InputFormState extends State<InputForm> {
               cursorColor: const Color(0xff7099c2),
               keyboardType: widget.keyboardType ?? TextInputType.text,
               onTap: widget.onTap,
+              enabled: widget.enabled,
               onChanged: widget.onChanged,
               inputFormatters: widget.inputFormaters,
               decoration: InputDecoration(
@@ -371,11 +381,12 @@ class _InputFormState extends State<InputForm> {
                               color: Color(0xff7099c2),
                             ),
                           )
-                    : null,
+                    : widget.suffixIcon,
               ),
               obscureText:
                   widget.isPasswordForm != null ? passwordVisable : false,
               validator: widget.validation,
+              maxLines: widget.maxLines,
             ),
           ],
         ),
@@ -475,7 +486,11 @@ Future<bool?> addStaffForm(context, {required String companyID}) async {
 }
 
 Future addCategoryForm(context,
-    {bool? isedit, String? categoryName, String? docID}) async {
+    {bool? isedit,
+    String? categoryName,
+    String? docID,
+    String? taxValue,
+    String? hsnCode}) async {
   return await showModalBottomSheet(
     enableDrag: false,
     isDismissible: true,
@@ -488,6 +503,8 @@ Future addCategoryForm(context,
         isEdit: isedit,
         categoryName: categoryName,
         docID: docID,
+        taxValue: taxValue,
+        hsnCode: hsnCode,
       );
     },
   );

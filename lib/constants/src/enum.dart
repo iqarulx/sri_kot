@@ -1,21 +1,14 @@
-enum UserType {
-  accountHolder,
-  admin,
-  staff,
-}
+enum UserType { accountHolder, admin, staff }
 
 enum ProfileType { staff, admin }
 
-enum ModalType {
-  danger,
-  info,
-  call,
-}
+enum ModalType { danger, info, call }
 
-enum ImagePickerMode {
-  galary,
-  camera,
-}
+enum ImagePickerMode { galary, camera }
+
+enum BillType { enquiry, estimate, invoice }
+
+enum SaveType { create, edit, delete }
 
 enum FileProviderType { excel, image, all }
 
@@ -51,3 +44,5 @@ enum PaymentType { company, staff, user }
 enum PlanTypes { free, premium, enterprise }
 
 enum DataTypes { local, cloud }
+
+enum ProductType { discounted, netRated }

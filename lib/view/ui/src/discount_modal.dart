@@ -5,11 +5,15 @@ class DiscountModal extends StatefulWidget {
   final String title;
   final String symbol;
   final String value;
+  final String amount;
+  final bool isPackingCharge;
   const DiscountModal({
     super.key,
     required this.title,
     required this.value,
     required this.symbol,
+    required this.amount,
+    required this.isPackingCharge,
   });
 
   @override
@@ -127,39 +131,82 @@ class _DiscountModalState extends State<DiscountModal> {
             Expanded(
               child: GestureDetector(
                 onTap: () async {
-                  if (sys == "%") {
-                    if (value.text.isEmpty) {
-                      return showToast(context,
-                          content: "Discount must be provided",
-                          isSuccess: false,
-                          top: false);
-                    } else if (value.text.contains(RegExp(r'\s'))) {
-                      return showToast(context,
-                          content: "White spaces not allowed",
-                          isSuccess: false,
-                          top: false);
-                    } else if (double.tryParse(value.text) == null) {
-                      return showToast(context,
-                          content: "Must be a valid number",
-                          isSuccess: false,
-                          top: false);
-                    } else if (double.parse(value.text) >= 100) {
-                      return showToast(context,
-                          content: "Discount must be less than 100",
-                          isSuccess: false,
-                          top: false);
+                  FocusManager.instance.primaryFocus!.unfocus();
+                  if (widget.isPackingCharge) {
+                    if (sys == "%") {
+                      if (value.text.isEmpty) {
+                        return showToast(context,
+                            content: "Discount must be provided",
+                            isSuccess: false,
+                            top: false);
+                      } else if (value.text.contains(RegExp(r'\s'))) {
+                        return showToast(context,
+                            content: "White spaces not allowed",
+                            isSuccess: false,
+                            top: false);
+                      } else if (double.tryParse(value.text) == null) {
+                        return showToast(context,
+                            content: "Must be a valid number",
+                            isSuccess: false,
+                            top: false);
+                      }
+                    } else {
+                      if (value.text.isEmpty) {
+                        return showToast(context,
+                            content: "Discount amount must be provided",
+                            isSuccess: false,
+                            top: false);
+                      }
                     }
                   } else {
-                    if (value.text.isEmpty) {
-                      return showToast(context,
-                          content: "Discount must be provided",
-                          isSuccess: false,
-                          top: false);
-                    } else if (double.parse(value.text) >= 10000) {
-                      return showToast(context,
-                          content: "Discount must be less than 10000",
-                          isSuccess: false,
-                          top: false);
+                    if (sys == "%") {
+                      if (value.text.isEmpty) {
+                        return showToast(context,
+                            content: "Discount must be provided",
+                            isSuccess: false,
+                            top: false);
+                      } else if (value.text.contains(RegExp(r'\s'))) {
+                        return showToast(context,
+                            content: "White spaces not allowed",
+                            isSuccess: false,
+                            top: false);
+                      } else if (double.tryParse(value.text) == null) {
+                        return showToast(context,
+                            content: "Must be a valid number",
+                            isSuccess: false,
+                            top: false);
+                      } else if (double.parse(value.text) >= 100) {
+                        return showToast(context,
+                            content: "Discount must be less than 100",
+                            isSuccess: false,
+                            top: false);
+                      }
+                    } else {
+                      if (value.text.isEmpty) {
+                        return showToast(context,
+                            content: "Discount amount must be provided",
+                            isSuccess: false,
+                            top: false);
+                      }
+
+                      double? discountValue;
+                      try {
+                        discountValue = double.parse(value.text);
+                      } catch (e) {
+                        return showToast(context,
+                            content:
+                                "Invalid discount amount value. Please enter a valid number.",
+                            isSuccess: false,
+                            top: false);
+                      }
+
+                      if (discountValue >= double.parse(widget.amount)) {
+                        return showToast(context,
+                            content:
+                                "Discount amount must be less than ${widget.amount}",
+                            isSuccess: false,
+                            top: false);
+                      }
                     }
                   }
                   Navigator.pop(context, {
