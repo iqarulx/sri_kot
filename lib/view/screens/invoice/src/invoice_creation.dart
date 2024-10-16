@@ -2,9 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:sri_kot/view/ui/src/customer_search_view.dart';
 import '../../billing/src/utils/add_customer_box.dart';
-import '/func/invoice_calc.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/services/services.dart';
@@ -1125,11 +1123,8 @@ class _InvoiceCreationState extends State<InvoiceCreation> {
                       ),
                       controller: address,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Address is must";
-                        } else {
-                          return null;
-                        }
+                        return FormValidation()
+                            .addressValidation(value ?? '', false);
                       },
                     ),
                   ],

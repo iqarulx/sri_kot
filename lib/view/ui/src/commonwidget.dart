@@ -386,7 +386,7 @@ class _InputFormState extends State<InputForm> {
               obscureText:
                   widget.isPasswordForm != null ? passwordVisable : false,
               validator: widget.validation,
-              maxLines: widget.maxLines,
+              // maxLines: widget.maxLines,
             ),
           ],
         ),

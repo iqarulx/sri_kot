@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
-import '../../../theme/theme_change.dart';
-import '/theme/theme.dart';
 import '/services/services.dart';
 import '/app/src/life_cycle/app_lifecycle.dart';
 import '/view/screens/screens.dart';
@@ -23,19 +21,19 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeData appTheme = AppThemeUI().theme1;
+  ThemeData appTheme = ThemeConfig().theme1;
   getcurrentTheme() {
     setState(() {
       if (changeThemeApp.theme.toString().toLowerCase() == "theme1") {
-        appTheme = AppThemeUI().theme1;
+        appTheme = ThemeConfig().theme1;
       } else if (changeThemeApp.theme.toString().toLowerCase() == "theme2") {
-        appTheme = AppThemeUI().theme2;
+        appTheme = ThemeConfig().theme2;
       } else if (changeThemeApp.theme.toString().toLowerCase() == "theme3") {
-        appTheme = AppThemeUI().theme3;
+        appTheme = ThemeConfig().theme3;
       } else if (changeThemeApp.theme.toString().toLowerCase() == "theme4") {
-        appTheme = AppThemeUI().theme4;
+        appTheme = ThemeConfig().theme4;
       } else {
-        appTheme = AppThemeUI().theme1;
+        appTheme = ThemeConfig().theme1;
       }
     });
   }

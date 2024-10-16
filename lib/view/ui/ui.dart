@@ -19,3 +19,8 @@ export 'src/customer_choose_modal.dart';
 export 'src/discount_detail_product.dart';
 export 'src/print_options.dart';
 export 'src/test_mode.dart';
+export 'src/billing_filters.dart';
+export 'src/view_all_products_inv.dart';
+export 'src/view_all_products.dart';
+export 'src/email_otp_modal.dart';
+export 'src/customer_search_view.dart';

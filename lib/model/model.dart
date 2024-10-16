@@ -18,3 +18,5 @@ export 'src/staff_data_model.dart';
 export 'src/staff_permission_model.dart';
 export 'src/user_admin_model.dart';
 export 'src/purchase_history_model.dart';
+export 'src/party_data_model.dart';
+export 'src/excel_product_model.dart';

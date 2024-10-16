@@ -946,7 +946,9 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
                         invoice: invoice,
                       );
                     } else {
-                      return const BillingTwoEditInv();
+                      return BillingTwoEditInv(
+                        invoice: invoice,
+                      );
                     }
                   }),
                 );

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '/gen/assets.gen.dart';
@@ -27,16 +28,7 @@ class _EstimateListingState extends State<EstimateListing> {
   List<EstimateDataModel> tmpEnquiryList = [];
   TextEditingController searchForm = TextEditingController();
   int? overallTotal;
-  int start = 0, end = 10, currentPage = 0, totalBills = 0;
-  List<DropdownMenuItem> noofpage = [];
-  String selectedPageLimit = "10";
-  List<DropdownMenuItem> pagelimit = const [
-    DropdownMenuItem(value: "10", child: Text("10")),
-    DropdownMenuItem(value: "25", child: Text("25")),
-    DropdownMenuItem(value: "50", child: Text("50")),
-    DropdownMenuItem(value: "100", child: Text("100")),
-  ];
-  bool searchTriggred = false;
+  int start = 0, end = 10, totalBills = 0;
 
   @override
   void dispose() {
@@ -46,10 +38,6 @@ class _EstimateListingState extends State<EstimateListing> {
   }
 
   Future<void> getEnquiryTotal() async {
-    setState(() {
-      noofpage.clear();
-    });
-
     var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
     var enquiry = await FireStore().getEstimateTotal(cid: cid);
     var enquiryLength = enquiry["total_estimate"];
@@ -59,25 +47,9 @@ class _EstimateListingState extends State<EstimateListing> {
       overallTotal = enquiryTotal.toInt();
       totalBills = enquiryLength;
     });
-
-    var pagesLength =
-        (enquiryLength.toInt() / int.parse(selectedPageLimit)).ceil();
-
-    for (var i = 0; i < pagesLength; i++) {
-      noofpage.add(
-        DropdownMenuItem(
-          value: i,
-          child: Text((i + 1).toString()),
-        ),
-      );
-    }
   }
 
   Future<void> getOfflineTotal() async {
-    setState(() {
-      noofpage.clear();
-    });
-
     var enquiry = await DatabaseHelper().getEstimateTotal();
     var enquiryLength = enquiry["no_of_estimate"];
     var enquiryTotal = enquiry["total"];
@@ -86,66 +58,63 @@ class _EstimateListingState extends State<EstimateListing> {
       overallTotal = double.parse(enquiryTotal).toInt();
       totalBills = enquiryLength;
     });
-
-    var pagesLength =
-        (enquiryLength.toInt() / int.parse(selectedPageLimit)).ceil();
-
-    for (var i = 0; i < pagesLength; i++) {
-      noofpage.add(
-        DropdownMenuItem(
-          value: i,
-          child: Text((i + 1).toString()),
-        ),
-      );
-    }
   }
+
+  List<CategoryDataModel> categoryList = [];
 
   Future getEstimateInfo() async {
     try {
       setState(() {
         enquiryList.clear();
         tmpEnquiryList.clear();
+        isLoad = false;
+        endOfDocument = false;
+        start = 0;
+        end = 10;
       });
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
       if (cid != null) {
-        start = currentPage * int.parse(selectedPageLimit);
-        end = start + int.parse(selectedPageLimit);
-
-        var enquiry = await FireStore().getEstimate(
-          cid: cid,
-          start: start,
-          end: end,
-          isLimitPage: true,
-        );
+        await FireStore().categoryListing(cid: cid).then((value) {
+          if (value != null && value.docs.isNotEmpty) {
+            for (var categorylist in value.docs) {
+              CategoryDataModel model = CategoryDataModel();
+              model.categoryName = categorylist["category_name"].toString();
+              model.postion = categorylist["postion"];
+              model.tmpcatid = categorylist.id;
+              model.discount = categorylist["discount"];
+              setState(() {
+                categoryList.add(model);
+              });
+            }
+          }
+        });
+        var enquiry = await FireStore()
+            .getEstimate(cid: cid, start: start, end: end, isLimitPage: true);
         if (enquiry.isNotEmpty) {
-          for (var enquiryData in enquiry) {
+          for (var value in enquiry) {
             var calc = BillingCalCulationModel();
-            calc.discountValue = enquiryData["price"]["discount_value"];
-            calc.extraDiscount = enquiryData["price"]["extra_discount"];
-            calc.roundOff = enquiryData["price"]["round_off"];
-            calc.extraDiscountValue =
-                enquiryData["price"]["extra_discount_value"];
-            calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
-            calc.package = enquiryData["price"]["package"];
-            calc.packageValue = enquiryData["price"]["package_value"];
-            calc.packagesys = enquiryData["price"]["package_sys"];
-            calc.subTotal = enquiryData["price"]["sub_total"];
-            calc.total = enquiryData["price"]["total"];
-            calc.netratedTotal = enquiryData["price"]["netrated_total"];
-            calc.discountedTotal = enquiryData["price"]["discounted_total"];
-            calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
-            calc.discounts = enquiryData["price"]["discounts"];
+            calc.discountValue = value["price"]["discount_value"];
+            calc.extraDiscount = value["price"]["extra_discount"];
+            calc.roundOff = value["price"]["round_off"];
+            calc.extraDiscountValue = value["price"]["extra_discount_value"];
+            calc.extraDiscountsys = value["price"]["extra_discount_sys"];
+            calc.package = value["price"]["package"];
+            calc.packageValue = value["price"]["package_value"];
+            calc.packagesys = value["price"]["package_sys"];
+            calc.subTotal = value["price"]["sub_total"];
+            calc.total = value["price"]["total"];
 
-            var customer = CustomerDataModel();
-            if (enquiryData["customer"] != null) {
-              customer.docID = enquiryData["customer"]["customer_id"] ?? '';
-              customer.address = enquiryData["customer"]["address"] ?? '';
-              customer.state = enquiryData["customer"]["state"] ?? '';
-              customer.city = enquiryData["customer"]["city"] ?? '';
-              customer.customerName =
-                  enquiryData["customer"]["customer_name"] ?? '';
-              customer.email = enquiryData["customer"]["email"] ?? '';
-              customer.mobileNo = enquiryData["customer"]["mobile_no"] ?? '';
+            CustomerDataModel? customer = CustomerDataModel();
+            if (value["customer"] != null) {
+              customer.docID = value["customer"]["customer_id"];
+              customer.address = value["customer"]["address"];
+              customer.state = value["customer"]["state"];
+              customer.city = value["customer"]["city"];
+              customer.customerName = value["customer"]["customer_name"];
+              customer.email = value["customer"]["email"];
+              customer.mobileNo = value["customer"]["mobile_no"];
+            } else {
+              customer = null;
             }
 
             List<ProductDataModel> tmpProducts = [];
@@ -155,7 +124,7 @@ class _EstimateListingState extends State<EstimateListing> {
             });
 
             await FireStore()
-                .getEstimateProducts(docid: enquiryData.id)
+                .getEstimateProducts(docid: value.id)
                 .then((products) {
               if (products != null && products.docs.isNotEmpty) {
                 for (var product in products.docs) {
@@ -166,28 +135,28 @@ class _EstimateListingState extends State<EstimateListing> {
                   productDataModel.productId = product["product_id"];
                   productDataModel.productName = product["product_name"];
                   productDataModel.qty = product["qty"];
-                  productDataModel.productCode = product["product_code"];
+                  productDataModel.productCode = product["product_code"] ?? "";
+                  productDataModel.productType =
+                      product["discount_lock"] || product["discount"] == null
+                          ? ProductType.netRated
+                          : ProductType.discounted;
                   productDataModel.discountLock = product["discount_lock"];
+                  productDataModel.hsnCode = product["hsn_code"];
+                  productDataModel.taxValue = product["tax_value"];
+                  if (productDataModel.categoryid != null &&
+                      productDataModel.categoryid!.isNotEmpty) {
+                    var getCategoryid = categoryList.indexWhere((elements) =>
+                        elements.tmpcatid == productDataModel.categoryid);
+                    productDataModel.discount =
+                        categoryList[getCategoryid].discount;
+                  }
                   productDataModel.docid = product.id;
                   productDataModel.name = product["name"];
                   productDataModel.productContent = product["product_content"];
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
                   productDataModel.videoUrl = product["video_url"];
-                  productDataModel.productType =
-                      product["discount_lock"] || product["discount"] == null
-                          ? ProductType.netRated
-                          : ProductType.discounted;
-                  if (productDataModel.productType == ProductType.discounted) {
-                    productDataModel.discountedPrice =
-                        double.parse(product["price"].toString()) -
-                            (double.parse(product["price"].toString()) *
-                                product["discount"] /
-                                100);
-                  } else {
-                    productDataModel.discountedPrice =
-                        double.parse(product["price"].toString());
-                  }
+
                   setState(() {
                     tmpProducts.add(productDataModel);
                   });
@@ -198,12 +167,12 @@ class _EstimateListingState extends State<EstimateListing> {
             setState(() {
               enquiryList.add(
                 EstimateDataModel(
-                  docID: enquiryData.id,
+                  docID: value.id,
                   createddate: DateTime.parse(
-                    enquiryData["created_date"].toDate().toString(),
+                    value["created_date"].toDate().toString(),
                   ),
-                  enquiryid: enquiryData["estimate_id"],
-                  estimateid: enquiryData["estimate_id"],
+                  enquiryid: value["estimate_id"],
+                  estimateid: value["estimate_id"],
                   price: calc,
                   customer: customer,
                   products: tmpProducts,
@@ -233,8 +202,6 @@ class _EstimateListingState extends State<EstimateListing> {
         enquiryList.clear();
         tmpEnquiryList.clear();
       });
-      start = currentPage * int.parse(selectedPageLimit);
-      end = start + int.parse(selectedPageLimit);
 
       var localEnquiry = await DatabaseHelper()
           .getEstimate(start: start, end: end, limitApplied: true);
@@ -343,575 +310,6 @@ class _EstimateListingState extends State<EstimateListing> {
 
   Future? estimateHandler;
 
-  searchEnquiryFun() async {
-    if (searchForm.text.isNotEmpty) {
-      setState(() {
-        enquiryList.clear();
-        tmpEnquiryList.clear();
-      });
-
-      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
-
-      if (cid != null) {
-        var enquiry = await FireStore().getAllEnquiry(cid: cid);
-        if (enquiry.isNotEmpty) {
-          for (var enquiryData in enquiry) {
-            var calc = BillingCalCulationModel();
-            calc.discountValue = enquiryData["price"]["discount_value"];
-            calc.extraDiscount = enquiryData["price"]["extra_discount"];
-            calc.roundOff = enquiryData["price"]["round_off"];
-            calc.extraDiscountValue =
-                enquiryData["price"]["extra_discount_value"];
-            calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
-            calc.package = enquiryData["price"]["package"];
-            calc.packageValue = enquiryData["price"]["package_value"];
-            calc.packagesys = enquiryData["price"]["package_sys"];
-            calc.subTotal = enquiryData["price"]["sub_total"];
-            calc.total = enquiryData["price"]["total"];
-            calc.netratedTotal = enquiryData["price"]["netrated_total"];
-            calc.discountedTotal = enquiryData["price"]["discounted_total"];
-            calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
-            calc.discounts = enquiryData["price"]["discounts"];
-
-            CustomerDataModel? customer = CustomerDataModel();
-            if (enquiryData["customer"] != null) {
-              customer.docID = enquiryData["customer"]["customer_id"];
-              customer.address = enquiryData["customer"]["address"];
-              customer.state = enquiryData["customer"]["state"];
-              customer.city = enquiryData["customer"]["city"];
-              customer.customerName = enquiryData["customer"]["customer_name"];
-              customer.email = enquiryData["customer"]["email"];
-              customer.mobileNo = enquiryData["customer"]["mobile_no"];
-            }
-
-            List<ProductDataModel> tmpProducts = [];
-
-            setState(() {
-              tmpProducts.clear();
-            });
-
-            await FireStore()
-                .getEnquiryProducts(docid: enquiryData.id)
-                .then((products) {
-              if (products != null && products.docs.isNotEmpty) {
-                for (var product in products.docs) {
-                  var productDataModel = ProductDataModel();
-                  productDataModel.categoryid = product["category_id"];
-                  productDataModel.categoryName = product["category_name"];
-                  productDataModel.price = product["price"];
-
-                  productDataModel.productId = product["product_id"];
-                  productDataModel.productName = product["product_name"];
-                  productDataModel.qty = product["qty"];
-                  productDataModel.productCode = product["product_code"] ?? "";
-                  productDataModel.discountLock = product["discount_lock"];
-                  productDataModel.docid = product.id;
-                  productDataModel.name = product["name"];
-                  productDataModel.productContent = product["product_content"];
-                  productDataModel.productImg = product["product_img"];
-                  productDataModel.qrCode = product["qr_code"];
-                  productDataModel.videoUrl = product["video_url"];
-                  productDataModel.productType =
-                      product["discount_lock"] || product["discount"] == null
-                          ? ProductType.netRated
-                          : ProductType.discounted;
-                  if (productDataModel.productType == ProductType.discounted) {
-                    productDataModel.discountedPrice =
-                        double.parse(product["price"].toString()) -
-                            (double.parse(product["price"].toString()) *
-                                product["discount"] /
-                                100);
-                  } else {
-                    productDataModel.discountedPrice =
-                        double.parse(product["price"].toString());
-                  }
-                  setState(() {
-                    tmpProducts.add(productDataModel);
-                  });
-                }
-              }
-            });
-
-            setState(() {
-              tmpEnquiryList.add(
-                EstimateDataModel(
-                  docID: enquiryData.id,
-                  createddate: DateTime.parse(
-                    enquiryData["created_date"].toDate().toString(),
-                  ),
-                  enquiryid: enquiryData['enquiry_id'],
-                  estimateid: enquiryData["estimate_id"],
-                  price: calc,
-                  customer: customer,
-                  products: tmpProducts,
-                  dataType: DataTypes.cloud,
-                ),
-              );
-            });
-          }
-        }
-      }
-
-      Iterable<EstimateDataModel> tmpList = tmpEnquiryList.where((element) {
-        if (element.customer != null &&
-            element.customer!.customerName != null &&
-            element.customer!.customerName!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.customer != null &&
-            element.customer!.mobileNo != null &&
-            element.customer!.mobileNo!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.customer != null &&
-            element.customer!.city != null &&
-            element.customer!.city!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.customer != null &&
-            element.customer!.state != null &&
-            element.customer!.state!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.enquiryid != null &&
-            element.enquiryid!.toLowerCase().replaceAll(' ', '').startsWith(
-                searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-      if (tmpList.isNotEmpty) {
-        for (var element in tmpList) {
-          setState(() {
-            enquiryList.add(element);
-          });
-        }
-      }
-      return enquiryList;
-    } else {
-      setState(() {
-        enquiryList.clear();
-        enquiryList.addAll(tmpEnquiryList);
-      });
-    }
-  }
-
-  searchEnquiryFunOffline() async {
-    if (searchForm.text.isNotEmpty) {
-      setState(() {
-        enquiryList.clear();
-        tmpEnquiryList.clear();
-      });
-
-      var localEnquiry = await DatabaseHelper()
-          .getEnquiry(start: 0, end: 0, limitApplied: false);
-      for (var data in localEnquiry) {
-        var calcula = BillingCalCulationModel();
-        var price = jsonDecode(data['price']) as Map<String, dynamic>;
-        calcula.discountValue = price["discount_value"];
-        calcula.extraDiscount = price["extra_discount"];
-        calcula.extraDiscountValue = price["extra_discount_value"];
-        calcula.extraDiscountsys = price["extra_discount_sys"];
-        calcula.package = price["package"];
-        calcula.packageValue = price["package_value"];
-        calcula.packagesys = price["package_sys"];
-        calcula.subTotal = price["sub_total"];
-        calcula.total = price["total"];
-        calcula.roundOff = price["round_off"];
-
-        CustomerDataModel? customer = CustomerDataModel();
-        if (data["customer"] != null) {
-          var customerData =
-              jsonDecode(data['customer']) as Map<String, dynamic>;
-          customer.address = customerData["address"] ?? "";
-          customer.state = customerData["state"] ?? "";
-          customer.city = customerData["city"] ?? "";
-          customer.customerName = customerData["customer_name"] ?? "";
-          customer.email = customerData["email"] ?? "";
-          customer.mobileNo = customerData["mobile_no"] ?? "";
-        }
-
-        List<ProductDataModel> tmpProducts = [];
-
-        if (data["products"] != null) {
-          var productData = jsonDecode(data['products']) as List<dynamic>;
-          for (var product in productData) {
-            var productDataModel = ProductDataModel();
-            productDataModel.categoryid = product["category_id"];
-            productDataModel.categoryName = product["category_name"];
-            productDataModel.price = product["price"];
-            productDataModel.productId = product["product_id"];
-            productDataModel.productName = product["product_name"];
-            productDataModel.qty = product["qty"];
-            productDataModel.productCode = product["product_code"] ?? "";
-            productDataModel.discountLock = product["discount_lock"];
-            productDataModel.docid = product["product_id"];
-            productDataModel.name = product["name"];
-            productDataModel.productContent = product["product_content"];
-            productDataModel.productImg = product["product_img"];
-            productDataModel.qrCode = product["qr_code"];
-            productDataModel.videoUrl = product["video_url"];
-            tmpProducts.add(productDataModel);
-          }
-        }
-
-        tmpEnquiryList.add(
-          EstimateDataModel(
-            docID: null,
-            createddate: DateTime.parse(data['created_date']),
-            enquiryid: null,
-            estimateid: null,
-            price: calcula,
-            customer: customer,
-            products: tmpProducts,
-            dataType: DataTypes.local,
-            referenceId: data["reference_id"],
-          ),
-        );
-      }
-
-      Iterable<EstimateDataModel> tmpList = tmpEnquiryList.where((element) {
-        if (element.customer != null &&
-            element.customer!.customerName != null &&
-            element.customer!.customerName!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.customer != null &&
-            element.customer!.mobileNo != null &&
-            element.customer!.mobileNo!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.customer != null &&
-            element.customer!.city != null &&
-            element.customer!.city!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.customer != null &&
-            element.customer!.state != null &&
-            element.customer!.state!
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith(
-                    searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else if (element.referenceId != null &&
-            element.referenceId!.toLowerCase().replaceAll(' ', '').startsWith(
-                searchForm.text.toLowerCase().replaceAll(' ', ''))) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-      if (tmpList.isNotEmpty) {
-        for (var element in tmpList) {
-          setState(() {
-            enquiryList.add(element);
-          });
-        }
-      }
-      return enquiryList;
-    } else {
-      setState(() {
-        enquiryList.clear();
-        enquiryList.addAll(tmpEnquiryList);
-      });
-    }
-  }
-
-  filtersEnquiryFun(
-    DateTime? fromDate,
-    DateTime? toDate,
-    String? customerID,
-  ) async {
-    setState(() {
-      enquiryList.clear();
-      tmpEnquiryList.clear();
-    });
-    var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
-
-    if (cid != null) {
-      var enquiry = await FireStore().getAllEnquiry(cid: cid);
-      if (enquiry.isNotEmpty) {
-        for (var enquiryData in enquiry) {
-          var calc = BillingCalCulationModel();
-          calc.discountValue = enquiryData["price"]["discount_value"];
-          calc.extraDiscount = enquiryData["price"]["extra_discount"];
-          calc.roundOff = enquiryData["price"]["round_off"];
-          calc.extraDiscountValue =
-              enquiryData["price"]["extra_discount_value"];
-          calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
-          calc.package = enquiryData["price"]["package"];
-          calc.packageValue = enquiryData["price"]["package_value"];
-          calc.packagesys = enquiryData["price"]["package_sys"];
-          calc.subTotal = enquiryData["price"]["sub_total"];
-          calc.total = enquiryData["price"]["total"];
-          calc.netratedTotal = enquiryData["price"]["netrated_total"];
-          calc.discountedTotal = enquiryData["price"]["discounted_total"];
-          calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
-          calc.discounts = enquiryData["price"]["discounts"];
-
-          CustomerDataModel? customer = CustomerDataModel();
-          if (enquiryData["customer"] != null) {
-            customer.docID = enquiryData["customer"]["customer_id"];
-            customer.address = enquiryData["customer"]["address"];
-            customer.state = enquiryData["customer"]["state"];
-            customer.city = enquiryData["customer"]["city"];
-            customer.customerName = enquiryData["customer"]["customer_name"];
-            customer.email = enquiryData["customer"]["email"];
-            customer.mobileNo = enquiryData["customer"]["mobile_no"];
-          }
-
-          List<ProductDataModel> tmpProducts = [];
-
-          setState(() {
-            tmpProducts.clear();
-          });
-
-          await FireStore()
-              .getEnquiryProducts(docid: enquiryData.id)
-              .then((products) {
-            if (products != null && products.docs.isNotEmpty) {
-              for (var product in products.docs) {
-                var productDataModel = ProductDataModel();
-                productDataModel.categoryid = product["category_id"];
-                productDataModel.categoryName = product["category_name"];
-                productDataModel.price = product["price"];
-
-                productDataModel.productId = product["product_id"];
-                productDataModel.productName = product["product_name"];
-                productDataModel.qty = product["qty"];
-                productDataModel.productCode = product["product_code"] ?? "";
-                productDataModel.discountLock = product["discount_lock"];
-                productDataModel.docid = product.id;
-                productDataModel.name = product["name"];
-                productDataModel.productContent = product["product_content"];
-                productDataModel.productImg = product["product_img"];
-                productDataModel.qrCode = product["qr_code"];
-                productDataModel.videoUrl = product["video_url"];
-                productDataModel.productType =
-                    product["discount_lock"] || product["discount"] == null
-                        ? ProductType.netRated
-                        : ProductType.discounted;
-                if (productDataModel.productType == ProductType.discounted) {
-                  productDataModel.discountedPrice =
-                      double.parse(product["price"].toString()) -
-                          (double.parse(product["price"].toString()) *
-                              product["discount"] /
-                              100);
-                } else {
-                  productDataModel.discountedPrice =
-                      double.parse(product["price"].toString());
-                }
-                setState(() {
-                  tmpProducts.add(productDataModel);
-                });
-              }
-            }
-          });
-
-          setState(() {
-            tmpEnquiryList.add(
-              EstimateDataModel(
-                docID: enquiryData.id,
-                createddate: DateTime.parse(
-                  enquiryData["created_date"].toDate().toString(),
-                ),
-                enquiryid: enquiryData['enquiry_id'],
-                estimateid: enquiryData["estimate_id"],
-                price: calc,
-                customer: customer,
-                products: tmpProducts,
-                dataType: DataTypes.cloud,
-              ),
-            );
-          });
-        }
-      }
-    }
-
-    // Filter the list based on the provided inputs.
-    Iterable<EstimateDataModel> tmpList = tmpEnquiryList.where((element) {
-      final createdDate = element.createddate!;
-
-      // Check each condition independently.
-      bool matchesCustomer =
-          customerID == null || element.customer!.docID == customerID;
-      bool matchesFromDate = fromDate == null || createdDate.isAfter(fromDate);
-      bool matchesToDate = toDate == null || createdDate.isBefore(toDate);
-
-      // Return true if any of the conditions are met.
-      return matchesCustomer && matchesFromDate && matchesToDate;
-    });
-
-    if (tmpList.isNotEmpty) {
-      setState(() {
-        searchApplied = true;
-        enquiryList.clear();
-        enquiryList.addAll(tmpList);
-      });
-    } else {
-      showToast(context,
-          content: "No records found", isSuccess: false, top: false);
-    }
-  }
-
-  filtersEnquiryFunOffline(
-    DateTime? fromDate,
-    DateTime? toDate,
-    String? customerID,
-  ) async {
-    setState(() {
-      enquiryList.clear();
-      tmpEnquiryList.clear();
-    });
-    var localEnquiry = await DatabaseHelper()
-        .getEnquiry(start: 0, end: 0, limitApplied: false);
-    for (var data in localEnquiry) {
-      var calcula = BillingCalCulationModel();
-      var price = jsonDecode(data['price']) as Map<String, dynamic>;
-      calcula.discountValue = price["discount_value"];
-      calcula.extraDiscount = price["extra_discount"];
-      calcula.extraDiscountValue = price["extra_discount_value"];
-      calcula.extraDiscountsys = price["extra_discount_sys"];
-      calcula.package = price["package"];
-      calcula.packageValue = price["package_value"];
-      calcula.packagesys = price["package_sys"];
-      calcula.subTotal = price["sub_total"];
-      calcula.total = price["total"];
-      calcula.roundOff = price["round_off"];
-
-      CustomerDataModel? customer = CustomerDataModel();
-      if (data["customer"] != null) {
-        var customerData = jsonDecode(data['customer']) as Map<String, dynamic>;
-        customer.docID = customerData["customer_id"] ?? "";
-        customer.address = customerData["address"] ?? "";
-        customer.state = customerData["state"] ?? "";
-        customer.city = customerData["city"] ?? "";
-        customer.customerName = customerData["customer_name"] ?? "";
-        customer.email = customerData["email"] ?? "";
-        customer.mobileNo = customerData["mobile_no"] ?? "";
-      }
-
-      List<ProductDataModel> tmpProducts = [];
-
-      if (data["products"] != null) {
-        var productData = jsonDecode(data['products']) as List<dynamic>;
-        for (var product in productData) {
-          var productDataModel = ProductDataModel();
-          productDataModel.categoryid = product["category_id"];
-          productDataModel.categoryName = product["category_name"];
-          productDataModel.price = product["price"];
-          productDataModel.productId = product["product_id"];
-          productDataModel.productName = product["product_name"];
-          productDataModel.qty = product["qty"];
-          productDataModel.productCode = product["product_code"] ?? "";
-          productDataModel.discountLock = product["discount_lock"];
-          productDataModel.docid = product["product_id"];
-          productDataModel.name = product["name"];
-          productDataModel.productContent = product["product_content"];
-          productDataModel.productImg = product["product_img"];
-          productDataModel.qrCode = product["qr_code"];
-          productDataModel.videoUrl = product["video_url"];
-          tmpProducts.add(productDataModel);
-        }
-      }
-
-      tmpEnquiryList.add(
-        EstimateDataModel(
-          docID: null,
-          createddate: DateTime.parse(data['created_date']),
-          enquiryid: null,
-          estimateid: null,
-          price: calcula,
-          customer: customer,
-          products: tmpProducts,
-          dataType: DataTypes.local,
-          referenceId: data["reference_id"],
-        ),
-      );
-    }
-    // Filter the list based on the provided inputs.
-    Iterable<EstimateDataModel> tmpList = tmpEnquiryList.where((element) {
-      final createdDate = element.createddate!;
-
-      // Check each condition independently.
-      bool matchesCustomer =
-          customerID == null || element.customer!.docID == customerID;
-      bool matchesFromDate = fromDate == null || createdDate.isAfter(fromDate);
-      bool matchesToDate = toDate == null || createdDate.isBefore(toDate);
-
-      // Return true if any of the conditions are met.
-      return matchesCustomer && matchesFromDate && matchesToDate;
-    });
-
-    if (tmpList.isNotEmpty) {
-      setState(() {
-        searchApplied = true;
-        enquiryList.clear();
-        enquiryList.addAll(tmpList);
-      });
-    } else {
-      showToast(context,
-          content: "No records found", isSuccess: false, top: false);
-    }
-  }
-
-  bool searchApplied = false;
-
-  showFilterSheet() async {
-    await showModalBottomSheet(
-      shape: RoundedRectangleBorder(
-        side: BorderSide.none,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      isScrollControlled: true,
-      context: context,
-      builder: (builder) {
-        return const EnquiryFilter();
-      },
-    ).then((result) {
-      if (result != null) {
-        final connectionProvider =
-            Provider.of<ConnectionProvider>(context, listen: false);
-        if (connectionProvider.isConnected) {
-          filtersEnquiryFun(
-            result["FromDate"],
-            result["ToDate"],
-            result["CustomerID"],
-          );
-        } else {
-          filtersEnquiryFunOffline(
-            result["FromDate"],
-            result["ToDate"],
-            result["CustomerID"],
-          );
-        }
-      }
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -942,6 +340,12 @@ class _EstimateListingState extends State<EstimateListing> {
         }
       });
     });
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        loadBills();
+      }
+    });
   }
 
   @override
@@ -955,603 +359,965 @@ class _EstimateListingState extends State<EstimateListing> {
             Navigator.of(context).pop();
           }
         },
-        child: body(),
-      ),
-    );
-  }
-
-  Consumer<ConnectionProvider> body() {
-    return Consumer<ConnectionProvider>(
-      builder: (context, connectionProvider, child) {
-        return Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(
-                    top: 10,
-                    right: 10,
-                    left: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Overall Bill Total",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge!
-                                  .copyWith(
+        child: Consumer<ConnectionProvider>(
+          builder: (context, connectionProvider, child) {
+            return RefreshIndicator(
+              color: Theme.of(context).primaryColor,
+              onRefresh: () async {
+                if (connectionProvider.isConnected) {
+                  setState(() {
+                    estimateHandler = getEstimateInfo();
+                  });
+                } else {
+                  setState(() {
+                    estimateHandler = getOfflineEstimateInfo();
+                  });
+                }
+              },
+              child: ListView(
+                padding: const EdgeInsets.all(8),
+                controller: _scrollController,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Overall Bill Total",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                "($totalBills Bills)",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          "\u{20B9}${overallTotal ?? 0}",
+                          style:
+                              Theme.of(context).textTheme.titleLarge!.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              "($totalBills Bills)",
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        "\u{20B9}${overallTotal ?? 0}",
-                        style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      )
-                    ],
+                        )
+                      ],
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.only(
-                    top: 10,
-                    right: 10,
-                    left: 10,
-                    bottom: 10,
+                  const SizedBox(
+                    height: 10,
                   ),
-                  child: TextFormField(
-                    controller: searchForm,
-                    cursorColor: Theme.of(context).primaryColor,
-                    textInputAction: TextInputAction.next,
-                    onChanged: (value) => {
-                      if (searchForm.text.isNotEmpty)
-                        {
-                          setState(() {
-                            searchTriggred = true;
-                          })
-                        }
-                      else
-                        {
-                          setState(() {
-                            searchTriggred = false;
-                          })
-                        }
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Search",
-                      filled: true,
-                      fillColor: const Color(0xfff1f5f9),
-                      border: const OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: searchTriggred
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    if (connectionProvider.isConnected) {
-                                      setState(() {
-                                        estimateHandler = getEstimateInfo();
-                                      });
+                  FutureBuilder(
+                      future: estimateHandler,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return futureLoading(context);
+                        } else if (snapshot.hasError) {
+                          return errorDisplay(snapshot);
+                        } else {
+                          return enquiryList.isNotEmpty
+                              ? ListView.builder(
+                                  primary: false,
+                                  shrinkWrap: true,
+                                  itemCount: enquiryList.length,
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  itemBuilder: (context, index) {
+                                    if (enquiryList[index].estimateid == null) {
+                                      return const SizedBox();
                                     } else {
-                                      setState(() {
-                                        estimateHandler =
-                                            getOfflineEstimateInfo();
-                                      });
-                                    }
-                                    setState(() {
-                                      searchForm.text = "";
-                                      searchTriggred = false;
-                                    });
-                                    FocusManager.instance.primaryFocus!
-                                        .unfocus();
-                                  },
-                                  icon: const Icon(
-                                    Icons.clear_rounded,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    if (connectionProvider.isConnected) {
-                                      setState(() {
-                                        estimateHandler = searchEnquiryFun();
-                                      });
-                                    } else {
-                                      setState(() {
-                                        estimateHandler =
-                                            searchEnquiryFunOffline();
-                                      });
-                                    }
-                                    FocusManager.instance.primaryFocus!
-                                        .unfocus();
-                                  },
-                                  icon: const Icon(Icons.search_rounded),
-                                ),
-                              ],
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        padding: const EdgeInsets.only(
-                          top: 0,
-                          left: 10,
-                          bottom: 5,
-                        ),
-                        child: DropdownButtonFormField(
-                          value: selectedPageLimit,
-                          isExpanded: true,
-                          items: pagelimit,
-                          onChanged: (value) {
-                            setState(() {
-                              setState(() {
-                                selectedPageLimit = value;
-                                currentPage = 0;
-                              });
-                            });
-                            if (connectionProvider.isConnected) {
-                              setState(() {
-                                getEnquiryTotal();
-                                estimateHandler = getEstimateInfo();
-                              });
-                            } else {
-                              setState(() {
-                                estimateHandler = getOfflineEstimateInfo();
-                                getOfflineTotal();
-                              });
-                            }
-                          },
-                          decoration: const InputDecoration(
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 10),
-                            labelText: "Limit",
-                            labelStyle: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        padding: const EdgeInsets.only(
-                          top: 0,
-                          right: 10,
-                          bottom: 5,
-                        ),
-                        child: DropdownButtonFormField(
-                          isExpanded: true,
-                          items: noofpage,
-                          value: currentPage != 0 ? currentPage : null,
-                          onChanged: (value) {
-                            setState(() {
-                              currentPage = value;
-                            });
-                            if (connectionProvider.isConnected) {
-                              setState(() {
-                                estimateHandler = getEstimateInfo();
-                              });
-                            } else {
-                              setState(() {
-                                estimateHandler = getOfflineEstimateInfo();
-                              });
-                            }
-                          },
-                          decoration: const InputDecoration(
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 10),
-                            labelText: "Page",
-                            labelStyle: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                FutureBuilder(
-                  future: estimateHandler,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return futureLoading(context);
-                    } else if (snapshot.hasError) {
-                      return errorDisplay(snapshot);
-                    } else {
-                      return enquiryList.isNotEmpty
-                          ? Expanded(
-                              child: RefreshIndicator(
-                                color: Theme.of(context).primaryColor,
-                                onRefresh: () async {
-                                  if (connectionProvider.isConnected) {
-                                    setState(() {
-                                      estimateHandler = getEstimateInfo();
-                                    });
-                                  } else {
-                                    setState(() {
-                                      estimateHandler =
-                                          getOfflineEstimateInfo();
-                                    });
-                                  }
-                                },
-                                child: ListView(
-                                  children: [
-                                    ListView.builder(
-                                      primary: false,
-                                      shrinkWrap: true,
-                                      itemCount: enquiryList.length,
-                                      itemBuilder: (context, index) {
-                                        return GestureDetector(
-                                          onTap: () {
-                                            // if (enquiryList[index].dataType ==
-                                            //     DataTypes.cloud) {
-                                            setState(() {
-                                              Navigator.push(
-                                                context,
-                                                CupertinoPageRoute(
-                                                  builder: (context) =>
-                                                      EstimateDetails(
-                                                    cid: enquiryList[index]
-                                                            .docID ??
-                                                        enquiryList[index]
-                                                            .referenceId ??
-                                                        '',
-                                                  ),
+                                      return GestureDetector(
+                                        onTap: () {
+                                          // if (enquiryList[index].dataType ==
+                                          //     DataTypes.cloud) {
+                                          setState(() {
+                                            Navigator.push(
+                                              context,
+                                              CupertinoPageRoute(
+                                                builder: (context) =>
+                                                    EstimateDetails(
+                                                  cid: enquiryList[index]
+                                                          .docID ??
+                                                      enquiryList[index]
+                                                          .referenceId ??
+                                                      '',
                                                 ),
-                                              ).then((value) {
-                                                if (value != null &&
-                                                    value == true) {
-                                                  if (connectionProvider
-                                                      .isConnected) {
-                                                    setState(() {
-                                                      estimateHandler =
-                                                          getEstimateInfo();
-                                                    });
-                                                  } else {
-                                                    setState(() {
-                                                      estimateHandler =
-                                                          getOfflineEstimateInfo();
-                                                    });
-                                                  }
+                                              ),
+                                            ).then((value) {
+                                              if (value != null &&
+                                                  value == true) {
+                                                if (connectionProvider
+                                                    .isConnected) {
+                                                  setState(() {
+                                                    estimateHandler =
+                                                        getEstimateInfo();
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    estimateHandler =
+                                                        getOfflineEstimateInfo();
+                                                  });
                                                 }
-                                              });
+                                              }
                                             });
-                                            // } else {
-                                            //   snackbar(context, false,
-                                            //       "Please upload the data to view details");
-                                            // }
-                                          },
-                                          onLongPress: () {
-                                            billOptions(
-                                                enquiryList[index].enquiryid !=
-                                                        null
-                                                    ? enquiryList[index]
-                                                        .enquiryid!
-                                                    : enquiryList[index]
-                                                                .referenceId !=
-                                                            null
-                                                        ? enquiryList[index]
-                                                            .referenceId!
-                                                        : "Choose an option",
-                                                index);
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(10),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              border: index > 0
-                                                  ? const Border(
-                                                      top: BorderSide(
-                                                        width: 0.5,
-                                                        color:
-                                                            Color(0xffE0E0E0),
-                                                      ),
-                                                    )
-                                                  : null,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  height: 40,
-                                                  width: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey.shade300,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      "${enquiryList.length - index}",
-                                                      style: const TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                Expanded(
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                          });
+                                          // } else {
+                                          //   snackbar(context, false,
+                                          //       "Please upload the data to view details");
+                                          // }
+                                        },
+                                        onLongPress: () {
+                                          billOptions(
+                                              enquiryList[index].estimateid !=
+                                                      null
+                                                  ? enquiryList[index]
+                                                      .estimateid!
+                                                  : enquiryList[index]
+                                                              .referenceId !=
+                                                          null
+                                                      ? enquiryList[index]
+                                                          .referenceId!
+                                                      : "Choose an option",
+                                              index);
+                                        },
+                                        child: Container(
+                                          margin:
+                                              const EdgeInsets.only(top: 10),
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Colors.white,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Row(
                                                     children: [
-                                                      RichText(
-                                                        text: TextSpan(
-                                                          children: [
-                                                            const TextSpan(
-                                                              text:
-                                                                  "ESTIMATE ID - ",
-                                                              style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
+                                                      Container(
+                                                        height: 18,
+                                                        width: 18,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors
+                                                              .grey.shade300,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: Center(
+                                                          child: Text(
+                                                            "${index + 1}",
+                                                            style:
+                                                                const TextStyle(
+                                                              color:
+                                                                  Colors.grey,
+                                                              fontSize: 10,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
                                                             ),
-                                                            TextSpan(
-                                                              text: connectionProvider.isConnected
-                                                                  ? enquiryList[
-                                                                          index]
-                                                                      .enquiryid
-                                                                  : enquiryList[
-                                                                              index]
-                                                                          .referenceId ??
-                                                                      "",
-                                                              style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: enquiryList[index]
-                                                                            .estimateid ==
-                                                                        null
-                                                                    ? Colors.red
-                                                                    : Colors
-                                                                        .black,
-                                                              ),
-                                                            ),
-                                                          ],
+                                                          ),
                                                         ),
                                                       ),
                                                       const SizedBox(
-                                                        height: 3,
+                                                        width: 5,
                                                       ),
-                                                      RichText(
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        text: TextSpan(
-                                                          text: "CUSTOMER - ",
-                                                          style:
-                                                              const TextStyle(
-                                                            color:
-                                                                Colors.black87,
-                                                            fontSize: 13,
-                                                          ),
-                                                          children: [
-                                                            TextSpan(
-                                                              text:
-                                                                  "${enquiryList[index].customer != null && enquiryList[index].customer!.customerName != null ? enquiryList[index].customer!.customerName : ""}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
+                                                      Text(
+                                                        connectionProvider
+                                                                .isConnected
+                                                            ? enquiryList[index]
+                                                                    .estimateid ??
+                                                                ''
+                                                            : enquiryList[index]
+                                                                    .referenceId ??
+                                                                "",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyLarge!
+                                                            .copyWith(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
                                                             ),
-                                                            if (enquiryList[index]
-                                                                        .customer!
-                                                                        .customerName !=
-                                                                    null &&
-                                                                enquiryList[
-                                                                        index]
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Text(
+                                                    DateFormat('dd-MM-yyyy')
+                                                        .format(enquiryList[
+                                                                    index]
+                                                                .createddate ??
+                                                            DateTime.now()),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall,
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        if (enquiryList[index]
+                                                                    .customer !=
+                                                                null &&
+                                                            enquiryList[index]
                                                                     .customer!
-                                                                    .customerName!
-                                                                    .isEmpty)
-                                                              TextSpan(
-                                                                text: enquiryList[
-                                                                            index]
-                                                                        .customer!
-                                                                        .mobileNo ??
-                                                                    '',
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 13,
+                                                                    .customerName !=
+                                                                null &&
+                                                            enquiryList[index]
+                                                                .customer!
+                                                                .customerName!
+                                                                .isNotEmpty)
+                                                          Text(
+                                                            "${enquiryList[index].customer!.customerName}",
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .titleLarge!
+                                                                .copyWith(
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
                                                                 ),
-                                                              )
+                                                          ),
+                                                        const SizedBox(
+                                                            height: 5),
+                                                        if (enquiryList[index]
+                                                                    .customer
+                                                                    ?.city !=
+                                                                null ||
+                                                            enquiryList[index]
+                                                                    .customer
+                                                                    ?.mobileNo !=
+                                                                null)
+                                                          Row(
+                                                            children: [
+                                                              Row(
+                                                                children: [
+                                                                  const Icon(
+                                                                      Iconsax
+                                                                          .location,
+                                                                      size: 10),
+                                                                  Text(
+                                                                    enquiryList[index]
+                                                                            .customer
+                                                                            ?.city ??
+                                                                        "",
+                                                                    style: Theme.of(
+                                                                            context)
+                                                                        .textTheme
+                                                                        .bodySmall,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              const SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              Row(
+                                                                children: [
+                                                                  const Icon(
+                                                                      Iconsax
+                                                                          .call,
+                                                                      size: 10),
+                                                                  Text(
+                                                                    enquiryList[index]
+                                                                            .customer
+                                                                            ?.mobileNo ??
+                                                                        "",
+                                                                    style: Theme.of(
+                                                                            context)
+                                                                        .textTheme
+                                                                        .bodySmall,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        const SizedBox(
+                                                          height: 5,
+                                                        ),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                                Iconsax
+                                                                    .calendar,
+                                                                size: 10),
+                                                            Text(
+                                                              DateFormat(
+                                                                      'dd-MM-yyyy hh:mm a')
+                                                                  .format(enquiryList[
+                                                                              index]
+                                                                          .createddate ??
+                                                                      DateTime
+                                                                          .now()),
+                                                              style: Theme.of(
+                                                                      context)
+                                                                  .textTheme
+                                                                  .bodySmall,
+                                                            ),
                                                           ],
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        "DATE - ${DateFormat('dd-MM-yyyy hh:mm a').format(enquiryList[index].createddate!)}",
-                                                        style: const TextStyle(
-                                                          fontSize: 13,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Center(
-                                                  child: Text(
-                                                    "Rs.${enquiryList[index].price!.total}",
-                                                  ),
-                                                ),
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.all(10),
-                                                  child: const Center(
-                                                    child: Icon(
-                                                      Icons.arrow_forward_ios,
-                                                      size: 18,
-                                                      color: Color(0xff6B6B6B),
+                                                      ],
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    Visibility(
-                                        visible: searchApplied,
-                                        child: Center(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      Theme.of(context)
-                                                          .primaryColor,
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    searchApplied = false;
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback(
-                                                            (_) {
-                                                      final connectionProvider =
-                                                          Provider.of<
-                                                                  ConnectionProvider>(
-                                                              context,
-                                                              listen: false);
-                                                      if (connectionProvider
-                                                          .isConnected) {
-                                                        AccountValid
-                                                            .accountValid(
-                                                                context);
-
-                                                        estimateHandler =
-                                                            getEstimateInfo();
-                                                      } else {
-                                                        estimateHandler =
-                                                            getOfflineEstimateInfo();
-                                                      }
-                                                    });
-
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback(
-                                                            (_) {
-                                                      final connectionProvider =
-                                                          Provider.of<
-                                                                  ConnectionProvider>(
-                                                              context,
-                                                              listen: false);
-                                                      connectionProvider
-                                                          .addListener(() {
-                                                        if (connectionProvider
-                                                            .isConnected) {
-                                                          AccountValid
-                                                              .accountValid(
-                                                                  context);
-
-                                                          estimateHandler =
-                                                              getEstimateInfo();
-                                                        } else {
-                                                          estimateHandler =
-                                                              getOfflineEstimateInfo();
-                                                        }
-                                                      });
-                                                    });
-                                                  });
-                                                },
-                                                child: const Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.clear_rounded),
-                                                    SizedBox(width: 5),
-                                                    Text('Exit search'),
-                                                  ],
-                                                ),
+                                                  const SizedBox(width: 10),
+                                                  Text(
+                                                    "\u{20B9}${enquiryList[index].price?.total ?? ""}",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleLarge!
+                                                        .copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
-                                        ))
-                                  ],
-                                ),
-                              ),
-                            )
-                          : noData(context);
-                    }
-                  },
-                )
-              ],
-            ),
-          ),
-        );
-      },
+                                        ),
+                                      );
+                                    }
+                                  },
+                                )
+                              : noData(context);
+                        }
+                      }),
+
+                  // FutureBuilder(
+                  //   future: estimateHandler,
+                  //   builder: (context, snapshot) {
+                  //     if (snapshot.connectionState == ConnectionState.waiting) {
+                  //       return futureLoading(context);
+                  //     } else if (snapshot.hasError) {
+                  //       return errorDisplay(snapshot);
+                  //     } else {
+                  //       return enquiryList.isNotEmpty
+                  //           ? ListView.builder(
+                  //               primary: false,
+                  //               shrinkWrap: true,
+                  //               padding: const EdgeInsets.only(bottom: 20),
+                  //               itemCount: enquiryList.length,
+                  //               itemBuilder: (context, index) {
+                  //                 return GestureDetector(
+                  //                   onTap: () {
+                  //                     // if (enquiryList[index].dataType ==
+                  //                     //     DataTypes.cloud) {
+                  //                     setState(() {
+                  //                       Navigator.push(
+                  //                         context,
+                  //                         CupertinoPageRoute(
+                  //                           builder: (context) =>
+                  //                               EstimateDetails(
+                  //                             cid: enquiryList[index].docID ??
+                  //                                 enquiryList[index]
+                  //                                     .referenceId ??
+                  //                                 '',
+                  //                           ),
+                  //                         ),
+                  //                       ).then((value) {
+                  //                         if (value != null && value == true) {
+                  //                           if (connectionProvider
+                  //                               .isConnected) {
+                  //                             setState(() {
+                  //                               estimateHandler =
+                  //                                   getEstimateInfo();
+                  //                             });
+                  //                           } else {
+                  //                             setState(() {
+                  //                               estimateHandler =
+                  //                                   getOfflineEstimateInfo();
+                  //                             });
+                  //                           }
+                  //                         }
+                  //                       });
+                  //                     });
+                  //                     // } else {
+                  //                     //   snackbar(context, false,
+                  //                     //       "Please upload the data to view details");
+                  //                     // }
+                  //                   },
+                  //                   onLongPress: () {
+                  //                     billOptions(
+                  //                         enquiryList[index].estimateid != null
+                  //                             ? enquiryList[index].estimateid!
+                  //                             : enquiryList[index]
+                  //                                         .referenceId !=
+                  //                                     null
+                  //                                 ? enquiryList[index]
+                  //                                     .referenceId!
+                  //                                 : "Choose an option",
+                  //                         index);
+                  //                   },
+                  //                   child: Container(
+                  //                     padding: const EdgeInsets.all(10),
+                  //                     decoration: BoxDecoration(
+                  //                       color: Colors.white,
+                  //                       border: index > 0
+                  //                           ? const Border(
+                  //                               top: BorderSide(
+                  //                                 width: 0.5,
+                  //                                 color: Color(0xffE0E0E0),
+                  //                               ),
+                  //                             )
+                  //                           : null,
+                  //                     ),
+                  //                     child: Row(
+                  //                       children: [
+                  //                         Container(
+                  //                           height: 40,
+                  //                           width: 40,
+                  //                           decoration: BoxDecoration(
+                  //                             color: Colors.grey.shade300,
+                  //                             shape: BoxShape.circle,
+                  //                           ),
+                  //                           child: Center(
+                  //                             child: Text(
+                  //                               "${index + 1}",
+                  //                               style: const TextStyle(
+                  //                                 color: Colors.grey,
+                  //                                 fontSize: 15,
+                  //                                 fontWeight: FontWeight.bold,
+                  //                               ),
+                  //                             ),
+                  //                           ),
+                  //                         ),
+                  //                         const SizedBox(
+                  //                           width: 10,
+                  //                         ),
+                  //                         Expanded(
+                  //                           child: Column(
+                  //                             mainAxisSize: MainAxisSize.min,
+                  //                             crossAxisAlignment:
+                  //                                 CrossAxisAlignment.start,
+                  //                             children: [
+                  //                               RichText(
+                  //                                 text: TextSpan(
+                  //                                   children: [
+                  //                                     const TextSpan(
+                  //                                       text: "ESTIMATE ID - ",
+                  //                                       style: TextStyle(
+                  //                                         fontWeight:
+                  //                                             FontWeight.bold,
+                  //                                         color: Colors.black,
+                  //                                       ),
+                  //                                     ),
+                  //                                     TextSpan(
+                  //                                       text: connectionProvider
+                  //                                               .isConnected
+                  //                                           ? enquiryList[index]
+                  //                                               .estimateid
+                  //                                           : enquiryList[index]
+                  //                                                   .referenceId ??
+                  //                                               "",
+                  //                                       style: TextStyle(
+                  //                                         fontWeight:
+                  //                                             FontWeight.bold,
+                  //                                         color: enquiryList[
+                  //                                                         index]
+                  //                                                     .estimateid ==
+                  //                                                 null
+                  //                                             ? Colors.red
+                  //                                             : Colors.black,
+                  //                                       ),
+                  //                                     ),
+                  //                                   ],
+                  //                                 ),
+                  //                               ),
+                  //                               const SizedBox(
+                  //                                 height: 3,
+                  //                               ),
+                  //                               RichText(
+                  //                                 textAlign: TextAlign.center,
+                  //                                 text: TextSpan(
+                  //                                   text:
+                  //                                       "CUSTOMER - ",
+                  //                                   style: const TextStyle(
+                  //                                     color: Colors.black87,
+                  //                                     fontSize: 13,
+                  //                                   ),
+                  //                                   children: [
+                  //                                     TextSpan(
+                  //                                       text:
+                  //                                           "${enquiryList[index].customer != null && enquiryList[index].customer!.customerName != null ? enquiryList[index].customer!.customerName : ""}",
+                  //                                       style: const TextStyle(
+                  //                                         color: Colors.black,
+                  //                                         fontWeight:
+                  //                                             FontWeight.bold,
+                  //                                       ),
+                  //                                     ),
+                  //                                     if (enquiryList[index]
+                  //                                                 .customer!
+                  //                                                 .customerName !=
+                  //                                             null &&
+                  //                                         enquiryList[index]
+                  //                                             .customer!
+                  //                                             .customerName!
+                  //                                             .isEmpty)
+                  //                                       TextSpan(
+                  //                                         text: enquiryList[
+                  //                                                     index]
+                  //                                                 .customer!
+                  //                                                 .mobileNo ??
+                  //                                             '',
+                  //                                         style:
+                  //                                             const TextStyle(
+                  //                                           fontSize: 13,
+                  //                                           fontWeight:
+                  //                                               FontWeight.bold,
+                  //                                         ),
+                  //                                       )
+                  //                                   ],
+                  //                                 ),
+                  //                               ),
+                  //                               Text(
+                  //                                 "DATE - ${DateFormat('dd-MM-yyyy hh:mm a').format(enquiryList[index].createddate!)}",
+                  //                                 style: const TextStyle(
+                  //                                   fontSize: 13,
+                  //                                 ),
+                  //                               ),
+                  //                             ],
+                  //                           ),
+                  //                         ),
+                  //                         Center(
+                  //                           child: Text(
+                  //                             "Rs.${enquiryList[index].price!.total}",
+                  //                           ),
+                  //                         ),
+                  //                         Container(
+                  //                           padding: const EdgeInsets.all(10),
+                  //                           child: const Center(
+                  //                             child: Icon(
+                  //                               Icons.arrow_forward_ios,
+                  //                               size: 18,
+                  //                               color: Color(0xff6B6B6B),
+                  //                             ),
+                  //                           ),
+                  //                         ),
+                  //                       ],
+                  //                     ),
+                  //                   ),
+                  //                 );
+                  //               },
+                  //             )
+                  //           : noData(context);
+                  //     }
+                  //   },
+                  // ),
+
+                  Visibility(
+                    visible: isLoad,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                  Visibility(
+                    visible: endOfDocument,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.stop_rounded, color: Colors.red.shade300),
+                        Text("End of Document",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge!
+                                .copyWith(
+                                    color: Colors.red.shade300,
+                                    fontWeight: FontWeight.bold))
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
+  loadBills() async {
+    setState(() {
+      isLoad = true;
+      start += 10;
+      end += 10;
+      endOfDocument = false;
+    });
+    var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+    if (cid != null) {
+      var enquiry = await FireStore()
+          .getEstimate(cid: cid, start: start, end: end, isLimitPage: true);
+      if (enquiry.isNotEmpty) {
+        for (var enquiryData in enquiry) {
+          var calc = BillingCalCulationModel();
+          calc.discountValue = enquiryData["price"]["discount_value"];
+          calc.extraDiscount = enquiryData["price"]["extra_discount"];
+          calc.roundOff = enquiryData["price"]["round_off"];
+          calc.extraDiscountValue =
+              enquiryData["price"]["extra_discount_value"];
+          calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+          calc.package = enquiryData["price"]["package"];
+          calc.packageValue = enquiryData["price"]["package_value"];
+          calc.packagesys = enquiryData["price"]["package_sys"];
+          calc.subTotal = enquiryData["price"]["sub_total"];
+          calc.total = enquiryData["price"]["total"];
+          calc.netratedTotal = enquiryData["price"]["netrated_total"];
+          calc.discountedTotal = enquiryData["price"]["discounted_total"];
+          calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+          calc.discounts = enquiryData["price"]["discounts"];
+
+          var customer = CustomerDataModel();
+          if (enquiryData["customer"] != null) {
+            customer.docID = enquiryData["customer"]["customer_id"] ?? '';
+            customer.address = enquiryData["customer"]["address"] ?? '';
+            customer.state = enquiryData["customer"]["state"] ?? '';
+            customer.city = enquiryData["customer"]["city"] ?? '';
+            customer.customerName =
+                enquiryData["customer"]["customer_name"] ?? '';
+            customer.email = enquiryData["customer"]["email"] ?? '';
+            customer.mobileNo = enquiryData["customer"]["mobile_no"] ?? '';
+          }
+
+          List<ProductDataModel> tmpProducts = [];
+
+          setState(() {
+            tmpProducts.clear();
+          });
+
+          await FireStore()
+              .getEstimateProducts(docid: enquiryData.id)
+              .then((products) {
+            if (products != null && products.docs.isNotEmpty) {
+              for (var product in products.docs) {
+                var productDataModel = ProductDataModel();
+                productDataModel.categoryid = product["category_id"];
+                productDataModel.categoryName = product["category_name"];
+                productDataModel.price = product["price"];
+                productDataModel.productId = product["product_id"];
+                productDataModel.productName = product["product_name"];
+                productDataModel.qty = product["qty"];
+                productDataModel.productCode = product["product_code"];
+                productDataModel.discountLock = product["discount_lock"];
+                productDataModel.docid = product.id;
+                productDataModel.name = product["name"];
+                productDataModel.productContent = product["product_content"];
+                productDataModel.productImg = product["product_img"];
+                productDataModel.qrCode = product["qr_code"];
+                productDataModel.videoUrl = product["video_url"];
+                productDataModel.productType =
+                    product["discount_lock"] || product["discount"] == null
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+                if (productDataModel.productType == ProductType.discounted) {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString()) -
+                          (double.parse(product["price"].toString()) *
+                              product["discount"] /
+                              100);
+                } else {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString());
+                }
+                setState(() {
+                  tmpProducts.add(productDataModel);
+                });
+              }
+            }
+          });
+
+          setState(() {
+            enquiryList.add(
+              EstimateDataModel(
+                docID: enquiryData.id,
+                createddate: DateTime.parse(
+                  enquiryData["created_date"].toDate().toString(),
+                ),
+                enquiryid: enquiryData["estimate_id"],
+                estimateid: enquiryData["estimate_id"],
+                price: calc,
+                customer: customer,
+                products: tmpProducts,
+                dataType: DataTypes.cloud,
+              ),
+            );
+          });
+        }
+      } else {
+        setState(() {
+          isLoad = false;
+          endOfDocument = true;
+        });
+      }
+      setState(() {
+        tmpEnquiryList.addAll(enquiryList);
+      });
+
+      return enquiry;
+    }
+  }
+
+  final ScrollController _scrollController = ScrollController();
+
+  bool isLoad = false;
+  bool endOfDocument = false;
+
+  filter(Map<String, dynamic> search) async {
+    setState(() {
+      enquiryList.clear();
+      tmpEnquiryList.clear();
+      isLoad = false;
+      endOfDocument = false;
+    });
+
+    var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+
+    if (cid != null) {
+      var enquiry = await FireStore().getAllEstimate(cid: cid);
+      for (var enquiryData in enquiry) {
+        var calc = BillingCalCulationModel();
+        calc.discountValue = enquiryData["price"]["discount_value"];
+        calc.extraDiscount = enquiryData["price"]["extra_discount"];
+        calc.roundOff = enquiryData["price"]["round_off"];
+        calc.extraDiscountValue = enquiryData["price"]["extra_discount_value"];
+        calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+        calc.package = enquiryData["price"]["package"];
+        calc.packageValue = enquiryData["price"]["package_value"];
+        calc.packagesys = enquiryData["price"]["package_sys"];
+        calc.subTotal = enquiryData["price"]["sub_total"];
+        calc.total = enquiryData["price"]["total"];
+        calc.netratedTotal = enquiryData["price"]["netrated_total"];
+        calc.discountedTotal = enquiryData["price"]["discounted_total"];
+        calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+        calc.discounts = enquiryData["price"]["discounts"];
+
+        CustomerDataModel? customer = CustomerDataModel();
+        if (enquiryData["customer"] != null) {
+          customer.docID = enquiryData["customer"]["customer_id"];
+          customer.address = enquiryData["customer"]["address"];
+          customer.state = enquiryData["customer"]["state"];
+          customer.city = enquiryData["customer"]["city"];
+          customer.customerName = enquiryData["customer"]["customer_name"];
+          customer.email = enquiryData["customer"]["email"];
+          customer.mobileNo = enquiryData["customer"]["mobile_no"];
+        } else {
+          customer = null;
+        }
+
+        List<ProductDataModel> tmpProducts = [];
+
+        setState(() {
+          tmpProducts.clear();
+        });
+
+        await FireStore()
+            .getEstimateProducts(docid: enquiryData.id)
+            .then((products) {
+          if (products != null && products.docs.isNotEmpty) {
+            for (var product in products.docs) {
+              var productDataModel = ProductDataModel();
+              productDataModel.categoryid = product["category_id"];
+              productDataModel.categoryName = product["category_name"];
+              productDataModel.price = product["price"];
+
+              productDataModel.productId = product["product_id"];
+              productDataModel.productName = product["product_name"];
+              productDataModel.qty = product["qty"];
+              productDataModel.productCode = product["product_code"] ?? "";
+              productDataModel.discountLock = product["discount_lock"];
+              productDataModel.docid = product.id;
+              productDataModel.name = product["name"];
+              productDataModel.productContent = product["product_content"];
+              productDataModel.productImg = product["product_img"];
+              productDataModel.qrCode = product["qr_code"];
+              productDataModel.productType =
+                  product["discount_lock"] || product["discount"] == null
+                      ? ProductType.netRated
+                      : ProductType.discounted;
+              if (productDataModel.productType == ProductType.discounted) {
+                productDataModel.discountedPrice =
+                    double.parse(product["price"].toString()) -
+                        (double.parse(product["price"].toString()) *
+                            product["discount"] /
+                            100);
+              } else {
+                productDataModel.discountedPrice =
+                    double.parse(product["price"].toString());
+              }
+
+              setState(() {
+                tmpProducts.add(productDataModel);
+              });
+            }
+          }
+        });
+
+        setState(() {
+          tmpEnquiryList.add(
+            EstimateDataModel(
+              docID: enquiryData.id,
+              createddate: DateTime.parse(
+                enquiryData["created_date"].toDate().toString(),
+              ),
+              enquiryid: enquiryData['estimate_id'],
+              estimateid: enquiryData["estimate_id"],
+              price: calc,
+              customer: customer,
+              products: tmpProducts,
+              dataType: DataTypes.cloud,
+            ),
+          );
+        });
+      }
+    }
+
+    List<EstimateDataModel> filteredList = tmpEnquiryList.where((enquiry) {
+      if (search["search_text"].isNotEmpty) {
+        if (enquiry.customer != null &&
+            enquiry.customer!.customerName != null &&
+            enquiry.customer!.customerName!
+                .toLowerCase()
+                .replaceAll(' ', '')
+                .startsWith(
+                    search["search_text"].toLowerCase().replaceAll(' ', ''))) {
+          return true;
+        } else if (enquiry.customer != null &&
+            enquiry.customer!.mobileNo != null &&
+            enquiry.customer!.mobileNo!
+                .toLowerCase()
+                .replaceAll(' ', '')
+                .startsWith(
+                    search["search_text"].toLowerCase().replaceAll(' ', ''))) {
+          return true;
+        } else if (enquiry.customer != null &&
+            enquiry.customer!.city != null &&
+            enquiry.customer!.city!.toLowerCase().replaceAll(' ', '').startsWith(
+                search["search_text"].toLowerCase().replaceAll(' ', ''))) {
+          return true;
+        } else if (enquiry.customer != null &&
+            enquiry.customer!.state != null &&
+            enquiry.customer!.state!.toLowerCase().replaceAll(' ', '').startsWith(
+                search["search_text"].toLowerCase().replaceAll(' ', ''))) {
+          return true;
+        } else if (enquiry.enquiryid != null &&
+            enquiry.enquiryid!.toLowerCase().replaceAll(' ', '').startsWith(
+                search["search_text"].toLowerCase().replaceAll(' ', ''))) {
+          return true;
+        } else if (enquiry.enquiryid != null &&
+            enquiry.enquiryid!
+                .toLowerCase()
+                .replaceAll(' ', '')
+                .contains(search["search_text"].toLowerCase().replaceAll(' ', ''))) {
+          return true;
+        } else {
+          return false;
+        }
+      } else if (search["from_date"] != null && search["to_date"] != null) {
+        if (enquiry.createddate != null &&
+            enquiry.createddate!.isAfter(search["from_date"]) &&
+            enquiry.createddate!.isBefore(DateTime(
+                search["to_date"].year,
+                search["to_date"].month,
+                search["to_date"].day,
+                23,
+                59,
+                59,
+                999 // Set time to 23:59:59.999 (last millisecond of the day)
+                ))) {
+          return true;
+        } else {
+          return false;
+        }
+      } else if (search["customer"]["doc_id"] != null) {
+        if (enquiry.customer != null &&
+            enquiry.customer!.docID == search["customer"]["doc_id"]) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }).toList();
+    setState(() {
+      enquiryList = filteredList;
+    });
+  }
+
   FloatingActionButton floatingButton(BuildContext context) {
-    return FloatingActionButton.extended(
+    return FloatingActionButton(
       backgroundColor: Theme.of(context).primaryColor,
       shape: RoundedRectangleBorder(
         side: BorderSide.none,
         borderRadius: BorderRadius.circular(10),
       ),
-      onPressed: () async {
-        await showFilterSheet();
+      onPressed: () {
+        billFilters();
       },
-      label: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.filter_list_outlined),
-          SizedBox(
-            width: 10,
-          ),
-          Text("Filter"),
-        ],
-      ),
+      child: const Icon(Icons.filter_list_outlined),
     );
+  }
+
+  billFilters() async {
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (builder) {
+        return const FractionallySizedBox(
+          heightFactor: 0.9,
+          child: BillingFilters(),
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          estimateHandler = filter(value);
+        });
+      }
+    });
   }
 
   Center errorDisplay(AsyncSnapshot<dynamic> snapshot) {
@@ -1796,7 +1562,11 @@ class _EstimateListingState extends State<EstimateListing> {
       builder: (builder) {
         return FractionallySizedBox(
           heightFactor: 0.4,
-          child: BillOptions(title: title, billType: BillType.estimate),
+          child: BillOptions(
+            title: title,
+            billType: BillType.estimate,
+            estimate: enquiryList[index],
+          ),
         );
       },
     );

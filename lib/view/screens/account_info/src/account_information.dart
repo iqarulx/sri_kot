@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sri_kot/constants/constants.dart';
-import 'package:sri_kot/services/services.dart';
-import 'package:sri_kot/view/ui/src/commonwidget.dart';
+import '/constants/constants.dart';
+import '/services/services.dart';
+import '/view/ui/src/commonwidget.dart';
 
 class AccountInformation extends StatefulWidget {
   const AccountInformation({super.key});

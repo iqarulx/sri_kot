@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sri_kot/services/firebase/firestore.dart';
-import 'package:sri_kot/utils/src/utilities.dart';
-import 'package:sri_kot/view/ui/src/toast.dart';
+import '/services/services.dart';
+import '/utils/src/utilities.dart';
+import '/view/ui/src/toast.dart';
 
 class CustomCityAlert extends StatefulWidget {
   final String state;

@@ -532,7 +532,9 @@ class InvoicePDFService {
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
                         child: pw.Text(
-                          productList[j][k].productName!,
+                          productList[j][k].productName!.length > 30
+                              ? productList[j][k].productName!.substring(0, 30)
+                              : productList[j][k].productName!,
                           textAlign: pdfAlignment == 1
                               ? pw.TextAlign.left
                               : pdfAlignment == 2
@@ -1510,7 +1512,7 @@ class InvoicePDFService {
                                     padding: const pw.EdgeInsets.all(3),
                                     child: pw.Center(
                                       child: pw.Text(
-                                          i["product_rate"].toString(),
+                                          i["product_rate"].toStringAsFixed(2),
                                           textAlign: pw.TextAlign.center,
                                           style: normalTextStyle),
                                     ),
@@ -2580,7 +2582,12 @@ class InvoicePDFService {
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(1.5),
-                        child: pw.Text("${productList[j][k].productName}",
+                        child: pw.Text(
+                            productList[j][k].productName!.length > 30
+                                ? productList[j][k]
+                                    .productName!
+                                    .substring(0, 30)
+                                : productList[j][k].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -4571,7 +4578,10 @@ class InvoicePDFService {
                     ),
                     pw.Padding(
                       padding: const pw.EdgeInsets.all(3),
-                      child: pw.Text("${productList[j][k].productName}",
+                      child: pw.Text(
+                          productList[j][k].productName!.length > 30
+                              ? productList[j][k].productName!.substring(0, 30)
+                              : productList[j][k].productName!,
                           textAlign: pdfAlignment == 1
                               ? pw.TextAlign.left
                               : pdfAlignment == 2
@@ -5511,7 +5521,7 @@ class InvoicePDFService {
                                     padding: const pw.EdgeInsets.all(3),
                                     child: pw.Center(
                                       child: pw.Text(
-                                          i["product_rate"].toString(),
+                                          i["product_rate"].toStringAsFixed(2),
                                           textAlign: pw.TextAlign.center,
                                           style: normalTextStyle),
                                     ),

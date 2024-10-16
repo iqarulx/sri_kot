@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '/model/src/party_data_model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
-import '/view/ui/src/customer_search_view.dart';
 import '/view/ui/ui.dart';
 
 class AddCustomerBoxInv extends StatefulWidget {
@@ -45,7 +44,7 @@ class _AddCustomerBoxInvState extends State<AddCustomerBoxInv> {
     ).then(
       (value) {
         if (value != null) {
-          state = value;
+          state.text = value;
           setState(() {});
         }
       },
@@ -77,7 +76,7 @@ class _AddCustomerBoxInvState extends State<AddCustomerBoxInv> {
     ).then(
       (value) {
         if (value != null) {
-          city = value;
+          city.text = value;
           setState(() {});
         }
       },
@@ -219,6 +218,7 @@ class _AddCustomerBoxInvState extends State<AddCustomerBoxInv> {
                       labelName: "Mobile No (*)",
                       controller: mobileNo,
                       formName: "Mobile No",
+                      keyboardType: TextInputType.phone,
                       validation: (input) {
                         return FormValidation().phoneValidation(
                           input: input ?? '',
@@ -233,12 +233,8 @@ class _AddCustomerBoxInvState extends State<AddCustomerBoxInv> {
                       formName: "Address",
                       maxLines: 2,
                       validation: (input) {
-                        return FormValidation().commonValidation(
-                          input: input ?? '',
-                          isMandatory: true,
-                          formName: "Address",
-                          isOnlyCharter: true,
-                        );
+                        return FormValidation()
+                            .addressValidation(input ?? '', false);
                       },
                     ),
                     InputForm(
@@ -299,7 +295,7 @@ class _AddCustomerBoxInvState extends State<AddCustomerBoxInv> {
                           input: input ?? '',
                           isMandatory: true,
                           formName: "Transport No",
-                          isOnlyCharter: true,
+                          isOnlyCharter: false,
                         );
                       },
                     ),

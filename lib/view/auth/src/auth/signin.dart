@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:sri_kot/view/ui/src/test_mode.dart';
+import '/view/ui/src/test_mode.dart';
 import '/view/ui/ui.dart';
 import '/view/auth/auth.dart';
 import '/constants/constants.dart';
@@ -411,24 +411,25 @@ class _SigninState extends State<Signin> {
 
   superAdminLogin() async {
     try {
-      loading(context);
+      loading(context); // Show loading dialog
+
       FireStore fireStore = FireStore();
       var company = await fireStore.getCompany(email: email.text);
+
       if (company.docs.isNotEmpty) {
         if (company.docs.first["info_filled"] == false) {
-          Navigator.pop(context);
+          Navigator.pop(context); // Close loading dialog
           snackbar(context, false,
               "Company info not filled. Contact administrator for further assistance");
         } else {
           bool isTestMode = await LocalDB.checkTestMode();
-
           DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
-          DeviceModel deviceDetails = DeviceModel();
-
-          deviceDetails.deviceId = deviceInfo!.deviceId;
-          deviceDetails.modelName = deviceInfo.modelName;
-          deviceDetails.deviceName = deviceInfo.deviceName;
-          deviceDetails.lastlogin = DateTime.now();
+          DeviceModel deviceDetails = DeviceModel(
+            deviceId: deviceInfo!.deviceId,
+            modelName: deviceInfo.modelName,
+            deviceName: deviceInfo.deviceName,
+            lastlogin: DateTime.now(),
+          );
 
           var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
             context,
@@ -464,15 +465,10 @@ class _SigninState extends State<Signin> {
               );
             });
           } else {
-            if (company.docs.first["device.device_id"] != null &&
-                company.docs.first["device.model_name"] != null &&
-                company.docs.first["device.device_name"] != null) {
-              Navigator.pop(context);
-              snackbar(
-                context,
-                false,
-                "You're already logged with another device",
-              );
+            Navigator.pop(context);
+            if (company.docs.first["device.device_id"] != null) {
+              snackbar(context, false,
+                  "You're already logged in with another device");
             } else {
               await fireStore
                   .registerNewDevice(
@@ -481,198 +477,174 @@ class _SigninState extends State<Signin> {
                 docid: company.docs.first.id,
                 deviceData: deviceDetails,
               )
-                  .then((value) async {
-                await LocalService.updateOpened(uid: company.docs.first.id)
-                    .then((value) {
-                  superAdminLogin();
-                });
+                  .then((value) {
+                superAdminLogin();
               });
             }
           }
         }
       } else {
-        Navigator.pop(context);
-        snackbar(
-          context,
-          false,
-          "User not found",
-        );
+        Navigator.pop(context); // Close loading dialog
+        snackbar(context, false, "User not found");
       }
     } catch (e) {
-      Navigator.pop(context);
+      Navigator.pop(context); // Close loading dialog
       snackbar(context, false, e.toString());
     }
   }
 
   staffLogin() async {
     try {
-      loading(context);
+      loading(context); // Show loading dialog
       FireStore fireStore = FireStore();
 
-      await fireStore
-          .staffLogin(email: email.text, password: password.text)
-          .then((value) async {
-        if (value != null && value.docs.isNotEmpty) {
-          var tmpData = email.text.split('@');
+      var value = await fireStore.staffLogin(
+          email: email.text, password: password.text);
+      if (value != null && value.docs.isNotEmpty) {
+        var tmpData = email.text.split('@');
+        bool isTestMode = await LocalDB.checkTestMode();
+        DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
+        DeviceModel deviceDetails = DeviceModel(
+          deviceId: deviceInfo!.deviceId,
+          modelName: deviceInfo.modelName,
+          deviceName: deviceInfo.deviceName,
+          lastlogin: DateTime.now(),
+        );
 
-          bool isTestMode = await LocalDB.checkTestMode();
-          DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
+        var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
+          context,
+          uid: value.docs.first["user_login_id"],
+          deviceData: deviceDetails,
+          type: UserType.staff,
+        );
 
-          DeviceModel deviceDetails = DeviceModel();
-          deviceDetails.deviceId = deviceInfo!.deviceId;
-          deviceDetails.modelName = deviceInfo.modelName;
-          deviceDetails.deviceName = deviceInfo.deviceName;
-          deviceDetails.lastlogin = DateTime.now();
-
-          var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
-            context,
-            uid: value.docs.first["user_login_id"],
-            deviceData: deviceDetails,
-            type: UserType.staff,
-          );
-
-          if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
-            await LocalDB.createNewUser(
-              username: value.docs.first["staff_name"],
-              loginEmail: value.docs.first["user_login_id"],
-              uID: value.docs.first.id,
-              companyID: value.docs.first["company_id"],
-              companyAddress: value.docs.first["address"].toString(),
-              companyName: value.docs.first["company_name"].toString(),
-              companyUniqueId: tmpData[1],
-              isAdmin: false,
-              prCategory: value.docs.first["permission"]["category"],
-              prCustomer: value.docs.first["permission"]["customer"],
-              prEstimate: value.docs.first["permission"]["estimate"],
-              prOrder: value.docs.first["permission"]["orders"],
-              prProduct: value.docs.first["permission"]["product"],
-              prBillofSupply: value.docs.first["permission"]["billofsupply"],
-            ).then((value) {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => const UserHome(),
-                ),
-              );
-            });
-          } else {
-            if (value.docs.first["device.device_id"] != null &&
-                value.docs.first["device.model_name"] != null &&
-                value.docs.first["device.device_name"] != null &&
-                !isTestMode) {
-              Navigator.pop(context);
-              snackbar(
-                context,
-                false,
-                "You're already logged with another device",
-              );
-            } else {
-              await fireStore
-                  .registerNewDevice(
-                context,
-                type: UserType.staff,
-                docid: value.docs.first.id,
-                deviceData: deviceDetails,
-              )
-                  .then((value) {
-                staffLogin();
-              });
-            }
-          }
+        if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
+          await LocalDB.createNewUser(
+            username: value.docs.first["staff_name"],
+            loginEmail: value.docs.first["user_login_id"],
+            uID: value.docs.first.id,
+            companyID: value.docs.first["company_id"],
+            companyAddress: value.docs.first["address"].toString(),
+            companyName: value.docs.first["company_name"].toString(),
+            companyUniqueId: tmpData[1],
+            isAdmin: false,
+            prCategory: value.docs.first["permission"]["category"],
+            prCustomer: value.docs.first["permission"]["customer"],
+            prEstimate: value.docs.first["permission"]["estimate"],
+            prOrder: value.docs.first["permission"]["orders"],
+            prProduct: value.docs.first["permission"]["product"],
+            prBillofSupply: value.docs.first["permission"]["billofsupply"],
+          ).then((value) {
+            Navigator.pop(context); // Close loading dialog
+            Navigator.pushReplacement(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => const UserHome(),
+              ),
+            );
+          });
         } else {
-          adminLogin();
+          Navigator.pop(context); // Close loading dialog
+          if (value.docs.first["device.device_id"] != null) {
+            snackbar(
+                context, false, "You're already logged in with another device");
+          } else {
+            await fireStore
+                .registerNewDevice(
+              context,
+              type: UserType.staff,
+              docid: value.docs.first.id,
+              deviceData: deviceDetails,
+            )
+                .then((value) {
+              staffLogin();
+            });
+          }
         }
-      });
+      } else {
+        Navigator.pop(context);
+        adminLogin();
+      }
     } catch (e) {
-      Navigator.pop(context);
+      Navigator.pop(context); // Close loading dialog
       snackbar(context, false, e.toString());
     }
   }
 
   adminLogin() async {
     try {
-      loading(context);
+      loading(context); // Show loading dialog
       FireStore fireStore = FireStore();
 
-      await fireStore
-          .adminLogin(email: email.text, password: password.text)
-          .then((value) async {
-        if (value != null && value.docs.isNotEmpty) {
-          var tmpData = email.text.split('@');
+      var value = await fireStore.adminLogin(
+          email: email.text, password: password.text);
+      if (value != null && value.docs.isNotEmpty) {
+        var tmpData = email.text.split('@');
+        bool isTestMode = await LocalDB.checkTestMode();
+        DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
+        DeviceModel deviceDetails = DeviceModel(
+          deviceId: deviceInfo!.deviceId,
+          modelName: deviceInfo.modelName,
+          deviceName: deviceInfo.deviceName,
+          lastlogin: DateTime.now(),
+        );
 
-          bool isTestMode = await LocalDB.checkTestMode();
+        var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
+          context,
+          uid: value.docs.first["user_login_id"],
+          deviceData: deviceDetails,
+          type: UserType.admin,
+        );
 
-          DeviceModel? deviceInfo = await DeviceInformation().getDeviceInfo();
-
-          DeviceModel deviceDetails = DeviceModel();
-          deviceDetails.deviceId = deviceInfo!.deviceId;
-          deviceDetails.modelName = deviceInfo.modelName;
-          deviceDetails.deviceName = deviceInfo.deviceName;
-          deviceDetails.lastlogin = DateTime.now();
-
-          var deviceAccessResult = await fireStore.checkLoginDeviceInfo(
-            context,
-            uid: value.docs.first["user_login_id"],
-            deviceData: deviceDetails,
-            type: UserType.admin,
-          );
-
-          if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
-            await LocalDB.createNewUser(
-              username: value.docs.first["admin_name"],
-              loginEmail: value.docs.first["user_login_id"],
-              uID: value.docs.first.id,
-              companyID: value.docs.first["company_id"],
-              companyUniqueId: tmpData[1],
-              companyAddress: value.docs.first["address"].toString(),
-              companyName: value.docs.first["company_name"].toString(),
-              isAdmin: false,
-              prCategory: true,
-              prCustomer: true,
-              prEstimate: true,
-              prOrder: true,
-              prProduct: true,
-              prBillofSupply: true,
-            ).then((value) {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => const UserHome(),
-                ),
-              );
-            });
-          } else {
-            if (value.docs.first["device.device_id"] != null &&
-                value.docs.first["device.model_name"] != null &&
-                value.docs.first["device.device_name"] != null) {
-              Navigator.pop(context);
-              snackbar(
-                context,
-                false,
-                "You're already logged with another device",
-              );
-            } else {
-              await fireStore
-                  .registerNewDevice(
-                context,
-                type: UserType.admin,
-                docid: value.docs.first.id,
-                deviceData: deviceDetails,
-              )
-                  .then((value) {
-                adminLogin();
-              });
-            }
-          }
+        if (deviceAccessResult!.docs.isNotEmpty || isTestMode) {
+          await LocalDB.createNewUser(
+            username: value.docs.first["admin_name"],
+            loginEmail: value.docs.first["user_login_id"],
+            uID: value.docs.first.id,
+            companyID: value.docs.first["company_id"],
+            companyUniqueId: tmpData[1],
+            companyAddress: value.docs.first["address"].toString(),
+            companyName: value.docs.first["company_name"].toString(),
+            isAdmin: false,
+            prCategory: true,
+            prCustomer: true,
+            prEstimate: true,
+            prOrder: true,
+            prProduct: true,
+            prBillofSupply: true,
+          ).then((value) {
+            Navigator.pop(context); // Close loading dialog
+            Navigator.pushReplacement(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => const UserHome(),
+              ),
+            );
+          });
         } else {
-          Navigator.pop(context);
-          snackbar(context, false, "User Details Not Found");
+          Navigator.pop(context); // Close loading dialog
+          if (value.docs.first["device.device_id"] != null) {
+            snackbar(
+                context, false, "You're already logged in with another device");
+          } else {
+            await fireStore
+                .registerNewDevice(
+              context,
+              type: UserType.admin,
+              docid: value.docs.first.id,
+              deviceData: deviceDetails,
+            )
+                .then((value) {
+              adminLogin(); // Recursive call to log in again
+            });
+          }
         }
-      });
+      } else {
+        Navigator.pop(context); // Close loading dialog
+        snackbar(context, false, "User Details Not Found");
+      }
     } catch (e) {
-      Navigator.pop(context);
+      Navigator.pop(context); // Close loading dialog
       snackbar(context, false, e.toString());
     }
   }

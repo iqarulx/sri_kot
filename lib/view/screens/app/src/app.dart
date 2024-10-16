@@ -63,14 +63,6 @@ class _UserHomeState extends State<UserHome> {
     });
   }
 
-  @override
-  void dispose() {
-    final connectionProvider =
-        Provider.of<ConnectionProvider>(context, listen: false);
-    connectionProvider.removeListener(() {});
-    super.dispose();
-  }
-
   Future<void> initFunction() async {
     await getinfo();
     await Future.wait([

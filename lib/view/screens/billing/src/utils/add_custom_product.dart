@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '/constants/constants.dart';
 import '/model/model.dart';
 import '/utils/utils.dart';
 import '/view/ui/ui.dart';
@@ -38,6 +39,9 @@ class _AddCustomProductState extends State<AddCustomProduct> {
     cartDataInfo.productId = tmpProductDetails.productId;
     cartDataInfo.productName = tmpProductDetails.productName;
     cartDataInfo.discountLock = tmpProductDetails.discountLock;
+    if (cartDataInfo.discountLock ?? false) {
+      cartDataInfo.productType = ProductType.netRated;
+    }
     cartDataInfo.productCode = tmpProductDetails.productCode;
     cartDataInfo.productContent = tmpProductDetails.productContent;
     cartDataInfo.productImg = tmpProductDetails.productImg;

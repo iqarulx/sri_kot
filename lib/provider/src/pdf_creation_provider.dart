@@ -8,443 +8,6 @@ import 'package:pdf/widgets.dart' as pw;
 import '/constants/constants.dart';
 import '/model/model.dart';
 
-class PdfCreationProvider {
-  String companyName;
-  String companyAddress;
-  List<PricelistCategoryDataModel> priceList;
-  PdfCreationProvider({
-    required this.companyName,
-    required this.companyAddress,
-    required this.priceList,
-  });
-
-  // Future<List<int>?> createProceList() async {
-  //   // Return Pdf Data
-  //   List<int>? bytes;
-  //   // Ini New Doucument
-  //   final PdfDocument document = PdfDocument();
-  //   // Page Orientation
-  //   document.pageSettings.orientation = PdfPageOrientation.portrait;
-  //   // Page Margins
-  //   document.pageSettings.margins.all = 20;
-  //   // Page Size
-  //   document.pageSettings.size = PdfPageSize.a4;
-  //   PdfSection section = document.sections!.add();
-  //   PdfPageTemplateElement topHeader = PdfPageTemplateElement(
-  //     Rect.fromLTWH(0, 0, document.pageSettings.size.width + 2, 71),
-  //   );
-  //   // topHeader.
-  //   PdfGrid headergrid = PdfGrid();
-  //   headergrid.columns.add(count: 6);
-  //   headergrid.headers.add(1);
-  //   //Add the rows to the grid
-  //   PdfGridRow headergridrow = headergrid.headers[0];
-  //   PdfStringFormat headerformat = PdfStringFormat();
-  //   headerformat.alignment = PdfTextAlignment.center;
-  //   headerformat.lineAlignment = PdfVerticalAlignment.middle;
-  //   headergridrow.cells[0].value = '$companyName,\n$companyAddress';
-  //   headergridrow.cells[0].columnSpan = 6;
-  //   headergridrow.cells[0].stringFormat = headerformat;
-  //   // //Add rows to grid
-  //   PdfGridRow headerrow = headergrid.rows.add();
-  //   headerrow.cells[0].value = 'Price List';
-  //   headerrow.cells[0].columnSpan = 6;
-  //   headerrow.cells[0].stringFormat = headerformat;
-  //   headerrow = headergrid.rows.add();
-  //   headerrow.cells[0].value = 'Product Code';
-  //   headerrow.cells[1].value = 'Product Name';
-  //   headerrow.cells[2].value = 'Content';
-  //   headerrow.cells[3].value = 'Qnt';
-  //   headerrow.cells[4].value = 'Price';
-  //   headerrow.cells[5].value = 'Amount';
-  //   headerrow.cells[0].stringFormat = headerformat;
-  //   headerrow.cells[1].stringFormat = headerformat;
-  //   headerrow.cells[2].stringFormat = headerformat;
-  //   headerrow.cells[3].stringFormat = headerformat;
-  //   headerrow.cells[4].stringFormat = headerformat;
-  //   headerrow.cells[5].stringFormat = headerformat;
-  //   headergrid.draw(
-  //     graphics: topHeader.graphics,
-  //   );
-  //   document.template.top = topHeader;
-  //   // Table Creation
-  //   PdfGrid grid = PdfGrid();
-  //   grid.columns.add(count: 6);
-  //   PdfStringFormat format = PdfStringFormat();
-  //   format.alignment = PdfTextAlignment.center;
-  //   format.lineAlignment = PdfVerticalAlignment.middle;
-  //   PdfGridCellStyle style = PdfGridCellStyle(
-  //     cellPadding: PdfPaddings(left: 2, right: 2, top: 2, bottom: 2),
-  //     backgroundBrush: PdfBrushes.lightGray,
-  //     textBrush: PdfBrushes.black,
-  //   );
-  //   // //Add rows to grid
-  //   int count = 1;
-  //   for (int i = 0; i < priceList.length; i++) {
-  //     PdfGridRow row = grid.rows.add();
-  //     row.cells[0].value = priceList[i].categoryName.toString();
-  //     row.cells[0].columnSpan = 6;
-  //     row.cells[0].stringFormat = format;
-  //     row.cells[0].style = style;
-  //     for (var j = 0; j < priceList[i].productModel!.length; j++) {
-  //       var prodData = priceList[i].productModel![j];
-  //       row = grid.rows.add();
-  //       row.cells[0].value = '$count';
-  //       row.cells[1].value = prodData.prodcutName;
-  //       row.cells[2].value = prodData.content;
-  //       row.cells[3].value = '';
-  //       row.cells[4].value = prodData.price;
-  //       row.cells[5].value = '';
-  //       count++;
-  //     }
-  //   }
-  //   // row = grid.rows.add();
-  //   // row.cells[0].value = 'E02';
-  //   // row.cells[1].value = 'Simon';
-  //   // row.cells[2].value = '\$12,000';
-  //   //Set the grid style
-  //   grid.style = PdfGridStyle(
-  //     cellPadding: PdfPaddings(left: 2, right: 2, top: 2, bottom: 2),
-  //     textBrush: PdfBrushes.black,
-  //   );
-  //   //Draw the grid
-  //   grid.draw(
-  //     page: section.pages.add(),
-  //   );
-  //   //Save and dispose the PDF document
-  //   // Directory dir = Directory('/storage/emulated/0/Download');
-  //   bytes = await document.save();
-  //   // File('${dir.path}/SampleOutput.pdf').writeAsBytes(await document.save());
-  //   document.dispose();
-  //   return bytes;
-  // }
-
-  int code = 0;
-  productTableList(PricelistProdcutDataModel prod, Font? font) {
-    code += 1;
-    return pw.Table(
-      columnWidths: {
-        0: const pw.FlexColumnWidth(1),
-        1: const pw.FlexColumnWidth(6),
-        2: const pw.FlexColumnWidth(2),
-        3: const pw.FlexColumnWidth(2),
-        4: const pw.FlexColumnWidth(2),
-        5: const pw.FlexColumnWidth(2),
-      },
-      border: pw.TableBorder.all(),
-      children: [
-        pw.TableRow(
-          children: [
-            pw.Center(
-              child: pw.Padding(
-                padding: const pw.EdgeInsets.all(2),
-                child: pw.Text(
-                  "$code",
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            pw.Center(
-              child: pw.Padding(
-                padding: const pw.EdgeInsets.all(2),
-                child: pw.Text(
-                  prod.prodcutName ?? "",
-                  style: pw.TextStyle(
-                    font: font,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            ),
-            pw.Center(
-              child: pw.Padding(
-                padding: const pw.EdgeInsets.all(2),
-                child: pw.Text(
-                  prod.content ?? "",
-                  style: const pw.TextStyle(
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            ),
-            pw.Center(
-              child: pw.Padding(
-                padding: const pw.EdgeInsets.all(2),
-                child: pw.Text(
-                  "",
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            pw.Center(
-              child: pw.Padding(
-                padding: const pw.EdgeInsets.all(2),
-                child: pw.Text(
-                  prod.price ?? "",
-                  style: const pw.TextStyle(
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            ),
-            pw.Center(
-              child: pw.Padding(
-                padding: const pw.EdgeInsets.all(2),
-                child: pw.Text(
-                  "",
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<Uint8List> createPriceList() async {
-    final font = await PdfGoogleFonts.notoSansTamilRegular();
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.MultiPage(
-        margin: const pw.EdgeInsets.all(10),
-        pageFormat: pf.PdfPageFormat.a4,
-        header: (context) {
-          return pw.Column(
-            children: [
-              pw.Table(
-                border: const pw.TableBorder(
-                  left: pw.BorderSide(color: pf.PdfColors.black),
-                  top: pw.BorderSide(color: pf.PdfColors.black),
-                  right: pw.BorderSide(color: pf.PdfColors.black),
-                  bottom: pw.BorderSide(color: pf.PdfColors.black),
-                ),
-                children: [
-                  pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(2),
-                        child: pw.Center(
-                          child: pw.Column(
-                            mainAxisSize: pw.MainAxisSize.min,
-                            children: [
-                              pw.Text(
-                                companyName,
-                                style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                              pw.Text(
-                                companyAddress,
-                                textAlign: pw.TextAlign.center,
-                                style: const pw.TextStyle(
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.Table(
-                border: const pw.TableBorder(
-                  left: pw.BorderSide(color: pf.PdfColors.black),
-                  top: pw.BorderSide(color: pf.PdfColors.black),
-                  right: pw.BorderSide(color: pf.PdfColors.black),
-                  bottom: pw.BorderSide(color: pf.PdfColors.black),
-                ),
-                children: [
-                  pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(2),
-                        child: pw.Center(
-                          child: pw.Column(
-                            mainAxisSize: pw.MainAxisSize.min,
-                            children: [
-                              pw.Text(
-                                "Price List",
-                                style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.Table(
-                columnWidths: {
-                  0: const pw.FlexColumnWidth(1),
-                  1: const pw.FlexColumnWidth(6),
-                  2: const pw.FlexColumnWidth(2),
-                  3: const pw.FlexColumnWidth(2),
-                  4: const pw.FlexColumnWidth(2),
-                  5: const pw.FlexColumnWidth(2),
-                },
-                border: pw.TableBorder.all(),
-                children: [
-                  pw.TableRow(
-                    children: [
-                      pw.Center(
-                        child: pw.Padding(
-                          padding: const pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            "CODE",
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Center(
-                        child: pw.Padding(
-                          padding: const pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            "PRODUCT NAME",
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Center(
-                        child: pw.Padding(
-                          padding: const pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            "CONTENT",
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Center(
-                        child: pw.Padding(
-                          padding: const pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            "QTY",
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Center(
-                        child: pw.Padding(
-                          padding: const pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            "RATE",
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Center(
-                        child: pw.Padding(
-                          padding: const pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            "AMOUNT",
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-        footer: (context) {
-          return pw.Container(
-            margin: const pw.EdgeInsets.only(top: 5, bottom: 3),
-            child: pw.Center(
-              child: pw.Text(
-                "Page ${context.pageNumber}/${context.pagesCount}",
-                style: const pw.TextStyle(fontSize: 8),
-              ),
-            ),
-          );
-        },
-        build: (context) {
-          return [
-            for (int i = 0; i < priceList.length; i++)
-              pw.Column(
-                children: [
-                  pw.Table(
-                    border: const pw.TableBorder(
-                      left: pw.BorderSide(color: pf.PdfColors.black),
-                      top: pw.BorderSide(color: pf.PdfColors.black),
-                      right: pw.BorderSide(color: pf.PdfColors.black),
-                      bottom: pw.BorderSide(color: pf.PdfColors.black),
-                    ),
-                    children: [
-                      pw.TableRow(
-                        decoration:
-                            const pw.BoxDecoration(color: pf.PdfColors.grey300),
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(2),
-                            child: pw.Center(
-                              child: pw.Column(
-                                mainAxisSize: pw.MainAxisSize.min,
-                                children: [
-                                  pw.Text(
-                                    priceList[i].categoryName ?? "",
-                                    style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  for (int j = 0; j < priceList[i].productModel!.length; j++)
-                    productTableList(priceList[i].productModel![j], font),
-                ],
-              ),
-          ];
-        },
-      ),
-    );
-
-    return await pdf.save();
-  }
-}
-
 class EnquiryPdf {
   final EstimateDataModel estimateData;
   final PdfType type;
@@ -924,10 +487,11 @@ class EnquiryPdf {
                 columnWidths: {
                   0: const pw.FlexColumnWidth(1.3),
                   1: const pw.FlexColumnWidth(1.5),
-                  2: const pw.FlexColumnWidth(7),
-                  3: const pw.FlexColumnWidth(2),
-                  4: const pw.FlexColumnWidth(3),
+                  2: const pw.FlexColumnWidth(5.5),
+                  3: const pw.FlexColumnWidth(1.5),
+                  4: const pw.FlexColumnWidth(2),
                   5: const pw.FlexColumnWidth(3),
+                  6: const pw.FlexColumnWidth(3),
                 },
                 border: pw.TableBorder.all(),
                 children: [
@@ -964,6 +528,19 @@ class EnquiryPdf {
                         child: pw.Center(
                           child: pw.Text(
                             "Products",
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(3),
+                        child: pw.Center(
+                          child: pw.Text(
+                            "Content",
                             textAlign: pw.TextAlign.center,
                             style: pw.TextStyle(
                               fontWeight: pw.FontWeight.bold,
@@ -1026,10 +603,11 @@ class EnquiryPdf {
                 columnWidths: {
                   0: const pw.FlexColumnWidth(1.3),
                   1: const pw.FlexColumnWidth(1.5),
-                  2: const pw.FlexColumnWidth(7),
-                  3: const pw.FlexColumnWidth(2),
-                  4: const pw.FlexColumnWidth(3),
+                  2: const pw.FlexColumnWidth(5.5),
+                  3: const pw.FlexColumnWidth(1.5),
+                  4: const pw.FlexColumnWidth(2),
                   5: const pw.FlexColumnWidth(3),
+                  6: const pw.FlexColumnWidth(3),
                 },
                 border: pw.TableBorder.all(),
                 children: [
@@ -1081,16 +659,22 @@ class EnquiryPdf {
                             child: pw.Text(
                               sortEstimateProduct()[i][j].productCode ?? "",
                               textAlign: pw.TextAlign.center,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
-                              ),
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  font: roboto,
+                                  fontFallback: [roboto, noto],
+                                  fontStyle: FontStyle.italic),
                             ),
                           ),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            "${sortEstimateProduct()[i][j].productName}",
+                            sortEstimateProduct()[i][j].productName!.length > 30
+                                ? sortEstimateProduct()[i][j]
+                                    .productName!
+                                    .substring(0, 30)
+                                : sortEstimateProduct()[i][j].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -1098,10 +682,24 @@ class EnquiryPdf {
                                     : pdfAlignment == 3
                                         ? pw.TextAlign.center
                                         : pw.TextAlign.left,
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              font: roboto,
-                              fontFallback: [roboto, noto],
+                            style: TextStyle(
+                                fontSize: 10,
+                                font: roboto,
+                                fontFallback: [roboto, noto],
+                                fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Center(
+                            child: pw.Text(
+                              sortEstimateProduct()[i][j]
+                                  .productContent
+                                  .toString(),
+                              textAlign: pw.TextAlign.center,
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                         ),
@@ -1135,12 +733,9 @@ class EnquiryPdf {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            discount(
-                              sortEstimateProduct()[i][j].qty!.toDouble(),
-                              sortEstimateProduct()[i][j].price!.toDouble(),
-                              sortEstimateProduct()[i][j].discount,
-                              sortEstimateProduct()[i][j].discountLock,
-                            ),
+                            actualPrice(
+                                sortEstimateProduct()[i][j].qty!.toDouble(),
+                                sortEstimateProduct()[i][j].price!.toDouble()),
                             textAlign: pw.TextAlign.right,
                             style: const pw.TextStyle(
                               fontSize: 10,
@@ -1149,6 +744,119 @@ class EnquiryPdf {
                         ),
                       ],
                     ),
+                  if (sortEstimateProduct()[i].first.discountLock != null &&
+                      !sortEstimateProduct()[i].first.discountLock!)
+                    if (sortEstimateProduct()[i].first.discount != null)
+                      pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Center(
+                              child: pw.Text(
+                                "Sub Total",
+                                textAlign: pw.TextAlign.center,
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              discountSubtotal(sortEstimateProduct()[i])
+                                  .toStringAsFixed(2),
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  if (sortEstimateProduct()[i].first.discountLock != null &&
+                      !sortEstimateProduct()[i].first.discountLock!)
+                    if (sortEstimateProduct()[i].first.discount != null)
+                      pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Container(),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Center(
+                              child: pw.Text(
+                                sortEstimateProduct()[i].first.discountLock !=
+                                            null &&
+                                        !sortEstimateProduct()[i]
+                                            .first
+                                            .discountLock!
+                                    ? sortEstimateProduct()[i].first.discount !=
+                                            null
+                                        ? "Discount ${sortEstimateProduct()[i].first.discount}%"
+                                        : "NR"
+                                    : "NR",
+                                textAlign: pw.TextAlign.center,
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              discountGroupTotal(sortEstimateProduct()[i])
+                                  .toStringAsFixed(2),
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   pw.TableRow(
                     children: [
                       pw.Padding(
@@ -1157,9 +865,11 @@ class EnquiryPdf {
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
-                        child: pw.Center(
-                          child: pw.Container(),
-                        ),
+                        child: pw.Container(),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(3),
+                        child: pw.Container(),
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
@@ -1222,7 +932,15 @@ class EnquiryPdf {
                       ),
                     ),
                     pw.Container(
-                      width: 226,
+                      width: 177,
+                      decoration: const pw.BoxDecoration(
+                        border: pw.Border(
+                          right: pw.BorderSide(),
+                        ),
+                      ),
+                    ),
+                    pw.Container(
+                      width: 49,
                       decoration: const pw.BoxDecoration(
                         border: pw.Border(
                           right: pw.BorderSide(),
@@ -1255,9 +973,9 @@ class EnquiryPdf {
                 children: [
                   pw.Table(
                     columnWidths: {
-                      0: const pw.FlexColumnWidth(9.8),
-                      1: const pw.FlexColumnWidth(2),
-                      2: const pw.FlexColumnWidth(3),
+                      0: const pw.FlexColumnWidth(8.3),
+                      1: const pw.FlexColumnWidth(1.5),
+                      2: const pw.FlexColumnWidth(5),
                       3: const pw.FlexColumnWidth(3),
                     },
                     border: pw.TableBorder.all(),
@@ -1305,7 +1023,10 @@ class EnquiryPdf {
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(3),
                             child: pw.Text(
-                              "Net Rated Total",
+                              overallDiscountTotal() != 0 &&
+                                      overallNetRatedTotal() != 0
+                                  ? "Net Total (${overallDiscountTotal()} + ${overallNetRatedTotal()})"
+                                  : "Net Total",
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontWeight: pw.FontWeight.bold,
@@ -1316,82 +1037,7 @@ class EnquiryPdf {
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(3),
                             child: pw.Text(
-                              // subTotal(),
-                              overallNetRatedTotal().toStringAsFixed(2),
-                              textAlign: pw.TextAlign.right,
-                              style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  estimateData.price?.discountValue != null &&
-                          estimateData.price!.discountValue! > 0.0
-                      ? pw.Table(
-                          columnWidths: {
-                            0: const pw.FlexColumnWidth(14.8),
-                            1: const pw.FlexColumnWidth(3),
-                          },
-                          border: pw.TableBorder.all(),
-                          children: [
-                            pw.TableRow(
-                              children: [
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(3),
-                                  child: pw.Text(
-                                    "Discounted Products Total",
-                                    textAlign: pw.TextAlign.right,
-                                    style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(3),
-                                  child: pw.Text(
-                                    overallDiscountTotal().toStringAsFixed(2),
-                                    textAlign: pw.TextAlign.right,
-                                    style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        )
-                      : pw.SizedBox(),
-                  pw.Table(
-                    columnWidths: {
-                      0: const pw.FlexColumnWidth(14.8),
-                      1: const pw.FlexColumnWidth(3),
-                    },
-                    border: pw.TableBorder.all(),
-                    children: [
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              "Sub Total",
-                              textAlign: pw.TextAlign.right,
-                              style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              (overallNetRatedTotal() + overallDiscountTotal())
-                                  .toStringAsFixed(2),
+                              netTotal().toStringAsFixed(2),
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontWeight: pw.FontWeight.bold,
@@ -1428,7 +1074,9 @@ class EnquiryPdf {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    "- ${estimateData.price?.extraDiscountValue?.toStringAsFixed(2)}",
+                                    estimateData.price?.extraDiscountValue
+                                            ?.toStringAsFixed(2) ??
+                                        "",
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -1793,11 +1441,10 @@ class EnquiryPdf {
                 columnWidths: {
                   0: const pw.FlexColumnWidth(1.3),
                   1: const pw.FlexColumnWidth(1.5),
-                  2: const pw.FlexColumnWidth(5.5),
-                  3: const pw.FlexColumnWidth(1.5),
-                  4: const pw.FlexColumnWidth(2),
+                  2: const pw.FlexColumnWidth(7),
+                  3: const pw.FlexColumnWidth(2),
+                  4: const pw.FlexColumnWidth(3),
                   5: const pw.FlexColumnWidth(3),
-                  6: const pw.FlexColumnWidth(3),
                 },
                 border: pw.TableBorder.all(),
                 children: [
@@ -1834,19 +1481,6 @@ class EnquiryPdf {
                         child: pw.Center(
                           child: pw.Text(
                             "Products",
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                              fontWeight: pw.FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(3),
-                        child: pw.Center(
-                          child: pw.Text(
-                            "Content",
                             textAlign: pw.TextAlign.center,
                             style: pw.TextStyle(
                               fontWeight: pw.FontWeight.bold,
@@ -1909,11 +1543,10 @@ class EnquiryPdf {
                 columnWidths: {
                   0: const pw.FlexColumnWidth(1.3),
                   1: const pw.FlexColumnWidth(1.5),
-                  2: const pw.FlexColumnWidth(5.5),
-                  3: const pw.FlexColumnWidth(1.5),
-                  4: const pw.FlexColumnWidth(2),
+                  2: const pw.FlexColumnWidth(7),
+                  3: const pw.FlexColumnWidth(2),
+                  4: const pw.FlexColumnWidth(3),
                   5: const pw.FlexColumnWidth(3),
-                  6: const pw.FlexColumnWidth(3),
                 },
                 border: pw.TableBorder.all(),
                 children: [
@@ -1965,18 +1598,20 @@ class EnquiryPdf {
                             child: pw.Text(
                               sortEstimateProduct()[i][j].productCode ?? "",
                               textAlign: pw.TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  font: roboto,
-                                  fontFallback: [roboto, noto],
-                                  fontStyle: FontStyle.italic),
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            sortEstimateProduct()[i][j].productName!,
+                            sortEstimateProduct()[i][j].productName!.length > 30
+                                ? sortEstimateProduct()[i][j]
+                                    .productName!
+                                    .substring(0, 30)
+                                : sortEstimateProduct()[i][j].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -1984,24 +1619,10 @@ class EnquiryPdf {
                                     : pdfAlignment == 3
                                         ? pw.TextAlign.center
                                         : pw.TextAlign.left,
-                            style: TextStyle(
-                                fontSize: 10,
-                                font: roboto,
-                                fontFallback: [roboto, noto],
-                                fontStyle: FontStyle.italic),
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(3),
-                          child: pw.Center(
-                            child: pw.Text(
-                              sortEstimateProduct()[i][j]
-                                  .productContent
-                                  .toString(),
-                              textAlign: pw.TextAlign.center,
-                              style: const pw.TextStyle(
-                                fontSize: 10,
-                              ),
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              font: roboto,
+                              fontFallback: [roboto, noto],
                             ),
                           ),
                         ),
@@ -2035,9 +1656,12 @@ class EnquiryPdf {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            actualPrice(
-                                sortEstimateProduct()[i][j].qty!.toDouble(),
-                                sortEstimateProduct()[i][j].price!.toDouble()),
+                            discount(
+                              sortEstimateProduct()[i][j].qty!.toDouble(),
+                              sortEstimateProduct()[i][j].price!.toDouble(),
+                              sortEstimateProduct()[i][j].discount,
+                              sortEstimateProduct()[i][j].discountLock,
+                            ),
                             textAlign: pw.TextAlign.right,
                             style: const pw.TextStyle(
                               fontSize: 10,
@@ -2046,119 +1670,6 @@ class EnquiryPdf {
                         ),
                       ],
                     ),
-                  if (sortEstimateProduct()[i].first.discountLock != null &&
-                      !sortEstimateProduct()[i].first.discountLock!)
-                    if (sortEstimateProduct()[i].first.discount != null)
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
-                              child: pw.Text(
-                                "Sub Total",
-                                textAlign: pw.TextAlign.center,
-                                style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              discountSubtotal(sortEstimateProduct()[i])
-                                  .toStringAsFixed(2),
-                              textAlign: pw.TextAlign.right,
-                              style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  if (sortEstimateProduct()[i].first.discountLock != null &&
-                      !sortEstimateProduct()[i].first.discountLock!)
-                    if (sortEstimateProduct()[i].first.discount != null)
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Container(),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Center(
-                              child: pw.Text(
-                                sortEstimateProduct()[i].first.discountLock !=
-                                            null &&
-                                        !sortEstimateProduct()[i]
-                                            .first
-                                            .discountLock!
-                                    ? sortEstimateProduct()[i].first.discount !=
-                                            null
-                                        ? "Discount ${sortEstimateProduct()[i].first.discount}%"
-                                        : "NR"
-                                    : "NR",
-                                textAlign: pw.TextAlign.center,
-                                style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(3),
-                            child: pw.Text(
-                              discountGroupTotal(sortEstimateProduct()[i])
-                                  .toStringAsFixed(2),
-                              textAlign: pw.TextAlign.right,
-                              style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                   pw.TableRow(
                     children: [
                       pw.Padding(
@@ -2167,11 +1678,9 @@ class EnquiryPdf {
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
-                        child: pw.Container(),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(3),
-                        child: pw.Container(),
+                        child: pw.Center(
+                          child: pw.Container(),
+                        ),
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(3),
@@ -2234,15 +1743,7 @@ class EnquiryPdf {
                       ),
                     ),
                     pw.Container(
-                      width: 177,
-                      decoration: const pw.BoxDecoration(
-                        border: pw.Border(
-                          right: pw.BorderSide(),
-                        ),
-                      ),
-                    ),
-                    pw.Container(
-                      width: 49,
+                      width: 226,
                       decoration: const pw.BoxDecoration(
                         border: pw.Border(
                           right: pw.BorderSide(),
@@ -2325,7 +1826,7 @@ class EnquiryPdf {
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(3),
                             child: pw.Text(
-                              "Net Total",
+                              "Net Product Total",
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontWeight: pw.FontWeight.bold,
@@ -2336,7 +1837,82 @@ class EnquiryPdf {
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(3),
                             child: pw.Text(
-                              netTotal().toStringAsFixed(2),
+                              // subTotal(),
+                              overallNetRatedTotal().toStringAsFixed(2),
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  estimateData.price?.discountValue != null &&
+                          estimateData.price!.discountValue! > 0.0
+                      ? pw.Table(
+                          columnWidths: {
+                            0: const pw.FlexColumnWidth(14.8),
+                            1: const pw.FlexColumnWidth(3),
+                          },
+                          border: pw.TableBorder.all(),
+                          children: [
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(3),
+                                  child: pw.Text(
+                                    "Discounted Products Total",
+                                    textAlign: pw.TextAlign.right,
+                                    style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(3),
+                                  child: pw.Text(
+                                    overallDiscountTotal().toStringAsFixed(2),
+                                    textAlign: pw.TextAlign.right,
+                                    style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : pw.SizedBox(),
+                  pw.Table(
+                    columnWidths: {
+                      0: const pw.FlexColumnWidth(14.8),
+                      1: const pw.FlexColumnWidth(3),
+                    },
+                    border: pw.TableBorder.all(),
+                    children: [
+                      pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              "Sub Total",
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(3),
+                            child: pw.Text(
+                              (overallNetRatedTotal() + overallDiscountTotal())
+                                  .toStringAsFixed(2),
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontWeight: pw.FontWeight.bold,
@@ -2373,9 +1949,7 @@ class EnquiryPdf {
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(3),
                                   child: pw.Text(
-                                    estimateData.price?.extraDiscountValue
-                                            ?.toStringAsFixed(2) ??
-                                        "",
+                                    "- ${estimateData.price?.extraDiscountValue?.toStringAsFixed(2)}",
                                     textAlign: pw.TextAlign.right,
                                     style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
@@ -2936,7 +2510,11 @@ class EnquiryPdf {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            "${sortEstimateProduct()[i][j].productName}",
+                            sortEstimateProduct()[i][j].productName!.length > 30
+                                ? sortEstimateProduct()[i][j]
+                                    .productName!
+                                    .substring(0, 30)
+                                : sortEstimateProduct()[i][j].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -3879,7 +3457,11 @@ class EnquiryPdf {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            "${sortEstimateProduct()[i][j].productName}",
+                            sortEstimateProduct()[i][j].productName!.length > 30
+                                ? sortEstimateProduct()[i][j]
+                                    .productName!
+                                    .substring(0, 30)
+                                : sortEstimateProduct()[i][j].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -4766,7 +4348,11 @@ class EnquiryPdf {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            sortEstimateProduct()[i][j].productName!,
+                            sortEstimateProduct()[i][j].productName!.length > 30
+                                ? sortEstimateProduct()[i][j]
+                                    .productName!
+                                    .substring(0, 30)
+                                : sortEstimateProduct()[i][j].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -5725,7 +5311,11 @@ class EnquiryPdf {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(3),
                           child: pw.Text(
-                            "${sortEstimateProduct()[i][j].productName}",
+                            sortEstimateProduct()[i][j].productName!.length > 30
+                                ? sortEstimateProduct()[i][j]
+                                    .productName!
+                                    .substring(0, 30)
+                                : sortEstimateProduct()[i][j].productName!,
                             textAlign: pdfAlignment == 1
                                 ? pw.TextAlign.left
                                 : pdfAlignment == 2
@@ -6506,7 +6096,12 @@ class EnquiryPdf {
                                       : pdfAlignment == 3
                                           ? pw.TextAlign.center
                                           : pw.TextAlign.left,
-                              "${sortEstimateProduct()[i][j].productName}",
+                              sortEstimateProduct()[i][j].productName!.length >
+                                      30
+                                  ? sortEstimateProduct()[i][j]
+                                      .productName!
+                                      .substring(0, 30)
+                                  : sortEstimateProduct()[i][j].productName!,
                               style: pw.TextStyle(
                                 fontSize: 8,
                                 font: roboto,
@@ -6693,6 +6288,443 @@ class EnquiryPdf {
     }
     count = tmpcount.toString();
     return count;
+  }
+}
+
+class PdfCreationProvider {
+  String companyName;
+  String companyAddress;
+  List<PricelistCategoryDataModel> priceList;
+  PdfCreationProvider({
+    required this.companyName,
+    required this.companyAddress,
+    required this.priceList,
+  });
+
+  // Future<List<int>?> createProceList() async {
+  //   // Return Pdf Data
+  //   List<int>? bytes;
+  //   // Ini New Doucument
+  //   final PdfDocument document = PdfDocument();
+  //   // Page Orientation
+  //   document.pageSettings.orientation = PdfPageOrientation.portrait;
+  //   // Page Margins
+  //   document.pageSettings.margins.all = 20;
+  //   // Page Size
+  //   document.pageSettings.size = PdfPageSize.a4;
+  //   PdfSection section = document.sections!.add();
+  //   PdfPageTemplateElement topHeader = PdfPageTemplateElement(
+  //     Rect.fromLTWH(0, 0, document.pageSettings.size.width + 2, 71),
+  //   );
+  //   // topHeader.
+  //   PdfGrid headergrid = PdfGrid();
+  //   headergrid.columns.add(count: 6);
+  //   headergrid.headers.add(1);
+  //   //Add the rows to the grid
+  //   PdfGridRow headergridrow = headergrid.headers[0];
+  //   PdfStringFormat headerformat = PdfStringFormat();
+  //   headerformat.alignment = PdfTextAlignment.center;
+  //   headerformat.lineAlignment = PdfVerticalAlignment.middle;
+  //   headergridrow.cells[0].value = '$companyName,\n$companyAddress';
+  //   headergridrow.cells[0].columnSpan = 6;
+  //   headergridrow.cells[0].stringFormat = headerformat;
+  //   // //Add rows to grid
+  //   PdfGridRow headerrow = headergrid.rows.add();
+  //   headerrow.cells[0].value = 'Price List';
+  //   headerrow.cells[0].columnSpan = 6;
+  //   headerrow.cells[0].stringFormat = headerformat;
+  //   headerrow = headergrid.rows.add();
+  //   headerrow.cells[0].value = 'Product Code';
+  //   headerrow.cells[1].value = 'Product Name';
+  //   headerrow.cells[2].value = 'Content';
+  //   headerrow.cells[3].value = 'Qnt';
+  //   headerrow.cells[4].value = 'Price';
+  //   headerrow.cells[5].value = 'Amount';
+  //   headerrow.cells[0].stringFormat = headerformat;
+  //   headerrow.cells[1].stringFormat = headerformat;
+  //   headerrow.cells[2].stringFormat = headerformat;
+  //   headerrow.cells[3].stringFormat = headerformat;
+  //   headerrow.cells[4].stringFormat = headerformat;
+  //   headerrow.cells[5].stringFormat = headerformat;
+  //   headergrid.draw(
+  //     graphics: topHeader.graphics,
+  //   );
+  //   document.template.top = topHeader;
+  //   // Table Creation
+  //   PdfGrid grid = PdfGrid();
+  //   grid.columns.add(count: 6);
+  //   PdfStringFormat format = PdfStringFormat();
+  //   format.alignment = PdfTextAlignment.center;
+  //   format.lineAlignment = PdfVerticalAlignment.middle;
+  //   PdfGridCellStyle style = PdfGridCellStyle(
+  //     cellPadding: PdfPaddings(left: 2, right: 2, top: 2, bottom: 2),
+  //     backgroundBrush: PdfBrushes.lightGray,
+  //     textBrush: PdfBrushes.black,
+  //   );
+  //   // //Add rows to grid
+  //   int count = 1;
+  //   for (int i = 0; i < priceList.length; i++) {
+  //     PdfGridRow row = grid.rows.add();
+  //     row.cells[0].value = priceList[i].categoryName.toString();
+  //     row.cells[0].columnSpan = 6;
+  //     row.cells[0].stringFormat = format;
+  //     row.cells[0].style = style;
+  //     for (var j = 0; j < priceList[i].productModel!.length; j++) {
+  //       var prodData = priceList[i].productModel![j];
+  //       row = grid.rows.add();
+  //       row.cells[0].value = '$count';
+  //       row.cells[1].value = prodData.prodcutName;
+  //       row.cells[2].value = prodData.content;
+  //       row.cells[3].value = '';
+  //       row.cells[4].value = prodData.price;
+  //       row.cells[5].value = '';
+  //       count++;
+  //     }
+  //   }
+  //   // row = grid.rows.add();
+  //   // row.cells[0].value = 'E02';
+  //   // row.cells[1].value = 'Simon';
+  //   // row.cells[2].value = '\$12,000';
+  //   //Set the grid style
+  //   grid.style = PdfGridStyle(
+  //     cellPadding: PdfPaddings(left: 2, right: 2, top: 2, bottom: 2),
+  //     textBrush: PdfBrushes.black,
+  //   );
+  //   //Draw the grid
+  //   grid.draw(
+  //     page: section.pages.add(),
+  //   );
+  //   //Save and dispose the PDF document
+  //   // Directory dir = Directory('/storage/emulated/0/Download');
+  //   bytes = await document.save();
+  //   // File('${dir.path}/SampleOutput.pdf').writeAsBytes(await document.save());
+  //   document.dispose();
+  //   return bytes;
+  // }
+
+  int code = 0;
+  productTableList(PricelistProdcutDataModel prod, Font? font) {
+    code += 1;
+    return pw.Table(
+      columnWidths: {
+        0: const pw.FlexColumnWidth(1),
+        1: const pw.FlexColumnWidth(6),
+        2: const pw.FlexColumnWidth(2),
+        3: const pw.FlexColumnWidth(2),
+        4: const pw.FlexColumnWidth(2),
+        5: const pw.FlexColumnWidth(2),
+      },
+      border: pw.TableBorder.all(),
+      children: [
+        pw.TableRow(
+          children: [
+            pw.Center(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(2),
+                child: pw.Text(
+                  "$code",
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            pw.Center(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(2),
+                child: pw.Text(
+                  prod.prodcutName ?? "",
+                  style: pw.TextStyle(
+                    font: font,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
+            pw.Center(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(2),
+                child: pw.Text(
+                  prod.content ?? "",
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
+            pw.Center(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(2),
+                child: pw.Text(
+                  "",
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            pw.Center(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(2),
+                child: pw.Text(
+                  prod.price ?? "",
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
+            pw.Center(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(2),
+                child: pw.Text(
+                  "",
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<Uint8List> createPriceList() async {
+    final font = await PdfGoogleFonts.notoSansTamilRegular();
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        margin: const pw.EdgeInsets.all(10),
+        pageFormat: pf.PdfPageFormat.a4,
+        header: (context) {
+          return pw.Column(
+            children: [
+              pw.Table(
+                border: const pw.TableBorder(
+                  left: pw.BorderSide(color: pf.PdfColors.black),
+                  top: pw.BorderSide(color: pf.PdfColors.black),
+                  right: pw.BorderSide(color: pf.PdfColors.black),
+                  bottom: pw.BorderSide(color: pf.PdfColors.black),
+                ),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(2),
+                        child: pw.Center(
+                          child: pw.Column(
+                            mainAxisSize: pw.MainAxisSize.min,
+                            children: [
+                              pw.Text(
+                                companyName,
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              pw.Text(
+                                companyAddress,
+                                textAlign: pw.TextAlign.center,
+                                style: const pw.TextStyle(
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.Table(
+                border: const pw.TableBorder(
+                  left: pw.BorderSide(color: pf.PdfColors.black),
+                  top: pw.BorderSide(color: pf.PdfColors.black),
+                  right: pw.BorderSide(color: pf.PdfColors.black),
+                  bottom: pw.BorderSide(color: pf.PdfColors.black),
+                ),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(2),
+                        child: pw.Center(
+                          child: pw.Column(
+                            mainAxisSize: pw.MainAxisSize.min,
+                            children: [
+                              pw.Text(
+                                "Price List",
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.Table(
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(1),
+                  1: const pw.FlexColumnWidth(6),
+                  2: const pw.FlexColumnWidth(2),
+                  3: const pw.FlexColumnWidth(2),
+                  4: const pw.FlexColumnWidth(2),
+                  5: const pw.FlexColumnWidth(2),
+                },
+                border: pw.TableBorder.all(),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Center(
+                        child: pw.Padding(
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            "CODE",
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      pw.Center(
+                        child: pw.Padding(
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            "PRODUCT NAME",
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      pw.Center(
+                        child: pw.Padding(
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            "CONTENT",
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      pw.Center(
+                        child: pw.Padding(
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            "QTY",
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      pw.Center(
+                        child: pw.Padding(
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            "RATE",
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      pw.Center(
+                        child: pw.Padding(
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            "AMOUNT",
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+        footer: (context) {
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(top: 5, bottom: 3),
+            child: pw.Center(
+              child: pw.Text(
+                "Page ${context.pageNumber}/${context.pagesCount}",
+                style: const pw.TextStyle(fontSize: 8),
+              ),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            for (int i = 0; i < priceList.length; i++)
+              pw.Column(
+                children: [
+                  pw.Table(
+                    border: const pw.TableBorder(
+                      left: pw.BorderSide(color: pf.PdfColors.black),
+                      top: pw.BorderSide(color: pf.PdfColors.black),
+                      right: pw.BorderSide(color: pf.PdfColors.black),
+                      bottom: pw.BorderSide(color: pf.PdfColors.black),
+                    ),
+                    children: [
+                      pw.TableRow(
+                        decoration:
+                            const pw.BoxDecoration(color: pf.PdfColors.grey300),
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(2),
+                            child: pw.Center(
+                              child: pw.Column(
+                                mainAxisSize: pw.MainAxisSize.min,
+                                children: [
+                                  pw.Text(
+                                    priceList[i].categoryName ?? "",
+                                    style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  for (int j = 0; j < priceList[i].productModel!.length; j++)
+                    productTableList(priceList[i].productModel![j], font),
+                ],
+              ),
+          ];
+        },
+      ),
+    );
+
+    return await pdf.save();
   }
 }
 

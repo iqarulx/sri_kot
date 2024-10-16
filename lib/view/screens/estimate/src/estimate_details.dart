@@ -307,7 +307,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
       context: context,
       builder: (builder) {
         return const FractionallySizedBox(
-          heightFactor: 0.25,
+          heightFactor: 0.3,
           child: PdfPreviewModal(),
         );
       },
@@ -909,7 +909,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                       icon: const Icon(Icons.share),
                                     ),
                                     IconButton(
-                                      tooltip: "Print Enquiry",
+                                      tooltip: "Print Estimate",
                                       splashRadius: 29,
                                       onPressed: () {
                                         printEstimate();
@@ -919,7 +919,7 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: "Copy Enquiry",
+                                      tooltip: "Copy Estimate",
                                       splashRadius: 29,
                                       onPressed: () async {
                                         await confirmationDialog(
@@ -957,14 +957,14 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: "Delete Enquiry",
+                                      tooltip: "Delete Estimate",
                                       splashRadius: 29,
                                       onPressed: () async {
                                         await confirmationDialog(
                                           context,
                                           title: "Alert",
                                           message:
-                                              "Do you want delete enquiry?",
+                                              "Do you want delete estimate?",
                                         ).then((value) {
                                           if (value != null && value == true) {
                                             deleteEnquiry();

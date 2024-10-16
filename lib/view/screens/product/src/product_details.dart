@@ -636,9 +636,9 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   checkValidation() async {
-    loading(context);
     FocusManager.instance.primaryFocus!.unfocus();
     try {
+      loading(context);
       if (addProductKey.currentState!.validate()) {
         await LocalDB.fetchInfo(type: LocalData.companyid).then((cid) async {
           if (cid != null) {
@@ -661,10 +661,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                 productName.text.replaceAll(' ', '').trim().toLowerCase();
             productData.createdDateTime = DateTime.now();
             productData.postion = 0;
-            productData.hsnCode =
-                await FireStore().getCategoryHsn(categoryId: categoryID!);
-            productData.taxValue =
-                await FireStore().getCategoryTax(categoryId: categoryID!);
+            productData.hsnCode = await FireStore()
+                .getCategoryHsn(categoryId: productData.categoryid!);
+            productData.taxValue = await FireStore()
+                .getCategoryTax(categoryId: productData.categoryid!);
+
             if (productImage != null) {
               var downloadLink = await Storage().uploadImage(
                 fileData: productImage!,
@@ -674,11 +675,12 @@ class _ProductDetailsState extends State<ProductDetails> {
               productData.productImg = downloadLink;
             }
 
+            productData.productType = ProductType.netRated;
+
             var sameCode =
                 await FireStore().checkProductCode(code: productCode.text);
-
             var sameQrCode = await FireStore().checkQrCode(code: qrCode.text);
-            Navigator.pop(context);
+
             if (sameCode) {
               if (qrCode.text.isEmpty) {
                 await FireStore()
@@ -751,7 +753,6 @@ class _ProductDetailsState extends State<ProductDetails> {
         Navigator.pop(context);
       }
     } catch (e) {
-      Navigator.pop(context);
       snackbar(context, false, e.toString());
     }
   }

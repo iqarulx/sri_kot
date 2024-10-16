@@ -110,8 +110,7 @@ class _ViewAllProductsState extends State<ViewAllProducts> {
                                     horizontal: 10,
                                     vertical: 5,
                                   ),
-                                  // height: 30,
-                                  width: double.infinity,
+                                  width: 130,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(5),
@@ -125,18 +124,35 @@ class _ViewAllProductsState extends State<ViewAllProducts> {
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            "${widget.cart[index].price} X ${widget.cart[index].qty} = ${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium!
-                                                .copyWith(
-                                                  color: Colors.grey,
-                                                ),
-                                          ),
-                                        ),
+                                        if (widget.cart[index].productType ==
+                                            ProductType.netRated)
+                                          Expanded(
+                                            child: Text(
+                                              "${widget.cart[index].price} X ${widget.cart[index].qty} = ${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelMedium!
+                                                  .copyWith(
+                                                    color: Colors.grey,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
+                                        else
+                                          Expanded(
+                                            child: Text(
+                                              "${(widget.cart[index].price! - ((widget.cart[index].price! * widget.cart[index].discount!) / 100)).toStringAsFixed(2)} X ${widget.cart[index].qty} = ${((widget.cart[index].price! * widget.cart[index].qty!) - (((widget.cart[index].price! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelMedium!
+                                                  .copyWith(
+                                                    color: Colors.grey,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
                                       ],
                                     ),
                                   ),
@@ -147,16 +163,39 @@ class _ViewAllProductsState extends State<ViewAllProducts> {
                           const SizedBox(
                             width: 8,
                           ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                "\u{20B9}${widget.cart[index].price}",
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ],
-                          ),
+                          if (widget.cart[index].productType ==
+                              ProductType.netRated)
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "\u{20B9}${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ],
+                            )
+                          else
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "\u{20B9}${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall!
+                                      .copyWith(
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                          color: Colors.grey),
+                                ),
+                                Text(
+                                  "\u{20B9}${((widget.cart[index].price! * widget.cart[index].qty!) - (((widget.cart[index].price! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ],
+                            )
                         ],
                       ),
                     ],

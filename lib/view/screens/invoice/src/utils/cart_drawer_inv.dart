@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
-import '/func/calc.dart';
 import '/model/model.dart';
 import '/constants/constants.dart';
 import '/services/services.dart';

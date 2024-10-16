@@ -1,13 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
-import 'package:sri_kot/services/firebase/firestore.dart';
-import 'package:sri_kot/utils/src/utilities.dart';
-import 'package:sri_kot/utils/src/validation.dart';
-import '../../../../ui/src/view_all_products.dart';
+import '/services/services.dart';
+import '/utils/utils.dart';
 import '../../../screens.dart';
-import '/view/ui/src/customer_search_view.dart';
 import '/view/ui/ui.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -63,6 +61,9 @@ class _OrderSummaryState extends State<OrderSummary> {
 
   @override
   void initState() {
+    print(widget.billType);
+    print(widget.saveType);
+    print(widget.billNo);
     if (widget.saveType == SaveType.create) {
       billNoHandler = getBillNo();
     }
@@ -215,64 +216,60 @@ class _OrderSummaryState extends State<OrderSummary> {
 
   createEstimate() async {
     if (!customerFormKey.currentState!.validate()) {
-      if (customerSales) {
-        customerInfo.address = address.text;
-        customerInfo.state = state.text;
-        customerInfo.city = city.text;
-        customerInfo.mobileNo = mobileNo.text;
-        customerInfo.customerName = customerName.text;
-      }
+      return;
+    }
 
-      if (billNo != null) {
-        try {
-          loading(context);
-          await FireStore().createNewEstimate(
-              cid: widget.cid,
-              productList: widget.cart,
-              customerInfo: customerInfo,
-              calCulation: widget.calc,
-              billNo: billNo!);
-          if (customerInfo.docID != null) {
-            await FireStore().updateCustomer(
-                customerData: customerInfo, docID: customerInfo.docID ?? '');
-          }
-          Navigator.pop(context);
-          Navigator.pop(context);
-          Navigator.pop(context);
-          if (!(MediaQuery.of(context).size.width > 600)) {
-            Navigator.pop(context);
-          }
-          snackbar(context, true, "Estimate created successfully");
-          Navigator.push(
-            context,
-            CupertinoPageRoute(
-              builder: (context) => const EstimateListing(),
-            ),
-          );
-        } on Exception catch (e) {
-          snackbar(context, false, e.toString());
+    customerInfo.address = address.text;
+    customerInfo.state = state.text;
+    customerInfo.city = city.text;
+    customerInfo.mobileNo = mobileNo.text;
+    customerInfo.customerName = customerName.text;
+
+    if (billNo != null) {
+      try {
+        loading(context);
+        await FireStore().createNewEstimate(
+            cid: widget.cid,
+            productList: widget.cart,
+            customerInfo: customerInfo,
+            calCulation: widget.calc,
+            billNo: billNo!);
+        if (customerInfo.docID != null) {
+          await FireStore().updateCustomer(
+              customerData: customerInfo, docID: customerInfo.docID ?? '');
         }
-      } else {
-        getBillNo();
-        snackbar(context, false, "Please wait while generating bill number");
+        Navigator.pop(context);
+        Navigator.pop(context);
+        Navigator.pop(context);
+        if (!(MediaQuery.of(context).size.width > 600)) {
+          Navigator.pop(context);
+        }
+        snackbar(context, true, "Estimate created successfully");
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => const EstimateListing(),
+          ),
+        );
+      } on Exception catch (e) {
+        snackbar(context, false, e.toString());
       }
+    } else {
+      getBillNo();
+      snackbar(context, false, "Please wait while generating bill number");
     }
   }
 
   updateEstimate() async {
-    if (customerSales) {
-      if (!customerFormKey.currentState!.validate()) {
-        return;
-      }
+    if (!customerFormKey.currentState!.validate()) {
+      return;
     }
 
-    if (customerSales) {
-      customerInfo.address = address.text;
-      customerInfo.state = state.text;
-      customerInfo.city = city.text;
-      customerInfo.mobileNo = mobileNo.text;
-      customerInfo.customerName = customerName.text;
-    }
+    customerInfo.address = address.text;
+    customerInfo.state = state.text;
+    customerInfo.city = city.text;
+    customerInfo.mobileNo = mobileNo.text;
+    customerInfo.customerName = customerName.text;
 
     if (billNo != null) {
       try {
@@ -333,6 +330,7 @@ class _OrderSummaryState extends State<OrderSummary> {
             ),
             onPressed: () {
               _scrollToBottom();
+              print(widget.billType);
               if (widget.billType == BillType.enquiry) {
                 if (widget.saveType == SaveType.create) {
                   createEnquiry();
@@ -447,10 +445,32 @@ class _OrderSummaryState extends State<OrderSummary> {
                   color: Colors.transparent,
                   child: Row(
                     children: [
-                      Text(
-                        "Discount",
-                        // "Discount - % 12",
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      InkWell(
+                        onTap: () async {
+                          await showDialog(
+                            context: context,
+                            builder: (context) {
+                              return DiscountDetailsModal(
+                                  cartDataModel: widget.cart);
+                            },
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              "Discount",
+                              // "Discount - % 12",
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(
+                              width: 5,
+                            ),
+                            const Icon(
+                              Iconsax.info_circle,
+                              size: 15,
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(width: 5),
                       const Spacer(),
@@ -658,7 +678,7 @@ class _OrderSummaryState extends State<OrderSummary> {
                                                 horizontal: 10,
                                                 vertical: 5,
                                               ),
-                                              // height: 30,
+                                              width: 130,
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
                                                 borderRadius:
@@ -677,15 +697,40 @@ class _OrderSummaryState extends State<OrderSummary> {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
-                                                    Text(
-                                                      "${widget.cart[index].price} X ${widget.cart[index].qty} = ${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .labelMedium!
-                                                          .copyWith(
-                                                            color: Colors.grey,
-                                                          ),
-                                                    ),
+                                                    if (widget.cart[index]
+                                                            .productType ==
+                                                        ProductType.netRated)
+                                                      Expanded(
+                                                        child: Text(
+                                                          "${widget.cart[index].price} X ${widget.cart[index].qty} = ${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .labelMedium!
+                                                                  .copyWith(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      )
+                                                    else
+                                                      Expanded(
+                                                        child: Text(
+                                                          "${(widget.cart[index].price! - ((widget.cart[index].price! * widget.cart[index].discount!) / 100)).toStringAsFixed(2)} X ${widget.cart[index].qty} = ${((widget.cart[index].price! * widget.cart[index].qty!) - (((widget.cart[index].price! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .labelMedium!
+                                                                  .copyWith(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      )
                                                   ],
                                                 ),
                                               ),
@@ -696,19 +741,45 @@ class _OrderSummaryState extends State<OrderSummary> {
                                       const SizedBox(
                                         width: 8,
                                       ),
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            "\u{20B9}${widget.cart[index].price}",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleLarge,
-                                          ),
-                                        ],
-                                      ),
+                                      if (widget.cart[index].productType ==
+                                          ProductType.netRated)
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              "\u{20B9}${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge,
+                                            ),
+                                          ],
+                                        )
+                                      else
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              "\u{20B9}${(widget.cart[index].price! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall!
+                                                  .copyWith(
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
+                                                      color: Colors.grey),
+                                            ),
+                                            Text(
+                                              "\u{20B9}${((widget.cart[index].price! * widget.cart[index].qty!) - (((widget.cart[index].price! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge,
+                                            ),
+                                          ],
+                                        )
                                     ],
                                   ),
                                 ],
@@ -751,59 +822,61 @@ class _OrderSummaryState extends State<OrderSummary> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Customer Type",
+                    widget.billType != BillType.estimate
+                        ? "Customer Type"
+                        : "Customer Details",
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(
                     height: 10,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Text("Counter Sales"),
-                          const SizedBox(
-                            width: 8,
-                          ),
-                          CupertinoSwitch(
-                            value: counterSales,
-                            activeColor: Theme.of(context).primaryColor,
-                            onChanged: widget.billType == BillType.enquiry
-                                ? (value) {
-                                    _scrollToBottom();
-                                    setState(() {
-                                      counterSales = value;
-                                      customerSales = !value;
-                                    });
-                                  }
-                                : null,
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Text("Customer"),
-                          const SizedBox(
-                            width: 8,
-                          ),
-                          CupertinoSwitch(
-                            value: customerSales,
-                            activeColor: Theme.of(context).primaryColor,
-                            onChanged: (value) {
-                              _scrollToBottom();
-                              setState(() {
-                                counterSales = !value;
-                                customerSales = value;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  if (widget.billType != BillType.estimate)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Text("Counter Sales"),
+                            const SizedBox(
+                              width: 8,
+                            ),
+                            CupertinoSwitch(
+                              value: counterSales,
+                              activeColor: Theme.of(context).primaryColor,
+                              onChanged: (value) {
+                                _scrollToBottom();
+                                setState(() {
+                                  counterSales = value;
+                                  customerSales = !value;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            const Text("Customer"),
+                            const SizedBox(
+                              width: 8,
+                            ),
+                            CupertinoSwitch(
+                              value: customerSales,
+                              activeColor: Theme.of(context).primaryColor,
+                              onChanged: (value) {
+                                _scrollToBottom();
+                                setState(() {
+                                  counterSales = !value;
+                                  customerSales = value;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   Visibility(
-                    visible: customerSales,
+                    visible:
+                        customerSales || widget.billType == BillType.estimate,
                     child: ListView(
                       primary: false,
                       shrinkWrap: true,
@@ -850,12 +923,8 @@ class _OrderSummaryState extends State<OrderSummary> {
                           controller: address,
                           formName: "Address",
                           validation: (input) {
-                            return FormValidation().commonValidation(
-                              input: input ?? '',
-                              isMandatory: false,
-                              formName: "Address",
-                              isOnlyCharter: true,
-                            );
+                            return FormValidation()
+                                .addressValidation(input ?? '', false);
                           },
                         ),
                         InputForm(

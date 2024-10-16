@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
-import 'package:sri_kot/view/screens/enquiry/src/print_view/print_enquiry_3inch.dart';
 
-import '../../../ui/src/customer_search_view.dart';
 import '../../billing/src/utils/add_customer_box.dart';
 import '/model/model.dart';
 import '/provider/provider.dart';
@@ -17,7 +15,6 @@ import '/view/ui/ui.dart';
 import '/view/screens/screens.dart';
 import '/constants/constants.dart';
 import '/provider/src/file_open.dart' as helper;
-import 'print_view/print_enquiry_a5.dart';
 
 class EnquiryDetails extends StatefulWidget {
   final String cid;
@@ -298,7 +295,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
       context: context,
       builder: (builder) {
         return const FractionallySizedBox(
-          heightFactor: 0.25,
+          heightFactor: 0.3,
           child: PdfPreviewModal(),
         );
       },
@@ -722,57 +719,68 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                 }
               });
             } else if (value == "2") {
-              showDialog(
-                barrierDismissible: false,
+              await showModalBottomSheet(
+                backgroundColor: Colors.white,
+                useSafeArea: true,
+                showDragHandle: true,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  side: BorderSide.none,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10),
+                  ),
+                ),
                 context: context,
-                builder: (context) {
-                  return const CustomerSearchView();
+                builder: (builder) {
+                  return const FractionallySizedBox(
+                    heightFactor: 0.9,
+                    child: CustomerSearchView(),
+                  );
                 },
               ).then((value) async {
-                if (value != null) {
-                  if (connectionProvider.isConnected) {
-                    await FireStore()
-                        .updateEnquiryCustomer(
-                            docId: widget.cid,
-                            address: value.address,
-                            city: value.city,
-                            companyId: value.companyID,
-                            customerId: value.docID,
-                            customerName: value.customerName,
-                            email: value.email,
-                            mobileNo: value.mobileNo,
-                            state: value.state)
-                        .then((onValue) {
-                      setState(() {
-                        enquiryData.customer = CustomerDataModel(
-                          customerName: value.customerName ?? '',
-                          address: value.address ?? '',
-                          city: value.city ?? '',
-                          state: value.state ?? '',
-                          email: value.email ?? '',
-                          mobileNo: value.mobileNo ?? '',
-                        );
-                      });
-                      convertEstimate();
+                if (connectionProvider.isConnected) {
+                  await FireStore()
+                      .updateEnquiryCustomer(
+                          docId: widget.cid,
+                          address: value.address,
+                          city: value.city,
+                          companyId: value.companyID,
+                          customerId: value.docID,
+                          customerName: value.customerName,
+                          email: value.email,
+                          mobileNo: value.mobileNo,
+                          state: value.state)
+                      .then((onValue) {
+                    setState(() {
+                      enquiryData.customer = CustomerDataModel(
+                        customerName: value.customerName ?? '',
+                        address: value.address ?? '',
+                        city: value.city ?? '',
+                        state: value.state ?? '',
+                        email: value.email ?? '',
+                        mobileNo: value.mobileNo ?? '',
+                      );
                     });
-                  } else {
-                    await LocalService.updateCustomerInfo(
-                            customerInfo: value,
-                            referenceId: enquiryData.referenceId ?? '')
-                        .then((result) {
-                      setState(() {
-                        enquiryData.customer = CustomerDataModel(
-                          customerName: value.customerName ?? '',
-                          address: value.address ?? '',
-                          city: value.city ?? '',
-                          state: value.state ?? '',
-                          email: value.email ?? '',
-                          mobileNo: value.mobileNo ?? '',
-                        );
-                      });
-                      convertEstimate();
+                    convertEstimate();
+                  });
+                } else {
+                  await LocalService.updateCustomerInfo(
+                          customerInfo: value,
+                          referenceId: enquiryData.referenceId ?? '')
+                      .then((result) {
+                    setState(() {
+                      enquiryData.customer = CustomerDataModel(
+                        customerName: value.customerName ?? '',
+                        address: value.address ?? '',
+                        city: value.city ?? '',
+                        state: value.state ?? '',
+                        email: value.email ?? '',
+                        mobileNo: value.mobileNo ?? '',
+                      );
                     });
-                  }
+                    convertEstimate();
+                  });
                 }
               });
             }
@@ -1457,7 +1465,7 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     enquiryData: enquiryData,
                   );
                 } else {
-                  return BillingTwo(
+                  return BillingTwoEdit(
                     isEdit: true,
                     enquiryData: enquiryData,
                   );

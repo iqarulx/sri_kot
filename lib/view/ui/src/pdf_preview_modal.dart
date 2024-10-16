@@ -22,6 +22,13 @@ class _PdfPreviewModalState extends State<PdfPreviewModal> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              "Choose or select paper size",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(
+              height: 15,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [

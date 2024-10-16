@@ -26,6 +26,8 @@ Future<void> main() async {
   }
   changeThemeApp.toggletab(await LocalDB.getTheme() ?? 'original');
 
+  MailConfig.initialize();
+
   runApp(
     MultiProvider(
       providers: [

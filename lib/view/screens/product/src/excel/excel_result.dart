@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '/constants/constants.dart';
-import '/model/class.dart';
 import '/model/model.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -195,6 +194,10 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
                                       .toLowerCase();
                                   productsData.postion = count;
                                   productsData.createdDateTime = DateTime.now();
+                                  productsData.productType =
+                                      productsData.discountLock ?? false
+                                          ? ProductType.netRated
+                                          : ProductType.discounted;
                                   DocumentReference document =
                                       productServer.doc();
                                   print(productsData.toMap().toString());

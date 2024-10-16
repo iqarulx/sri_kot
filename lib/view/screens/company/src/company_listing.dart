@@ -769,12 +769,8 @@ class _CompanyListingState extends State<CompanyListing> {
                                                     Icons.place_outlined,
                                                 validation: (input) {
                                                   return FormValidation()
-                                                      .commonValidation(
-                                                    input: input,
-                                                    isMandatory: true,
-                                                    formName: "Address",
-                                                    isOnlyCharter: false,
-                                                  );
+                                                      .addressValidation(
+                                                          input ?? '', false);
                                                 },
                                               ),
                                               InputForm(

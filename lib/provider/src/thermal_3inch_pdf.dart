@@ -1,7 +1,7 @@
 import 'package:esc_pos_printer_new/esc_pos_printer_new.dart';
 import 'package:esc_pos_utils_new/esc_pos_utils_new.dart';
 import 'package:intl/intl.dart';
-import '../../log/log.dart';
+import '/services/services.dart';
 import '/model/model.dart';
 
 class Termal3InchPDF {
@@ -200,7 +200,7 @@ class Termal3InchPDF {
       printer.feed(0);
       printer.cut();
     } catch (e) {
-      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      LogConfig.addLog("${DateTime.now()} : ${e.toString()}");
     }
   }
 

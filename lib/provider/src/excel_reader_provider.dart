@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:excel/excel.dart';
-import '/model/class.dart';
+
+import '/model/model.dart';
 
 class ExcelReaderProvider {
   Future<List<ExcelCategoryClass>?> readExcelData({required File file}) async {

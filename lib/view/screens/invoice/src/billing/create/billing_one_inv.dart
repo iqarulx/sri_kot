@@ -264,46 +264,42 @@ class _BillingOneInvState extends State<BillingOneInv>
                 color: Colors.grey,
               ),
         ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(
+              height: 5,
+            ),
+            if (tmpProductDetails.productType == ProductType.discounted)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      "\u{20B9}${tmpProductDetails.price!.toStringAsFixed(2)}",
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 3,
+                  ),
+                  Text(
+                    "(${tmpProductDetails.discount ?? ""}%)",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall!
+                        .copyWith(color: Colors.green),
+                  ),
+                ],
+              ),
             Text(
               tmpProductDetails.productType == ProductType.netRated
                   ? "\u{20B9}${tmpProductDetails.price!.toStringAsFixed(2)}"
                   : "\u{20B9}${tmpProductDetails.discountedPrice!.toStringAsFixed(2)}",
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(
-              width: 5,
-            ),
-            if (tmpProductDetails.productType == ProductType.discounted)
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "\u{20B9}${tmpProductDetails.price!.toStringAsFixed(2)}",
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 3,
-                    ),
-                    Expanded(
-                      child: Text(
-                        "(${tmpProductDetails.discount ?? ""}%)",
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(color: Colors.green),
-                      ),
-                    ),
-                  ],
-                ),
-              )
           ],
         ),
       ],
@@ -1252,9 +1248,12 @@ class _BillingOneInvState extends State<BillingOneInv>
             productInfo.qtyForm =
                 TextEditingController(text: productInfo.qty.toString());
 
-            setState(() {
-              productDataList.add(productInfo);
-            });
+            productInfo.active = product["active"];
+            if (productInfo.active ?? false) {
+              setState(() {
+                productDataList.add(productInfo);
+              });
+            }
           }
           // Add TMP Array on Product Data List
           tmpProductDataList.addAll(productDataList);

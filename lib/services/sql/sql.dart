@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-import '../../log/log.dart';
+import '../services.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -46,7 +46,9 @@ class DatabaseHelper {
         delete_at INTEGER,
         discount TEXT,
         name TEXT,
-        postion TEXT
+        postion TEXT,
+        hsn_code TEXT,
+        tax_value TEXT
       )
       ''');
       saveLog('''
@@ -58,7 +60,9 @@ class DatabaseHelper {
         delete_at INTEGER,
         discount TEXT,
         name TEXT,
-        postion TEXT
+        postion TEXT,
+        hsn_code TEXT,
+        tax_value TEXT
       )
       ''');
     }
@@ -83,7 +87,10 @@ class DatabaseHelper {
         product_img TEXT,
         product_name TEXT,
         qr_code TEXT,
-        video_url TEXT
+        video_url TEXT,
+        hsn_code TEXT,
+        tax_value TEXT,
+        discount TEXT
       )
       ''');
       saveLog('''
@@ -105,7 +112,10 @@ class DatabaseHelper {
         product_img TEXT,
         product_name TEXT,
         qr_code TEXT,
-        video_url TEXT
+        video_url TEXT,
+         hsn_code TEXT,
+        tax_value TEXT,
+        discount TEXT
       )
       ''');
     }
@@ -262,7 +272,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? (result.first['count'] as int) : 0;
     } catch (e) {
       // Log the error (optional)
-      Log.addLog("${DateTime.now()} : Error counting enquiries: $e");
+      LogConfig.addLog("${DateTime.now()} : Error counting enquiries: $e");
 
       // Return 0 if there is an error (e.g., table does not exist)
       return 0;
@@ -283,7 +293,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? result.first : {};
     } catch (e) {
       // Log the error (optional)
-      Log.addLog("${DateTime.now()} : Error counting enquiries: $e");
+      LogConfig.addLog("${DateTime.now()} : Error counting enquiries: $e");
       return {};
     }
   }
@@ -300,7 +310,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? result.first : {};
     } catch (e) {
       // Log the error (optional)
-      Log.addLog("${DateTime.now()} : Error counting enquiries: $e");
+      LogConfig.addLog("${DateTime.now()} : Error counting enquiries: $e");
       return {};
     }
   }
@@ -316,7 +326,8 @@ class DatabaseHelper {
     ''', [customerInfo, referenceId]);
     } catch (e) {
       // Log the error (optional)
-      Log.addLog("${DateTime.now()} : Error updating enquiry customer: $e");
+      LogConfig.addLog(
+          "${DateTime.now()} : Error updating enquiry customer: $e");
     }
   }
 
@@ -343,7 +354,7 @@ class DatabaseHelper {
       DELETE FROM enquiry WHERE reference_id = ?
     ''', [referenceId]);
     } catch (e) {
-      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      LogConfig.addLog("${DateTime.now()} : ${e.toString()}");
     }
   }
 
@@ -355,7 +366,7 @@ class DatabaseHelper {
       DELETE FROM estimate WHERE reference_id = ?
     ''', [referenceId]);
     } catch (e) {
-      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      LogConfig.addLog("${DateTime.now()} : ${e.toString()}");
     }
   }
 
@@ -371,7 +382,7 @@ class DatabaseHelper {
       return result.isNotEmpty ? (result.first['count'] as int) : 0;
     } catch (e) {
       // Log the error (optional)
-      Log.addLog("${DateTime.now()} : Error counting estimate: $e");
+      LogConfig.addLog("${DateTime.now()} : Error counting estimate: $e");
 
       // Return 0 if there is an error (e.g., table does not exist)
       return 0;
@@ -624,7 +635,7 @@ class DatabaseHelper {
 
       print('SQL queries executed successfully.');
     } catch (e) {
-      Log.addLog("${DateTime.now()} : Error importing queries: $e");
+      LogConfig.addLog("${DateTime.now()} : Error importing queries: $e");
     }
   }
 
@@ -652,7 +663,7 @@ class DatabaseHelper {
 
       // print('Query saved to $filePath');
     } catch (e) {
-      Log.addLog("${DateTime.now()} : Error saving query: $e");
+      LogConfig.addLog("${DateTime.now()} : Error saving query: $e");
     }
   }
 }

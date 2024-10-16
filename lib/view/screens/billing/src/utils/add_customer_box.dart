@@ -232,12 +232,8 @@ class _AddCustomerBoxState extends State<AddCustomerBox> {
                             prefixIcon: Icons.place_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validation: (p0) {
-                              return FormValidation().commonValidation(
-                                input: p0,
-                                isMandatory: widget.isInvoice ? true : false,
-                                formName: 'Address',
-                                isOnlyCharter: false,
-                              );
+                              return FormValidation()
+                                  .addressValidation(p0 ?? '', false);
                             },
                           ),
                           InputForm(

@@ -73,6 +73,8 @@ dependencies:
   in_app_purchase_android: ^0.3.6+7
   in_app_purchase_storekit: ^0.3.18+1
   whatsapp_share: ^2.0.2
+  flutter_date_range_picker: ^0.1.1
+  email_otp: ^3.0.2
   # firebase_core: ^2.24.2
   # cloud_firestore: ^4.14.0
   # firebase_storage: ^11.6.0

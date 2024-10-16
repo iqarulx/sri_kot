@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '/services/services.dart';
 import '/view/auth/auth.dart';
-import '/services/firebase/messaging.dart';
 import '/view/ui/ui.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
@@ -405,12 +404,7 @@ class _RegisterCompanyState extends State<RegisterCompany> {
               ),
             ),
             validator: (value) {
-              return FormValidation().commonValidation(
-                input: value,
-                isMandatory: true,
-                formName: "Address",
-                isOnlyCharter: false,
-              );
+              return FormValidation().addressValidation(value ?? '', false);
             },
           ),
         ],

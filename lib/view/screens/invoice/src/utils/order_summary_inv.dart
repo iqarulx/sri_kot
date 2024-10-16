@@ -3,13 +3,11 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
-import '../../../../ui/src/view_all_products_inv.dart';
 import '/utils/src/utilities.dart';
 import '/view/ui/src/table_row.dart';
-import '../../../../../func/invoice_calc.dart';
-import '../../../../../model/src/party_data_model.dart';
-import '../../../../../services/services.dart';
+import '/services/services.dart';
 import '../listing/invoice_listing.dart';
 import '/view/ui/ui.dart';
 import '/constants/constants.dart';
@@ -75,7 +73,7 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
     customerInfo.gstType = partyDetails["gst_type"];
     customerInfo.taxType = partyDetails["tax_type"];
     customerInfo.gstChanged = partyDetails["gst_changed"];
-    if (customerInfo.gstChanged ?? false) {
+    if (customerInfo.gstChanged ?? false || widget.saveType == SaveType.edit) {
       gstChange();
     }
     setState(() {});
@@ -289,10 +287,32 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
                     color: Colors.transparent,
                     child: Row(
                       children: [
-                        Text(
-                          "Discount",
-                          // "Discount - % 12",
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        InkWell(
+                          onTap: () async {
+                            await showDialog(
+                              context: context,
+                              builder: (context) {
+                                return InvoiceDiscountModal(
+                                    cartDataModel: widget.cart);
+                              },
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                "Discount",
+                                // "Discount - % 12",
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              const Icon(
+                                Iconsax.info_circle,
+                                size: 15,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 5),
                         const Spacer(),
@@ -643,15 +663,30 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
                       "Party Details",
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.edit, color: Colors.green),
-                      label: const Text(
-                        "Edit",
-                        style: TextStyle(color: Colors.green),
-                      ),
-                      onPressed: () {
-                        editCustomer();
-                      },
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.edit, color: Colors.green),
+                          label: const Text(
+                            "Edit",
+                            style: TextStyle(color: Colors.green),
+                          ),
+                          onPressed: () {
+                            editCustomer();
+                          },
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.delete_rounded,
+                              color: Colors.red),
+                          label: const Text(
+                            "Delete",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                          onPressed: () {
+                            deleteCustomer();
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -837,15 +872,40 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
-                                                    Text(
-                                                      "${(widget.cart[index].rate)!.toStringAsFixed(2)} X ${widget.cart[index].qty} = ${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .labelMedium!
-                                                          .copyWith(
-                                                            color: Colors.grey,
-                                                          ),
-                                                    ),
+                                                    if (widget.cart[index]
+                                                            .productType ==
+                                                        ProductType.netRated)
+                                                      Expanded(
+                                                        child: Text(
+                                                          "${(widget.cart[index].rate)!.toStringAsFixed(2)} X ${widget.cart[index].qty} = ${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .labelMedium!
+                                                                  .copyWith(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      )
+                                                    else
+                                                      Expanded(
+                                                        child: Text(
+                                                          "${(widget.cart[index].rate! - ((widget.cart[index].rate! * widget.cart[index].discount!) / 100)).toStringAsFixed(2)} X ${widget.cart[index].qty} = ${((widget.cart[index].rate! * widget.cart[index].qty!) - (((widget.cart[index].rate! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .labelMedium!
+                                                                  .copyWith(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      )
                                                   ],
                                                 ),
                                               ),
@@ -892,19 +952,45 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
                                       const SizedBox(
                                         width: 8,
                                       ),
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            "\u{20B9}${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleLarge,
-                                          ),
-                                        ],
-                                      ),
+                                      if (widget.cart[index].productType ==
+                                          ProductType.netRated)
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              "\u{20B9}${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge,
+                                            ),
+                                          ],
+                                        )
+                                      else
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              "\u{20B9}${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall!
+                                                  .copyWith(
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
+                                                      color: Colors.grey),
+                                            ),
+                                            Text(
+                                              "\u{20B9}${((widget.cart[index].rate! * widget.cart[index].qty!) - (((widget.cart[index].rate! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge,
+                                            ),
+                                          ],
+                                        )
                                     ],
                                   ),
                                 ],
@@ -934,6 +1020,40 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
         ],
       ),
     );
+  }
+
+  deleteCustomer() {
+    confirmationDialog(context,
+            title: "Delete", message: "Are you sure want to delete this party?")
+        .then((value) async {
+      if (value ?? false) {
+        await LocalDB.clearInvoiceParty();
+        customerInfo = PartyDataModel();
+        setState(() {});
+        await showModalBottomSheet(
+          backgroundColor: Colors.white,
+          useSafeArea: true,
+          showDragHandle: true,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            side: BorderSide.none,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10),
+              topRight: Radius.circular(10),
+            ),
+          ),
+          context: context,
+          builder: (builder) {
+            return const FractionallySizedBox(
+              heightFactor: 0.9,
+              child: AddCustomerBoxInv(
+                edit: false,
+              ),
+            );
+          },
+        ).then((value) {});
+      }
+    });
   }
 
   editCustomer() async {
@@ -1282,6 +1402,7 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
           heightFactor: 0.9,
           child: ViewAllProductsInv(
             cart: widget.cart,
+            taxType: customerInfo.taxType ?? false,
           ),
         );
       },

@@ -93,6 +93,7 @@ class _PrintView3inchState extends State<PrintView3inch> {
         ),
         title: const Text("3inch Estimate"),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         foregroundColor: Colors.white,

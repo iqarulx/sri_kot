@@ -1,0 +1,62 @@
+11.10.2024 ---- Friday
+
+SRI KOT
+
+1. When we add company , should display company name & company owner name field.-----customer - (✔)
+
+2. When we add company or customer, Address should enter alphanumeric. - (✔)
+
+3.state & city dropdown should display "select state" & "select city". - (✔)
+
+4.When we create company or customer, When the user enter wrong identification number & click submit button, its should not exist.
+
+5. When we create new company, When the user create new company & click submit button. message should display "company created successfully".
+
+6.When we edit the created enquiry & click place to order button "null check operator used on a null value" error message is displaying. - (✔)
+
+7.Enquiry page --- when we click print icon --- In choose pdf pop-up message, "Choose or select paper size" - (✔)
+
+8.Estimate page --- When we create enquiry & converted into estimate, And in estimate page, When we click back button its coming out of application. - (✔)
+
+9. In enquiry pdf page, When we click print yellow color button & its printing  & pdf option pop up should close. - (✔)
+
+10. When we create product , discount is not saved. - (✔)
+
+11.  When we off(active) the product , In Enquiry or quick billing or  estimate page should not display that product. - (✔)
+
+12. In category page, When we change the place - product by using drag & drop , index number is displaying wrongly. - (✔)
+
+13. When we edit the product page, In ACTIVATE ON/OFF button, When ON or OFF the button & click submit button , message should display "product activated successfully" & same for discount. - (X)
+
+14.When we create category, same HSN code or same category or same tax value should not allow to  create. - (X)
+
+15.In Quick billing, When we edit the customer & click submit button error message is displaying. - (✔)
+
+16.When we edit the estimate, The user click place to order button, error message is displaying. - (✔)
+
+17. When we add product screen, In enquiry creation page should display "Enquiry". - (✔)
+
+18. In estimate page, When we use filter the particular customer & open the particular customer error message is diplaying.(estimate search option)
+-------------------------------------------------------
+
+
+
+14.10.2024 --- monday
+
+1. When we create enquiry, When The user converted into enquiry to estimate, should ask customer or counter. - (X)
+
+2. In estimate screen, search field is not working.
+
+3. In Estimate summary page, In order list displaying amount (5000 * 5) = 25000 --- 5000 should display the total amount. - (✔)
+
+4. When we edit the estimate, After clicking the place to order, In estimate summary page, edit order button should not display, (submit button should display) (for enquiry also) - (✔)
+
+5.In estimate pdf page, net total should not display(sub total). - (✔)
+
+6.When we create invoice, after clicking place to order button, in party details page --When we enter numbers only "transport number is characters only allowed " error message is displaying.(symbol is not allowing). - (✔)
+
+7. In Enquiry & estimate summary page, view all button is not working. - (✔)
+
+8.In estimate page, When we delete the estimate, Alert message is displaying wrongly ( do you want delete enquiry?). - (✔)
+
+9.When we converted enquiry to estimate, after converting to estimate, The page should remains in customer estimate page.

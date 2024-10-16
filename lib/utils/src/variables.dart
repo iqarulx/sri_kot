@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sri_kot/model/src/party_data_model.dart';
-import '/model/class.dart';
 import '/model/model.dart';
 
 // Map<String, List<String>> stateMapList = {

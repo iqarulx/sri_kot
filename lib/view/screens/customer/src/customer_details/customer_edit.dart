@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:sri_kot/view/ui/ui.dart';
-import '../../../../../utils/utils.dart';
+import '/view/ui/ui.dart';
+import '/utils/utils.dart';
 import '/services/services.dart';
 import '/model/model.dart';
 
@@ -588,12 +588,8 @@ class _CustomerEditState extends State<CustomerEdit> {
                                 prefixIcon: Icons.alternate_email_outlined,
                                 keyboardType: TextInputType.text,
                                 validation: (input) {
-                                  return FormValidation().commonValidation(
-                                    input: input,
-                                    isMandatory: false,
-                                    formName: "Address",
-                                    isOnlyCharter: false,
-                                  );
+                                  return FormValidation()
+                                      .addressValidation(input ?? '', false);
                                 },
                               ),
                               InputForm(

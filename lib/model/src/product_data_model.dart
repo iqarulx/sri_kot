@@ -245,7 +245,7 @@ class ProductDataModel {
     mapping["postion"] = postion;
     mapping["tax_value"] = taxValue;
     mapping["hsn_code"] = hsnCode;
-    mapping["product_type"] = productType!.name;
+    mapping["product_type"] = productType?.name;
     mapping["discount"] = discount;
     mapping["created_date_time"] = createdDateTime?.toIso8601String();
     return mapping;

@@ -1,7 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '/log/log.dart';
+import '/services/services.dart';
 import '/constants/constants.dart';
 import '/gen/assets.gen.dart';
 import '/provider/provider.dart';
@@ -305,7 +305,7 @@ class _UploadExcelUIState extends State<UploadExcelUI> {
             }
           }).catchError((onError) {
             snackbar(context, false, onError);
-            Log.addLog("${DateTime.now()} : ${onError.toString()}");
+            LogConfig.addLog("${DateTime.now()} : ${onError.toString()}");
           });
         } else {
           snackbar(context, false, "Something went wrong. Please try again");

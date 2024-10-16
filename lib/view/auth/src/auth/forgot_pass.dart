@@ -1,7 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '/view/ui/ui.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 
@@ -15,21 +16,67 @@ class ForgotPass extends StatefulWidget {
 class _ForgotPassState extends State<ForgotPass> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController email = TextEditingController();
+  TextEditingController password = TextEditingController();
+  bool verified = false;
+  bool passwordVisible = false;
 
   sendPasswordEmail() async {
     loading(context);
+    FocusManager.instance.primaryFocus!.unfocus();
     if (_formKey.currentState!.validate()) {
       var user = await FireStore().isUserAvailable(email: email.text);
-      if (user != null && user.docs.isNotEmpty) {
+      if (user) {
+        try {
+          await EmailOTP.sendOTP(email: email.text).then((value) {
+            Navigator.pop(context);
+            snackbar(context, true, "OTP has been sent");
+            verifyOtp();
+          }).catchError((error) {
+            Navigator.pop(context);
+            snackbar(context, false, error.toString());
+          });
+        } on Exception catch (e) {
+          Navigator.pop(context);
+          snackbar(context, false, e.toString());
+        }
+      }
+    }
+  }
+
+  verifyOtp() {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (builder) {
+        return const EmailOtpModal();
+      },
+    ).then((value) async {
+      if (value != null) {
+        var result = EmailOTP.verifyOTP(otp: value);
+        if (result) {
+          snackbar(context, true, "Email verified");
+          setState(() {
+            verified = true;
+          });
+        } else {
+          snackbar(context, false, "Invalid OTP");
+        }
+      }
+    });
+  }
+
+  updatePassword() async {
+    FocusManager.instance.primaryFocus!.unfocus();
+    if (_formKey.currentState!.validate()) {
+      try {
+        loading(context);
+        await FireStore()
+            .updatePassword(email: email.text, password: password.text);
         Navigator.pop(context);
-        await FirebaseAuth.instance
-            .sendPasswordResetEmail(email: email.text)
-            .then((value) {
-          snackbar(context, true, "Password reset mail send");
-        });
-      } else {
         Navigator.pop(context);
-        snackbar(context, false, "User not found");
+        snackbar(context, true, "Password reset successfully");
+      } on Exception catch (e) {
+        snackbar(context, false, e.toString());
       }
     }
   }
@@ -139,12 +186,88 @@ class _ForgotPassState extends State<ForgotPass> {
                                 },
                               ),
 
+                              Visibility(
+                                visible: verified,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(
+                                      height: 10,
+                                    ),
+                                    const Text(
+                                      "Password",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      height: 5,
+                                    ),
+                                    TextFormField(
+                                      controller: password,
+                                      cursorColor:
+                                          Theme.of(context).primaryColor,
+                                      textInputAction: TextInputAction.done,
+                                      keyboardType:
+                                          TextInputType.visiblePassword,
+                                      obscureText: passwordVisible == true
+                                          ? false
+                                          : true,
+                                      decoration: InputDecoration(
+                                        fillColor: const Color(0xfff1f5f9),
+                                        filled: true,
+                                        border: const OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        hintText: "Password",
+                                        prefixIcon: const Icon(
+                                          Icons.lock,
+                                        ),
+                                        suffixIcon: passwordVisible == true
+                                            ? IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    passwordVisible = false;
+                                                  });
+                                                },
+                                                icon: const Icon(
+                                                  Icons.remove_red_eye,
+                                                ),
+                                              )
+                                            : IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    passwordVisible = true;
+                                                  });
+                                                },
+                                                icon: const Icon(
+                                                  Icons.visibility_off,
+                                                ),
+                                              ),
+                                      ),
+                                      validator: (value) {
+                                        if (value!.isEmpty) {
+                                          return "Password is must";
+                                        } else {
+                                          return null;
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                               const SizedBox(
                                 height: 30,
                               ),
                               GestureDetector(
                                 onTap: () {
-                                  sendPasswordEmail();
+                                  if (verified) {
+                                    updatePassword();
+                                  } else {
+                                    sendPasswordEmail();
+                                  }
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -156,12 +279,12 @@ class _ForgotPassState extends State<ForgotPass> {
                                     vertical: 15,
                                   ),
                                   width: double.infinity,
-                                  child: const Center(
+                                  child: Center(
                                     child: Text(
-                                      "Send Email",
-                                      style: TextStyle(
+                                      verified ? "Update Password" : "Send OTP",
+                                      style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 20,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),

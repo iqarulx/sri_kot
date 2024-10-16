@@ -1,11 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../constants/constants.dart';
-import '../../../model/model.dart';
+import '/constants/constants.dart';
+import '/model/model.dart';
 
 class ViewAllProductsInv extends StatefulWidget {
   final List<InvoiceProductModel> cart;
-  const ViewAllProductsInv({super.key, required this.cart});
+  final bool taxType;
+  const ViewAllProductsInv(
+      {super.key, required this.cart, required this.taxType});
 
   @override
   State<ViewAllProductsInv> createState() => _ViewAllProductsInvState();
@@ -99,7 +101,6 @@ class _ViewAllProductsInvState extends State<ViewAllProductsInv> {
                                     vertical: 5,
                                   ),
                                   // height: 30,
-                                  width: double.infinity,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(5),
@@ -113,20 +114,70 @@ class _ViewAllProductsInvState extends State<ViewAllProductsInv> {
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            "${widget.cart[index].rate} X ${widget.cart[index].qty} = ${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium!
-                                                .copyWith(
-                                                  color: Colors.grey,
-                                                ),
-                                          ),
-                                        ),
+                                        if (widget.cart[index].productType ==
+                                            ProductType.netRated)
+                                          Expanded(
+                                            child: Text(
+                                              "${(widget.cart[index].rate)!.toStringAsFixed(2)} X ${widget.cart[index].qty} = ${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelMedium!
+                                                  .copyWith(
+                                                    color: Colors.grey,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
+                                        else
+                                          Expanded(
+                                            child: Text(
+                                              "${(widget.cart[index].rate! - ((widget.cart[index].rate! * widget.cart[index].discount!) / 100)).toStringAsFixed(2)} X ${widget.cart[index].qty} = ${((widget.cart[index].rate! * widget.cart[index].qty!) - (((widget.cart[index].rate! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelMedium!
+                                                  .copyWith(
+                                                    color: Colors.grey,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
                                       ],
                                     ),
+                                  ),
+                                ),
+                                Visibility(
+                                  visible: widget.taxType,
+                                  child: Column(
+                                    children: [
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Tax : ${widget.cart[index].taxValue}",
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall,
+                                          ),
+                                          const SizedBox(
+                                            width: 8,
+                                          ),
+                                          Text(
+                                            "HSN : ${widget.cart[index].hsnCode}",
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -135,16 +186,39 @@ class _ViewAllProductsInvState extends State<ViewAllProductsInv> {
                           const SizedBox(
                             width: 8,
                           ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                "\u{20B9}${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ],
-                          ),
+                          if (widget.cart[index].productType ==
+                              ProductType.netRated)
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "\u{20B9}${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ],
+                            )
+                          else
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "\u{20B9}${(widget.cart[index].rate! * widget.cart[index].qty!).toStringAsFixed(2)}",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall!
+                                      .copyWith(
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                          color: Colors.grey),
+                                ),
+                                Text(
+                                  "\u{20B9}${((widget.cart[index].rate! * widget.cart[index].qty!) - (((widget.cart[index].rate! * widget.cart[index].qty!) * widget.cart[index].discount!) / 100)).toStringAsFixed(2)}",
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ],
+                            )
                         ],
                       ),
                     ],

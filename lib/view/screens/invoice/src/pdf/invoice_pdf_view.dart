@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '/view/ui/ui.dart';
-import '/log/log.dart';
 import '/constants/constants.dart';
 import '/model/model.dart';
 import '/services/services.dart';
@@ -168,7 +167,7 @@ class _InvoicePdfViewState extends State<InvoicePdfView>
             'Invoie ${widget.invoice.billNo!.replaceAll("/", "-")}.pdf');
       }
     } catch (e) {
-      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      LogConfig.addLog("${DateTime.now()} : ${e.toString()}");
     }
   }
 
@@ -227,6 +226,7 @@ class _InvoicePdfViewState extends State<InvoicePdfView>
           )
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         foregroundColor: Colors.white,

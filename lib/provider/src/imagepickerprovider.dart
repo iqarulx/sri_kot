@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '/log/log.dart';
+import '../../services/services.dart';
 import '/constants/constants.dart';
 
 class ImagePickerProvider {
@@ -19,7 +19,7 @@ class ImagePickerProvider {
         tmpimageData = await picker.pickImage(source: ImageSource.camera);
       }
     } catch (e) {
-      Log.addLog("${DateTime.now()} : ${e.toString()}");
+      LogConfig.addLog("${DateTime.now()} : ${e.toString()}");
     }
 
     if (tmpimageData != null) {

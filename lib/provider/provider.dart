@@ -12,3 +12,6 @@ export 'src/page_provider.dart';
 export 'src/pdf_creation_provider.dart';
 export 'src/permission_provider.dart';
 export 'src/thermal_3inch_pdf.dart';
+export 'src/file_open.dart';
+export 'src/invoice_excel_creation.dart';
+export 'src/sort_product_name.dart';

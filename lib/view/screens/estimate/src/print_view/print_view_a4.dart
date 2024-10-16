@@ -169,6 +169,7 @@ class _PrintViewA4State extends State<PrintViewA4>
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         foregroundColor: Colors.white,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '/constants/constants.dart';
-import '/services/firebase/messaging.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import 'access_code_modal.dart';

@@ -361,12 +361,8 @@ class _AddCustomerState extends State<AddCustomer> {
                     prefixIcon: Icons.pin_drop_rounded,
                     keyboardType: TextInputType.emailAddress,
                     validation: (p0) {
-                      return FormValidation().commonValidation(
-                        input: p0,
-                        isMandatory: false,
-                        formName: 'Address',
-                        isOnlyCharter: false,
-                      );
+                      return FormValidation()
+                          .addressValidation(p0 ?? '', false);
                     },
                   ),
                   InputForm(

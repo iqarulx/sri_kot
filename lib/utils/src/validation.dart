@@ -109,10 +109,16 @@ class FormValidation {
 
   String? addressValidation(String input, bool isMandatory) {
     input = input.trim();
-    input = input.replaceAll(RegExp(r"\s+"), "");
+
+    input = input.replaceAll(RegExp(r"\s+"), " ");
+
+    RegExp alphanumericRegex = RegExp(r"^(?=.*[a-zA-Z])[a-zA-Z0-9\s,./@-]+$");
+
     if (isMandatory || input.isNotEmpty) {
       if (input.isEmpty) {
-        //@#&()-_[]'":;.,/
+        return "Address is required.";
+      } else if (!alphanumericRegex.hasMatch(input)) {
+        return "Address must be alphanumeric and contain at least one letter.";
       }
     }
     return null;

@@ -7,9 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:social_sharing_plus/social_sharing_plus.dart';
-import 'package:sri_kot/model/model.dart';
-import 'package:sri_kot/view/screens/enquiry/src/print_view/print_enquiry_3inch.dart';
-import 'package:sri_kot/view/screens/enquiry/src/print_view/print_enquiry_a5.dart';
+import '/model/model.dart';
 import 'package:whatsapp_share/whatsapp_share.dart';
 
 import '../../../constants/constants.dart';
@@ -134,180 +132,214 @@ class _BillOptionsState extends State<BillOptions> {
                     ),
                   ),
                 ),
-                InkWell(
-                  onTap: () async {
-                    if (widget.billType != BillType.invoice) {
-                      if (widget.billType == BillType.enquiry) {
-                        await confirmationDialog(
-                          context,
-                          title: "Alert",
-                          message: "Do you want delete enquiry?",
-                        ).then((value) {
-                          if (value != null && value == true) {
-                            deleteEnquiry();
-                          }
-                        });
-                      } else if (widget.billType == BillType.estimate) {
-                        await confirmationDialog(
-                          context,
-                          title: "Alert",
-                          message: "Do you want delete estimate?",
-                        ).then((value) {
-                          if (value != null && value == true) {
-                            deleteEstimate();
-                          }
-                        });
+                if (widget.billType != BillType.invoice)
+                  InkWell(
+                    onTap: () async {
+                      if (widget.billType != BillType.invoice) {
+                        if (widget.billType == BillType.enquiry) {
+                          await confirmationDialog(
+                            context,
+                            title: "Alert",
+                            message: "Do you want delete enquiry?",
+                          ).then((value) {
+                            if (value != null && value == true) {
+                              deleteEnquiry();
+                            }
+                          });
+                        } else if (widget.billType == BillType.estimate) {
+                          await confirmationDialog(
+                            context,
+                            title: "Alert",
+                            message: "Do you want delete estimate?",
+                          ).then((value) {
+                            if (value != null && value == true) {
+                              deleteEstimate();
+                            }
+                          });
+                        }
                       }
-                    }
-                  },
-                  child: Container(
-                    height: 80,
-                    width: 100,
-                    padding: const EdgeInsets.all(15),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.trash),
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "Delete",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                    },
+                    child: Container(
+                      height: 80,
+                      width: 100,
+                      padding: const EdgeInsets.all(15),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.trash,
                           ),
-                        )
-                      ],
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Expanded(
+                            child: Text(
+                              "Delete",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  InkWell(
+                    onTap: () async {
+                      if (widget.billType == BillType.invoice) {
+                        shareInvoice();
+                      }
+                    },
+                    child: Container(
+                      height: 80,
+                      width: 100,
+                      padding: const EdgeInsets.all(15),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.printer),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Expanded(
+                            child: Text(
+                              "Pdf",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             const SizedBox(
               height: 10,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                InkWell(
-                  onTap: () async {
-                    if (widget.billType == BillType.enquiry) {
-                      sharePDFEnquiry();
-                    } else if (widget.billType == BillType.estimate) {
-                      sharePDFEstimate();
-                    } else if (widget.billType == BillType.invoice) {
-                      shareInvoice();
-                    }
-                  },
-                  child: Container(
-                    height: 80,
-                    width: 100,
-                    padding: const EdgeInsets.all(15),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.link),
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "Share Pdf",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+            if (widget.billType != BillType.invoice)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  InkWell(
+                    onTap: () async {
+                      if (widget.billType == BillType.enquiry) {
+                        sharePDFEnquiry();
+                      } else if (widget.billType == BillType.estimate) {
+                        sharePDFEstimate();
+                      }
+                    },
+                    child: Container(
+                      height: 80,
+                      width: 100,
+                      padding: const EdgeInsets.all(15),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.link),
+                          SizedBox(
+                            height: 5,
                           ),
-                        )
-                      ],
+                          Expanded(
+                            child: Text(
+                              "Share Pdf",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                InkWell(
-                  onTap: () async {
-                    if (widget.billType == BillType.enquiry) {
-                      downloadPrintEnquiry();
-                    } else if (widget.billType == BillType.estimate) {
-                      downloadPrintEstimate();
-                    } else if (widget.billType == BillType.invoice) {
-                      shareInvoice();
-                    }
-                  },
-                  child: Container(
-                    height: 80,
-                    width: 100,
-                    padding: const EdgeInsets.all(15),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.arrow_down_circle),
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "Download",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                  InkWell(
+                    onTap: () async {
+                      if (widget.billType == BillType.enquiry) {
+                        downloadPrintEnquiry();
+                      } else if (widget.billType == BillType.estimate) {
+                        downloadPrintEstimate();
+                      }
+                    },
+                    child: Container(
+                      height: 80,
+                      width: 100,
+                      padding: const EdgeInsets.all(15),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.arrow_down_circle),
+                          SizedBox(
+                            height: 5,
                           ),
-                        )
-                      ],
+                          Expanded(
+                            child: Text(
+                              "Download",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                InkWell(
-                  onTap: () async {
-                    if (widget.billType == BillType.enquiry) {
-                      printEnquiry();
-                    } else if (widget.billType == BillType.estimate) {
-                      printEstimate();
-                    } else if (widget.billType == BillType.invoice) {
-                      shareInvoice();
-                    }
-                  },
-                  child: Container(
-                    height: 80,
-                    width: 100,
-                    padding: const EdgeInsets.all(15),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.printer),
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Expanded(
-                          child: Text(
-                            "Print Pdf",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                  InkWell(
+                    onTap: () async {
+                      if (widget.billType == BillType.enquiry) {
+                        printEnquiry();
+                      } else if (widget.billType == BillType.estimate) {
+                        printEstimate();
+                      }
+                    },
+                    child: Container(
+                      height: 80,
+                      width: 100,
+                      padding: const EdgeInsets.all(15),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.printer),
+                          SizedBox(
+                            height: 5,
                           ),
-                        )
-                      ],
+                          Expanded(
+                            child: Text(
+                              "Print Pdf",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             const SizedBox(
               height: 20,
             ),
@@ -385,6 +417,7 @@ class _BillOptionsState extends State<BillOptions> {
   }
 
   viewInvoice() async {
+    Navigator.pop(context);
     Navigator.push(
       context,
       CupertinoPageRoute(
@@ -393,7 +426,6 @@ class _BillOptionsState extends State<BillOptions> {
         ),
       ),
     );
-    Navigator.pop(context);
   }
 
   editInvoice() async {
@@ -463,7 +495,6 @@ class _BillOptionsState extends State<BillOptions> {
         });
       }
     });
-    Navigator.pop(context);
   }
 
   sharePDFEstimate() async {
@@ -553,7 +584,7 @@ class _BillOptionsState extends State<BillOptions> {
       context: context,
       builder: (builder) {
         return const FractionallySizedBox(
-          heightFactor: 0.25,
+          heightFactor: 0.3,
           child: PdfPreviewModal(),
         );
       },
@@ -749,10 +780,10 @@ class _BillOptionsState extends State<BillOptions> {
         }
       }
     });
-    Navigator.pop(context);
   }
 
   viewEstimate() {
+    Navigator.pop(context);
     Navigator.push(
       context,
       CupertinoPageRoute(
@@ -761,7 +792,6 @@ class _BillOptionsState extends State<BillOptions> {
         ),
       ),
     );
-    Navigator.pop(context);
   }
 
   deleteEstimate() async {
@@ -774,7 +804,6 @@ class _BillOptionsState extends State<BillOptions> {
         await FireStore()
             .deleteEstimate(docID: widget.estimate!.docID!)
             .then((value) {
-          Navigator.pop(context);
           Navigator.pop(context, true);
           snackbar(context, true, "Successfully Deleted");
         });
@@ -782,7 +811,6 @@ class _BillOptionsState extends State<BillOptions> {
         await LocalService.deleteEstimate(
                 referenceId: widget.estimate!.referenceId ?? '')
             .then((value) {
-          Navigator.pop(context);
           Navigator.pop(context, true);
           snackbar(context, true, "Successfully Deleted");
         });
@@ -949,7 +977,7 @@ class _BillOptionsState extends State<BillOptions> {
       context: context,
       builder: (builder) {
         return const FractionallySizedBox(
-          heightFactor: 0.25,
+          heightFactor: 0.3,
           child: PdfPreviewModal(),
         );
       },
@@ -1151,7 +1179,6 @@ class _BillOptionsState extends State<BillOptions> {
         }
       }
     });
-    Navigator.pop(context);
   }
 
   downloadPrintEnquiry() async {
@@ -1222,6 +1249,8 @@ class _BillOptionsState extends State<BillOptions> {
   }
 
   viewEnquiry() {
+    Navigator.pop(context);
+
     Navigator.push(
       context,
       CupertinoPageRoute(
@@ -1230,7 +1259,6 @@ class _BillOptionsState extends State<BillOptions> {
         ),
       ),
     );
-    Navigator.pop(context);
   }
 
   deleteEnquiry() async {
@@ -1243,7 +1271,6 @@ class _BillOptionsState extends State<BillOptions> {
         await FireStore()
             .deleteEnquiry(docID: widget.enquiry!.docID ?? '')
             .then((value) {
-          Navigator.pop(context);
           Navigator.pop(context, true);
           snackbar(context, true, "Successfully Deleted");
         });
@@ -1251,7 +1278,6 @@ class _BillOptionsState extends State<BillOptions> {
         await LocalService.deleteEnquiry(
                 referenceId: widget.enquiry!.referenceId ?? '')
             .then((value) {
-          Navigator.pop(context);
           Navigator.pop(context, true);
           snackbar(context, true, "Successfully Deleted");
         });
@@ -1264,6 +1290,7 @@ class _BillOptionsState extends State<BillOptions> {
   }
 
   editEnquiry() async {
+    Navigator.pop(context);
     await LocalDB.getBillingIndex().then((value) async {
       if (value != null) {
         Navigator.push(
@@ -1284,10 +1311,11 @@ class _BillOptionsState extends State<BillOptions> {
         );
       }
     });
-    Navigator.pop(context);
   }
 
   editEstimate() async {
+    Navigator.pop(context);
+
     await LocalDB.getBillingIndex().then((value) async {
       if (value != null) {
         Navigator.push(
@@ -1308,7 +1336,6 @@ class _BillOptionsState extends State<BillOptions> {
         );
       }
     });
-    Navigator.pop(context);
   }
 
   whatsappShareEnquiry() async {

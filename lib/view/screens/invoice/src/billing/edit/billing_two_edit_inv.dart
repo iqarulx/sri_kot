@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../model/src/party_data_model.dart';
 import '../../utils/cart_drawer_inv.dart';
 import '../../utils/qr_alert_inv.dart';
 import '../../utils/variables_inv.dart';
@@ -96,12 +95,12 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
             productInfo.qtyForm =
                 TextEditingController(text: productInfo.qty.toString());
 
-            setState(() {
-              productDataList.add(productInfo);
-            });
-            setState(() {
-              productDataList.add(productInfo);
-            });
+            productInfo.active = product["active"];
+            if (productInfo.active ?? false) {
+              setState(() {
+                productDataList.add(productInfo);
+              });
+            }
           }
 
           // Category & Product Merge
@@ -166,6 +165,8 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
                       elements.taxValue;
                   billingProductList[catId].products![proId].hsnCode =
                       elements.hsnCode;
+                  elements.rate =
+                      billingProductList[catId].products![proId].price;
                 });
 
                 editaddtoCart(elements);
@@ -257,9 +258,10 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
 
   PartyDataModel partyInfo = PartyDataModel();
 
-  addtoCart(int index) {
+  addtoCart(int index, {ProductDataModel? proData}) {
     var cartDataInfo = CartDataModel();
     var tmpProductDetails = billingProductList[crttab].products![index];
+
     cartDataInfo.categoryId = tmpProductDetails.categoryid;
     cartDataInfo.categoryName = tmpProductDetails.categoryName;
     cartDataInfo.price = tmpProductDetails.price;
@@ -270,19 +272,26 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
     cartDataInfo.productContent = tmpProductDetails.productContent;
     cartDataInfo.productImg = tmpProductDetails.productImg;
     cartDataInfo.qrCode = tmpProductDetails.qrCode;
-    cartDataInfo.discount = tmpProductDetails.discount;
+    cartDataInfo.taxValue = tmpProductDetails.taxValue;
+    cartDataInfo.hsnCode = tmpProductDetails.hsnCode;
+    cartDataInfo.qrCode = tmpProductDetails.qrCode;
     cartDataInfo.qty = 1;
+    cartDataInfo.discount = tmpProductDetails.discount;
     cartDataInfo.qtyForm = TextEditingController(
       text: cartDataInfo.qty.toString(),
     );
-    cartDataInfo.docID = tmpProductDetails.docid;
-    cartDataInfo.productType = tmpProductDetails.productType;
+    cartDataInfo.productType =
+        tmpProductDetails.discountLock! || tmpProductDetails.discount == null
+            ? ProductType.netRated
+            : ProductType.discounted;
     if (cartDataInfo.productType == ProductType.discounted) {
       cartDataInfo.discountedPrice = tmpProductDetails.price!.toDouble() -
           (tmpProductDetails.price! *
               tmpProductDetails.discount!.toDouble() /
               100);
     }
+    print(cartDataInfo.toMap());
+
     setState(() {
       tmpProductDetails.qty = tmpProductDetails.qty! + 1;
       tmpProductDetails.qtyForm!.text = tmpProductDetails.qty.toString();
@@ -998,10 +1007,43 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
                                           color: Colors.grey,
                                         ),
                                   ),
-                                  Row(
+                                  Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                        CrossAxisAlignment.start,
                                     children: [
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      if (tmpProductDetails.productType ==
+                                          ProductType.discounted)
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                "\u{20B9}${tmpProductDetails.price!.toStringAsFixed(2)}",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall!
+                                                    .copyWith(
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
+                                                    ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: 3,
+                                            ),
+                                            Text(
+                                              "(${tmpProductDetails.discount ?? ""}%)",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall!
+                                                  .copyWith(
+                                                      color: Colors.green),
+                                            ),
+                                          ],
+                                        ),
                                       Text(
                                         tmpProductDetails.productType ==
                                                 ProductType.netRated
@@ -1011,45 +1053,6 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
                                             .textTheme
                                             .titleLarge,
                                       ),
-                                      const SizedBox(
-                                        width: 5,
-                                      ),
-                                      if (tmpProductDetails.productType ==
-                                          ProductType.discounted)
-                                        Expanded(
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  "\u{20B9}${tmpProductDetails.price!.toStringAsFixed(2)}",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall!
-                                                      .copyWith(
-                                                        decoration:
-                                                            TextDecoration
-                                                                .lineThrough,
-                                                      ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                width: 3,
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  "(${tmpProductDetails.discount ?? ""}%)",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall!
-                                                      .copyWith(
-                                                          color: Colors.green),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
                                     ],
                                   ),
                                 ],
