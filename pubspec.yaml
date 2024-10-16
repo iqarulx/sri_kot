@@ -11,59 +11,14 @@ version: 1.0.10
 environment:
   sdk: '>=3.4.3 <4.0.0'
 
+
 dependencies:
   flutter:
     sdk: flutter
 
-  # cupertino_icons: ^1.0.8
-  # esc_pos_printer_new:
-  #   path: ./package/esc_pos_printer_new  
-  # shared_preferences: ^2.3.2
-  # image_picker: ^1.1.2
-  # device_info_plus: ^10.1.2
-  # dotted_border: ^2.1.0
-  # file_picker: ^8.1.2
-  # excel: ^4.0.6
-  # intl: ^0.19.0
-  # flutter_svg: ^2.0.10+1
-  # dio: ^5.7.0
-  # permission_handler: ^11.3.1
-  # syncfusion_flutter_pdf: ^26.2.14
-  # syncfusion_flutter_pdfviewer: ^26.2.14
-  # printing: ^5.13.2
-  # flutter_barcode_scanner: ^2.0.0
-  # path_provider: ^2.1.4
-  # pdf: ^3.11.1
-  # open_file_plus: ^3.4.1+1
-  # esc_pos_utils_new: ^0.0.3
-  # logger: ^2.4.0
-  # path: ^1.9.0
-  # logging: ^1.2.0
-  # json_annotation: ^4.9.0
-  # provider: ^6.1.2
-  # http: ^1.2.2
-  # url_launcher: ^6.3.0
-  # connectivity_plus: ^6.0.5
-  # flutter_image: ^4.1.11
-  # in_app_update: ^4.2.3
-  # package_info_plus: ^8.0.2
-  # cached_network_image: ^3.4.1
-  # flutter_blurhash: ^0.8.2
-  # flutter_native_splash: ^2.4.1
-  # open_file: ^3.5.3
-  # path_provider_platform_interface: ^2.1.2
-  # # cloud_firestore: ^5.4.2
-  # # firebase_core: ^3.5.0
-  # # firebase_storage: ^12.3.1
-  # # firebase_auth: ^5.3.0
-  # firebase_core: ^2.24.2
-  # firebase_auth: ^4.16.0
-  # cloud_firestore: ^4.14.0
-  # firebase_storage: ^11.6.0
-  # firebase_messaging: ^14.7.10
   cupertino_icons: ^1.0.8
   esc_pos_printer_new:
-    path: ./package/esc_pos_printer_new
+    path: ./package/esc_pos_printer_new  
   shared_preferences: ^2.3.2
   image_picker: ^1.1.2
   device_info_plus: ^10.1.2
@@ -103,12 +58,8 @@ dependencies:
   firebase_auth: ^4.16.0
   cloud_firestore: ^4.14.0
   firebase_storage: ^11.6.0
-  in_app_purchase: ^3.2.0
-  googleapis_auth: ^1.6.0
-  # in_app_purchase: ^3.0.7
   pinput: ^5.0.0
-  # firebase_messaging: ^15.1.2
-  # googleapis_auth: ^1.6.0
+  googleapis_auth: ^1.6.0
   fluttertoast: ^8.2.8
   toastification: ^2.2.0
   image: ^4.2.0
@@ -116,12 +67,13 @@ dependencies:
   iconsax: ^0.0.8
   responsive_grid: ^2.4.4
   social_sharing_plus: ^1.2.3
-  in_app_purchase_android: ^0.3.6+7
-  in_app_purchase_storekit: ^0.3.18+1
+  in_app_purchase_android: 0.3.4
+  in_app_purchase_platform_interface: 1.4.0
+  in_app_purchase_storekit: 0.3.14
   whatsapp_share: ^2.0.2
   flutter_date_range_picker: ^0.1.1
   email_otp: ^3.0.2
-
+  in_app_purchase: 3.2.0
   # firebase_core: ^2.24.2
   # cloud_firestore: ^4.14.0
   # firebase_storage: ^11.6.0
@@ -192,3 +144,198 @@ msix_config:
     update_blocks_activation: true
     show_prompt: true
     force_update_from_any_version: false
+
+# name: sri_kot
+# description: "A new Flutter project."
+
+# publish_to: 'none'
+
+# # Testing Environtment. Version starts with 0
+# # Production Environment. Version starts with 1
+# # Previous Test version 0.0.1
+# version: 1.0.10
+
+# environment:
+#   sdk: '>=3.4.3 <4.0.0'
+
+# dependencies:
+#   flutter:
+#     sdk: flutter
+
+#   # cupertino_icons: ^1.0.8
+#   # esc_pos_printer_new:
+#   #   path: ./package/esc_pos_printer_new  
+#   # shared_preferences: ^2.3.2
+#   # image_picker: ^1.1.2
+#   # device_info_plus: ^10.1.2
+#   # dotted_border: ^2.1.0
+#   # file_picker: ^8.1.2
+#   # excel: ^4.0.6
+#   # intl: ^0.19.0
+#   # flutter_svg: ^2.0.10+1
+#   # dio: ^5.7.0
+#   # permission_handler: ^11.3.1
+#   # syncfusion_flutter_pdf: ^26.2.14
+#   # syncfusion_flutter_pdfviewer: ^26.2.14
+#   # printing: ^5.13.2
+#   # flutter_barcode_scanner: ^2.0.0
+#   # path_provider: ^2.1.4
+#   # pdf: ^3.11.1
+#   # open_file_plus: ^3.4.1+1
+#   # esc_pos_utils_new: ^0.0.3
+#   # logger: ^2.4.0
+#   # path: ^1.9.0
+#   # logging: ^1.2.0
+#   # json_annotation: ^4.9.0
+#   # provider: ^6.1.2
+#   # http: ^1.2.2
+#   # url_launcher: ^6.3.0
+#   # connectivity_plus: ^6.0.5
+#   # flutter_image: ^4.1.11
+#   # in_app_update: ^4.2.3
+#   # package_info_plus: ^8.0.2
+#   # cached_network_image: ^3.4.1
+#   # flutter_blurhash: ^0.8.2
+#   # flutter_native_splash: ^2.4.1
+#   # open_file: ^3.5.3
+#   # path_provider_platform_interface: ^2.1.2
+#   # # cloud_firestore: ^5.4.2
+#   # # firebase_core: ^3.5.0
+#   # # firebase_storage: ^12.3.1
+#   # # firebase_auth: ^5.3.0
+#   # firebase_core: ^2.24.2
+#   # firebase_auth: ^4.16.0
+#   # cloud_firestore: ^4.14.0
+#   # firebase_storage: ^11.6.0
+#   # firebase_messaging: ^14.7.10
+#   cupertino_icons: ^1.0.8
+#   esc_pos_printer_new:
+#     path: ./package/esc_pos_printer_new
+#   shared_preferences: ^2.3.2
+#   image_picker: ^1.1.2
+#   device_info_plus: ^10.1.2
+#   dotted_border: ^2.1.0
+#   file_picker: ^8.1.2
+#   excel: ^4.0.6
+#   intl: ^0.19.0
+#   flutter_svg: ^2.0.10+1
+#   dio: ^5.7.0
+#   permission_handler: ^11.3.1
+#   syncfusion_flutter_pdf: ^26.2.14
+#   syncfusion_flutter_pdfviewer: ^26.2.14
+#   printing: ^5.13.2
+#   flutter_barcode_scanner: ^2.0.0
+#   path_provider: ^2.1.4
+#   pdf: ^3.11.1
+#   open_file_plus: ^3.4.1+1
+#   esc_pos_utils_new: ^0.0.3
+#   logger: ^2.4.0
+#   path: ^1.9.0
+#   logging: ^1.2.0
+#   json_annotation: ^4.9.0
+#   provider: ^6.1.2
+#   http: ^1.2.2
+#   url_launcher: ^6.3.0
+#   sqflite: ^2.3.3+1
+#   connectivity_plus: ^6.0.5
+#   flutter_image: ^4.1.11
+#   in_app_update: ^4.2.3
+#   package_info_plus: ^8.0.2
+#   cached_network_image: ^3.4.1
+#   flutter_blurhash: ^0.8.2
+#   flutter_native_splash: ^2.4.1
+#   open_file: ^3.5.3
+#   path_provider_platform_interface: ^2.1.2
+#   firebase_core: ^2.24.2
+#   firebase_auth: ^4.16.0
+#   cloud_firestore: ^4.14.0
+#   firebase_storage: ^11.6.0
+#   in_app_purchase: ^3.2.0
+#   googleapis_auth: ^1.6.0
+#   # in_app_purchase: ^3.0.7
+#   pinput: ^5.0.0
+#   # firebase_messaging: ^15.1.2
+#   # googleapis_auth: ^1.6.0
+#   fluttertoast: ^8.2.8
+#   toastification: ^2.2.0
+#   image: ^4.2.0
+#   flutter_image_compress: ^2.3.0
+#   iconsax: ^0.0.8
+#   responsive_grid: ^2.4.4
+#   social_sharing_plus: ^1.2.3
+#   in_app_purchase_android: ^0.3.6+7
+#   in_app_purchase_storekit: ^0.3.18+1
+#   whatsapp_share: ^2.0.2
+#   flutter_date_range_picker: ^0.1.1
+#   email_otp: ^3.0.2
+
+#   # firebase_core: ^2.24.2
+#   # cloud_firestore: ^4.14.0
+#   # firebase_storage: ^11.6.0
+#   # firebase_auth: ^4.16.0
+
+# dev_dependencies:
+#   flutter_test:
+#     sdk: flutter
+#   flutter_lints: ^3.0.0
+#   build_runner: ^2.4.11
+#   flutter_gen_runner: ^5.6.0  #If you want to generate assets then run this -> dart pub global activate flutter_gen, dart run build_runner build
+#   msix: ^3.16.8
+
+# flutter_gen:
+#   outputs:
+#     dart:
+#       - lib/gen/assets.gen.dart
+
+# flutter_native_splash:
+#   android: true
+#   ios: true
+#   color: "#FFFFFF"
+#   image: assets/logo_splash.png
+#   branding: assets/brand.png
+#   branding_mode: bottom
+#   android_12:
+#     color: "#FFFFFF"
+#     image: assets/logo_splash.png
+#     branding: assets/brand.png
+
+# flutter:
+#   uses-material-design: true
+
+#   assets:
+#     - assets/
+#     - assets/images/
+#     - assets/audio/store-scanner.mp3
+#     - assets/secure/
+#     - assets/fonts/
+
+#   fonts:
+#     - family: Roboto
+#       fonts:
+#         - asset: assets/fonts/Roboto-Regular.ttf
+#     - family: NotoSans
+#       fonts:
+#         - asset: assets/fonts/NotoSans-Regular.ttf
+#     - family: Times
+#       fonts:
+#         - asset: assets/fonts/Times New Roman.ttf
+
+# # dart pub run msix:create
+
+# msix_config:
+#   display_name: Sri KOT
+#   publisher_display_name: Srisoftwarez
+#   identity_name: com.srisoftwarez
+#   msix_version: 0.0.0.1
+#   logo_path: D:\flutter\projects\release\sri_kot\assets\logo.png
+#   languages: en-us
+#   capabilities: internetClient, location, microphone, webcam
+#   certificate_path: C:\Users\ramsankar\openssl\OPENSSL.pfx
+#   certificate_password: Admin123@
+#   app_installer: #<-- app installer configuration
+#     publish_folder_path: D:\exe
+#     hours_between_update_checks: 0
+#     automatic_background_task: true
+#     update_blocks_activation: true
+#     show_prompt: true
+#     force_update_from_any_version: false
