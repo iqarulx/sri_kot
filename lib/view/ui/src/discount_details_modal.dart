@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:sri_kot/constants/constants.dart';
-import 'package:sri_kot/model/model.dart';
+import '/constants/constants.dart';
+import '/model/model.dart';
 
 class DiscountDetailsModal extends StatefulWidget {
   final List<CartDataModel> cartDataModel;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sri_kot/view/ui/src/toast.dart';
+import '/view/ui/src/toast.dart';
 
 class DiscountModal extends StatefulWidget {
   final String title;

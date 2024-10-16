@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:sri_kot/model/model.dart';
+import '/model/model.dart';
 
 class DiscountDetailProduct extends StatefulWidget {
   final List<ProductDataModel> productData;

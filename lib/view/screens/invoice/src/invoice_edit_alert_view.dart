@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sri_kot/view/screens/invoice/src/product_listing_dialog.dart';
+import '/view/screens/invoice/src/product_listing_dialog.dart';
 import '/model/model.dart';
 
 class InvoiceEditAlertView extends StatefulWidget {

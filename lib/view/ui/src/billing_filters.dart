@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_date_range_picker/flutter_date_range_picker.dart';
-import 'package:sri_kot/view/ui/src/toast.dart';
+import '/view/ui/src/toast.dart';
 import '/model/model.dart';
 import 'commonwidget.dart';
 import 'customer_search_view.dart';

@@ -20,13 +20,15 @@ final bool _kAutoConsume = Platform.isIOS || true;
 
 const String _kUserId = 'user';
 const String _kStaffId = 'staff';
-const String _kSilverSubscriptionId = 'srikot_company';
+const String _kBasePlanId = 'srikot_company';
+const String _kPremiumPlanId = "srikot_app";
+
 // const String _kGoldSubscriptionId = 'srikot_app';
 const List<String> _kProductIds = <String>[
   _kUserId,
   _kStaffId,
-  _kSilverSubscriptionId,
-  // _kGoldSubscriptionId,
+  _kBasePlanId,
+  _kPremiumPlanId
 ];
 
 class Purchase extends StatefulWidget {
@@ -45,17 +47,20 @@ class PurchaseState extends State<Purchase> {
 
   @override
   void initState() {
-    final Stream<List<PurchaseDetails>> purchaseUpdated =
-        _inAppPurchase.purchaseStream;
-    _subscription =
-        purchaseUpdated.listen((List<PurchaseDetails> purchaseDetailsList) {
-      _listenToPurchaseUpdated(purchaseDetailsList);
-    }, onDone: () {
-      _subscription.cancel();
-    }, onError: (Object error) {
-      // handle error here.
-    });
-    purchaseHandler = initStoreInfo();
+    if (Platform.isAndroid || Platform.isIOS) {
+      final Stream<List<PurchaseDetails>> purchaseUpdated =
+          _inAppPurchase.purchaseStream;
+      _subscription =
+          purchaseUpdated.listen((List<PurchaseDetails> purchaseDetailsList) {
+        _listenToPurchaseUpdated(purchaseDetailsList);
+      }, onDone: () {
+        _subscription.cancel();
+      }, onError: (Object error) {
+        // handle error here.
+      });
+      purchaseHandler = initStoreInfo();
+    }
+
     super.initState();
   }
 
@@ -101,13 +106,15 @@ class PurchaseState extends State<Purchase> {
 
   @override
   void dispose() {
-    if (Platform.isIOS) {
-      final InAppPurchaseStoreKitPlatformAddition iosPlatformAddition =
-          _inAppPurchase
-              .getPlatformAddition<InAppPurchaseStoreKitPlatformAddition>();
-      iosPlatformAddition.setDelegate(null);
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (Platform.isIOS) {
+        final InAppPurchaseStoreKitPlatformAddition iosPlatformAddition =
+            _inAppPurchase
+                .getPlatformAddition<InAppPurchaseStoreKitPlatformAddition>();
+        iosPlatformAddition.setDelegate(null);
+      }
+      _subscription.cancel();
     }
-    _subscription.cancel();
     super.dispose();
   }
 
@@ -336,7 +343,7 @@ class PurchaseState extends State<Purchase> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          //_products[index].id == _kSilverSubscriptionId
+                                          //_products[index].id == _kBasePlanId
                                           Text(
                                             _products[index].title,
                                             style: Theme.of(context)
@@ -576,22 +583,20 @@ class PurchaseState extends State<Purchase> {
       ProductDetails productDetails, Map<String, PurchaseDetails> purchases) {
     GooglePlayPurchaseDetails? oldSubscription;
     /* 
-    if (productDetails.id == _kSilverSubscriptionId &&
+    if (productDetails.id == _kBasePlanId &&
         purchases[_kGoldSubscriptionId] != null) {
       oldSubscription =
           purchases[_kGoldSubscriptionId]! as GooglePlayPurchaseDetails;
     } else if (productDetails.id == _kGoldSubscriptionId &&
-        purchases[_kSilverSubscriptionId] != null) {
+        purchases[_kBasePlanId] != null) {
       oldSubscription =
-          purchases[_kSilverSubscriptionId]! as GooglePlayPurchaseDetails;
+          purchases[_kBasePlanId]! as GooglePlayPurchaseDetails;
     }
     */
-    if (purchases[_kSilverSubscriptionId] != null) {
-      oldSubscription =
-          purchases[_kSilverSubscriptionId]! as GooglePlayPurchaseDetails;
-    } else if (purchases[_kSilverSubscriptionId] != null) {
-      oldSubscription =
-          purchases[_kSilverSubscriptionId]! as GooglePlayPurchaseDetails;
+    if (purchases[_kBasePlanId] != null) {
+      oldSubscription = purchases[_kBasePlanId]! as GooglePlayPurchaseDetails;
+    } else if (purchases[_kBasePlanId] != null) {
+      oldSubscription = purchases[_kBasePlanId]! as GooglePlayPurchaseDetails;
     }
 
     return oldSubscription;
