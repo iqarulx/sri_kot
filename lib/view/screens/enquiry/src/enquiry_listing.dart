@@ -142,6 +142,8 @@ class _EnquiryListingState extends State<EnquiryListing> {
                 .then((products) {
               if (products != null && products.docs.isNotEmpty) {
                 for (var product in products.docs) {
+                  Map<String, dynamic> p =
+                      product.data() as Map<String, dynamic>;
                   var productDataModel = ProductDataModel();
                   productDataModel.categoryid = product["category_id"];
                   productDataModel.categoryName = product["category_name"];
@@ -154,17 +156,21 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   productDataModel.discountLock = product["discount_lock"];
                   productDataModel.docid = product.id;
                   productDataModel.name = product["name"];
-                  productDataModel.hsnCode = product["hsn_code"];
-                  productDataModel.taxValue = product["tax_value"];
-                  productDataModel.productType =
-                      product["discount_lock"] || product["discount"] == null
-                          ? ProductType.netRated
-                          : ProductType.discounted;
+                 
+                  productDataModel.productType = product["discount_lock"] ||
+                          (p.containsKey('discount')
+                              ? product["discount"] != null
+                              : false)
+                      ? ProductType.netRated
+                      : ProductType.discounted;
+                  productDataModel.hsnCode =
+                      (p.containsKey('hsn_code') ? product["hsn_code"] : null);
+                  productDataModel.taxValue =
+                      (p.containsKey('tax_value') ? product["hsn_code"] : null);
                   productDataModel.productContent = product["product_content"];
                   productDataModel.productImg = product["product_img"];
                   productDataModel.qrCode = product["qr_code"];
                   productDataModel.videoUrl = product["video_url"];
-                  productDataModel.discount = product["discount"];
 
                   setState(() {
                     tmpProducts.add(productDataModel);

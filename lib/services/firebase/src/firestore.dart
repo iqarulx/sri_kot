@@ -1632,8 +1632,11 @@ class FireStore {
           .where('delete_at', isEqualTo: false)
           .get();
       var total = 0.0;
-      for (var data in snapshot.docs) {
-        total += data["price"]["total"].toDouble();
+      for (var i = 0; i < snapshot.docs.length; i++) {
+        var j = snapshot.docs[i];
+        print("$i.${j["price"]["total"].toDouble()}");
+
+        total += j["price"]["total"].toDouble();
       }
 
       return {"total": total, "total_estimate": snapshot.docs.length};
@@ -2180,7 +2183,7 @@ class FireStore {
           var batch = FirebaseFirestore.instance.batch();
           for (var element in categoryList.docs) {
             var document = _category.doc(element.id);
-            batch.update(document, {"delete_at": true});
+            batch.delete(document);
           }
           await batch.commit().then((_) {
             result = 'Batch write executed successfully';

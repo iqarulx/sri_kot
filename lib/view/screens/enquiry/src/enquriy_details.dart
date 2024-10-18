@@ -90,6 +90,8 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     .then((products) {
                   if (products != null && products.docs.isNotEmpty) {
                     for (var product in products.docs) {
+                      Map<String, dynamic> p =
+                          product.data() as Map<String, dynamic>;
                       var productDataModel = ProductDataModel();
                       productDataModel.categoryid = product["category_id"];
                       productDataModel.categoryName = product["category_name"];
@@ -103,18 +105,24 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                       productDataModel.discountLock = product["discount_lock"];
                       productDataModel.docid = product.id;
                       productDataModel.name = product["name"];
-                      productDataModel.hsnCode = product["hsn_code"];
-                      productDataModel.taxValue = product["tax_value"];
+
                       productDataModel.productType = product["discount_lock"] ||
-                              product["discount"] == null
+                              (p.containsKey('discount')
+                                  ? product["discount"] != null
+                                  : false)
                           ? ProductType.netRated
                           : ProductType.discounted;
+                      productDataModel.hsnCode = (p.containsKey('hsn_code')
+                          ? product["hsn_code"]
+                          : null);
+                      productDataModel.taxValue = (p.containsKey('tax_value')
+                          ? product["hsn_code"]
+                          : null);
                       productDataModel.productContent =
                           product["product_content"];
                       productDataModel.productImg = product["product_img"];
                       productDataModel.qrCode = product["qr_code"];
                       productDataModel.videoUrl = product["video_url"];
-                      productDataModel.discount = product["discount"];
 
                       setState(() {
                         tmpProducts.add(productDataModel);
@@ -1127,70 +1135,6 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                     const SizedBox(
                       height: 10,
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Price",
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          Table(
-                            children: [
-                              tableRow(
-                                  "Sub Total",
-                                  "Rs.${enquiryData.price!.subTotal}",
-                                  false,
-                                  () {}),
-                              tableRow(
-                                  "Discount",
-                                  "Rs.${enquiryData.price!.discountValue}",
-                                  false, () async {
-                                await showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return DiscountDetailProduct(
-                                        productData: enquiryData.products!);
-                                  },
-                                );
-                              }),
-                              tableRow(
-                                  "Extra Discount (${enquiryData.price!.extraDiscountsys == "%" ? '${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}'})",
-                                  "Rs.${enquiryData.price!.extraDiscountValue}",
-                                  false,
-                                  () {}),
-                              tableRow(
-                                  "Package Charge (${enquiryData.price!.packagesys == "%" ? '${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}%' : 'Rs ${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}'})",
-                                  "Rs.${enquiryData.price!.packageValue}",
-                                  false,
-                                  () {}),
-                              tableRow(
-                                  "Round Off",
-                                  "Rs.${enquiryData.price!.roundOff}",
-                                  false,
-                                  () {}),
-                              tableRow(
-                                  "Total",
-                                  "Rs.${enquiryData.price!.total}",
-                                  true,
-                                  () {}),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
                     enquiryData.customer != null
                         ? Container(
                             padding: const EdgeInsets.all(10),
@@ -1428,6 +1372,70 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                                     ),
                                   ],
                                 ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Price",
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Table(
+                            children: [
+                              tableRow(
+                                  "Sub Total",
+                                  "Rs.${enquiryData.price!.subTotal}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Discount",
+                                  "Rs.${enquiryData.price!.discountValue}",
+                                  false, () async {
+                                await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return DiscountDetailProduct(
+                                        productData: enquiryData.products!);
+                                  },
+                                );
+                              }),
+                              tableRow(
+                                  "Extra Discount (${enquiryData.price!.extraDiscountsys == "%" ? '${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${enquiryData.price!.extraDiscount != null ? (enquiryData.price!.extraDiscount)!.round() : ""}'})",
+                                  "Rs.${enquiryData.price!.extraDiscountValue}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Package Charge (${enquiryData.price!.packagesys == "%" ? '${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}%' : 'Rs ${enquiryData.price!.package != null ? (enquiryData.price!.package)!.round() : ""}'})",
+                                  "Rs.${enquiryData.price!.packageValue}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Round Off",
+                                  "Rs.${enquiryData.price!.roundOff}",
+                                  false,
+                                  () {}),
+                              tableRow(
+                                  "Total",
+                                  "Rs.${enquiryData.price!.total}",
+                                  true,
+                                  () {}),
                             ],
                           ),
                         ],

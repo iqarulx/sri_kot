@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
+// import 'package:sri_kot/batch/batch.dart';
 import 'package:toastification/toastification.dart';
 import '/services/services.dart';
 import '/app/src/life_cycle/app_lifecycle.dart';
 import '/view/screens/screens.dart';
-import '../../../view/auth/src/auth/auth.dart';
+import '/view/auth/auth.dart';
 
 ChangeThemeApp changeThemeApp = ChangeThemeApp();
 
 class MyApp extends StatefulWidget {
-  final bool login;
-  final bool appUpdate;
-  const MyApp({
-    super.key,
-    required this.login,
-    required this.appUpdate,
-  });
+  final bool login, appUpdate;
+  const MyApp({super.key, required this.login, required this.appUpdate});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -70,6 +66,7 @@ class _MyAppState extends State<MyApp> {
                   ? const UserHome()
                   : const Auth()
               : const AppUpdateScreen(),
+          // home: const Update1110(),
         ),
       ),
     );

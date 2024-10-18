@@ -522,177 +522,6 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
                         ],
                       ),
                     ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Price",
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium!
-                                .copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          if (invoice!.taxType ?? false)
-                            if (invoice!.sameState ?? false)
-                              Table(
-                                children: [
-                                  tableRow(
-                                      "Sub Total",
-                                      "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Discount",
-                                      "Rs.${invoice!.price!.discountValue}",
-                                      false, () async {
-                                    await showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return InvoiceDiscountModal(
-                                            cartDataModel:
-                                                invoice!.listingProducts!);
-                                      },
-                                    );
-                                  }),
-                                  tableRow(
-                                      "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
-                                      "Rs.${invoice!.price!.extraDiscountValue}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Packing Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
-                                      "Rs.${invoice!.price!.packageValue}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "CGST",
-                                      "Rs.${invoice != null ? (invoice!.taxCalc!["total_tax"] / 2).toStringAsFixed(2) : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "SGST",
-                                      "Rs.${invoice != null ? (invoice!.taxCalc!["total_tax"] / 2).toStringAsFixed(2) : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Round Off",
-                                      "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Total",
-                                      "Rs.${invoice != null ? invoice!.price!.total : ""}",
-                                      true,
-                                      () {}),
-                                ],
-                              )
-                            else
-                              Table(
-                                children: [
-                                  tableRow(
-                                      "Sub Total",
-                                      "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Discount",
-                                      "Rs.${invoice!.price!.discountValue}",
-                                      false, () async {
-                                    await showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return InvoiceDiscountModal(
-                                            cartDataModel:
-                                                invoice!.listingProducts!);
-                                      },
-                                    );
-                                  }),
-                                  tableRow(
-                                      "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
-                                      "Rs.${invoice!.price!.extraDiscountValue}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Packing Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
-                                      "Rs.${invoice!.price!.packageValue}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "IGST",
-                                      "Rs.${invoice != null ? invoice!.taxCalc!["total_tax"].toStringAsFixed(2) : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Round Off",
-                                      "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
-                                      false,
-                                      () {}),
-                                  tableRow(
-                                      "Total",
-                                      "Rs.${invoice != null ? invoice!.price!.total : ""}",
-                                      true,
-                                      () {}),
-                                ],
-                              )
-                          else
-                            Table(
-                              children: [
-                                tableRow(
-                                    "Sub Total",
-                                    "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
-                                    false,
-                                    () {}),
-                                tableRow(
-                                    "Discount",
-                                    "Rs.${invoice!.price!.discountValue}",
-                                    false, () async {
-                                  await showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      return InvoiceDiscountModal(
-                                          cartDataModel:
-                                              invoice!.listingProducts!);
-                                    },
-                                  );
-                                }),
-                                tableRow(
-                                    "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
-                                    "Rs.${invoice!.price!.extraDiscountValue}",
-                                    false,
-                                    () {}),
-                                tableRow(
-                                    "Package Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
-                                    "Rs.${invoice!.price!.packageValue}",
-                                    false,
-                                    () {}),
-                                tableRow(
-                                    "Round Off",
-                                    "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
-                                    false,
-                                    () {}),
-                                tableRow(
-                                    "Total",
-                                    "Rs.${invoice != null ? invoice!.price!.total : ""}",
-                                    true,
-                                    () {}),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
                     // Container(
                     //   margin: const EdgeInsets.only(top: 10),
                     //   padding: const EdgeInsets.all(10),
@@ -901,6 +730,177 @@ class _InvoiceDetailsState extends State<InvoiceDetails> {
                                 ),
                             ],
                           ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Price",
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium!
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          if (invoice!.taxType ?? false)
+                            if (invoice!.sameState ?? false)
+                              Table(
+                                children: [
+                                  tableRow(
+                                      "Sub Total",
+                                      "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Discount",
+                                      "Rs.${invoice!.price!.discountValue}",
+                                      false, () async {
+                                    await showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return InvoiceDiscountModal(
+                                            cartDataModel:
+                                                invoice!.listingProducts!);
+                                      },
+                                    );
+                                  }),
+                                  tableRow(
+                                      "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
+                                      "Rs.${invoice!.price!.extraDiscountValue}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Packing Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
+                                      "Rs.${invoice!.price!.packageValue}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "CGST",
+                                      "Rs.${invoice != null ? (invoice!.taxCalc!["total_tax"] / 2).toStringAsFixed(2) : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "SGST",
+                                      "Rs.${invoice != null ? (invoice!.taxCalc!["total_tax"] / 2).toStringAsFixed(2) : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Round Off",
+                                      "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Total",
+                                      "Rs.${invoice != null ? invoice!.price!.total : ""}",
+                                      true,
+                                      () {}),
+                                ],
+                              )
+                            else
+                              Table(
+                                children: [
+                                  tableRow(
+                                      "Sub Total",
+                                      "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Discount",
+                                      "Rs.${invoice!.price!.discountValue}",
+                                      false, () async {
+                                    await showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return InvoiceDiscountModal(
+                                            cartDataModel:
+                                                invoice!.listingProducts!);
+                                      },
+                                    );
+                                  }),
+                                  tableRow(
+                                      "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
+                                      "Rs.${invoice!.price!.extraDiscountValue}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Packing Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
+                                      "Rs.${invoice!.price!.packageValue}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "IGST",
+                                      "Rs.${invoice != null ? invoice!.taxCalc!["total_tax"].toStringAsFixed(2) : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Round Off",
+                                      "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Total",
+                                      "Rs.${invoice != null ? invoice!.price!.total : ""}",
+                                      true,
+                                      () {}),
+                                ],
+                              )
+                          else
+                            Table(
+                              children: [
+                                tableRow(
+                                    "Sub Total",
+                                    "Rs.${invoice != null ? invoice!.price!.subTotal : ""}",
+                                    false,
+                                    () {}),
+                                tableRow(
+                                    "Discount",
+                                    "Rs.${invoice!.price!.discountValue}",
+                                    false, () async {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return InvoiceDiscountModal(
+                                          cartDataModel:
+                                              invoice!.listingProducts!);
+                                    },
+                                  );
+                                }),
+                                tableRow(
+                                    "Extra Discount (${invoice != null ? invoice!.price!.extraDiscountsys == "%" ? '${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}%' : 'Rs ${invoice!.price!.extraDiscount != null ? (invoice!.price!.extraDiscount)!.round() : ""}' : ""})",
+                                    "Rs.${invoice!.price!.extraDiscountValue}",
+                                    false,
+                                    () {}),
+                                tableRow(
+                                    "Package Charge (${invoice != null ? invoice!.price!.packagesys == "%" ? '${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}%' : 'Rs ${invoice!.price!.package != null ? (invoice!.price!.package)!.round() : ""}' : ""})",
+                                    "Rs.${invoice!.price!.packageValue}",
+                                    false,
+                                    () {}),
+                                tableRow(
+                                    "Round Off",
+                                    "Rs.${invoice != null ? invoice!.price!.roundOff : ""}",
+                                    false,
+                                    () {}),
+                                tableRow(
+                                    "Total",
+                                    "Rs.${invoice != null ? invoice!.price!.total : ""}",
+                                    true,
+                                    () {}),
+                              ],
+                            ),
                         ],
                       ),
                     ),

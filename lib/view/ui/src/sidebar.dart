@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sri_kot/batch/src/batch_1010.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '/purchase/purchase.dart';
 import '/utils/utils.dart';
@@ -577,6 +578,12 @@ class _SideBarState extends State<SideBar> {
                                   icon: Icons.shield_outlined,
                                   lable: "Test Entry",
                                   index: 20,
+                                ),
+                                menuView(
+                                  context,
+                                  icon: Icons.shield_outlined,
+                                  lable: "Batch",
+                                  index: 22,
                                 )
                               ])
                         : const SizedBox(),
@@ -756,6 +763,8 @@ class _SideBarState extends State<SideBar> {
 
       case 21:
         route = const ThemeChange();
+      case 22:
+        route = const Update1110();
 
       default:
         route = const UserHome();

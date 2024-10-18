@@ -87,6 +87,8 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                   .then((products) {
                 if (products != null && products.docs.isNotEmpty) {
                   for (var product in products.docs) {
+                    Map<String, dynamic> p =
+                        product.data() as Map<String, dynamic>;
                     var productDataModel = ProductDataModel();
                     productDataModel.categoryid = product["category_id"];
                     productDataModel.categoryName = product["category_name"];
@@ -96,13 +98,20 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                     productDataModel.qty = product["qty"];
                     productDataModel.productCode =
                         product["product_code"] ?? "";
-                    productDataModel.productType =
-                        product["discount_lock"] || product["discount"] == null
-                            ? ProductType.netRated
-                            : ProductType.discounted;
+                    productDataModel.productType = product["discount_lock"] ||
+                            (p.containsKey('discount')
+                                ? product["discount"] != null
+                                : false)
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+                    productDataModel.hsnCode = (p.containsKey('hsn_code')
+                        ? product["hsn_code"]
+                        : null);
+                    productDataModel.taxValue = (p.containsKey('tax_value')
+                        ? product["hsn_code"]
+                        : null);
                     productDataModel.discountLock = product["discount_lock"];
-                    productDataModel.hsnCode = product["hsn_code"];
-                    productDataModel.taxValue = product["tax_value"];
+
                     if (productDataModel.categoryid != null &&
                         productDataModel.categoryid!.isNotEmpty) {
                       var getCategoryid = categoryList.indexWhere((elements) =>
@@ -872,571 +881,563 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else {
                   return RefreshIndicator(
-                      color: Theme.of(context).primaryColor,
-                      onRefresh: () async {
-                        setState(() {
-                          enquiryDetailsHandler = getEnquiryData();
-                        });
-                      },
-                      child: ListView(
-                        padding: const EdgeInsets.all(10),
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Options",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium!
-                                      .copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    IconButton(
-                                      onPressed: sharePDF,
-                                      icon: const Icon(Icons.share),
-                                    ),
-                                    IconButton(
-                                      tooltip: "Print Estimate",
-                                      splashRadius: 29,
-                                      onPressed: () {
-                                        printEstimate();
-                                      },
-                                      icon: const Icon(
-                                        Icons.print,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      tooltip: "Copy Estimate",
-                                      splashRadius: 29,
-                                      onPressed: () async {
-                                        await confirmationDialog(
-                                          context,
-                                          title: "Alert",
-                                          message:
-                                              "Do you want Duplicate Estimate?",
-                                        ).then((value) {
-                                          if (value != null && value == true) {
-                                            duplicateEstimate();
-                                          }
-                                        });
-                                      },
-                                      icon: const Icon(
-                                        Icons.copy,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      tooltip: "Download PDF",
-                                      splashRadius: 29,
-                                      onPressed: () async {
-                                        await confirmationDialog(
-                                          context,
-                                          title: "Alert",
-                                          message:
-                                              "Do you want Download Estimate?",
-                                        ).then((value) {
-                                          if (value != null && value == true) {
-                                            downloadPrintEnquiry();
-                                          }
-                                        });
-                                      },
-                                      icon: const Icon(
-                                        Icons.file_download_outlined,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      tooltip: "Delete Estimate",
-                                      splashRadius: 29,
-                                      onPressed: () async {
-                                        await confirmationDialog(
-                                          context,
-                                          title: "Alert",
-                                          message:
-                                              "Do you want delete estimate?",
-                                        ).then((value) {
-                                          if (value != null && value == true) {
-                                            deleteEnquiry();
-                                          }
-                                        });
-                                      },
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                    color: Theme.of(context).primaryColor,
+                    onRefresh: () async {
+                      setState(() {
+                        enquiryDetailsHandler = getEnquiryData();
+                      });
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.all(10),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(
-                            height: 10,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Options",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed: sharePDF,
+                                    icon: const Icon(Icons.share),
+                                  ),
+                                  IconButton(
+                                    tooltip: "Print Estimate",
+                                    splashRadius: 29,
+                                    onPressed: () {
+                                      printEstimate();
+                                    },
+                                    icon: const Icon(
+                                      Icons.print,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: "Copy Estimate",
+                                    splashRadius: 29,
+                                    onPressed: () async {
+                                      await confirmationDialog(
+                                        context,
+                                        title: "Alert",
+                                        message:
+                                            "Do you want Duplicate Estimate?",
+                                      ).then((value) {
+                                        if (value != null && value == true) {
+                                          duplicateEstimate();
+                                        }
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.copy,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: "Download PDF",
+                                    splashRadius: 29,
+                                    onPressed: () async {
+                                      await confirmationDialog(
+                                        context,
+                                        title: "Alert",
+                                        message:
+                                            "Do you want Download Estimate?",
+                                      ).then((value) {
+                                        if (value != null && value == true) {
+                                          downloadPrintEnquiry();
+                                        }
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.file_download_outlined,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: "Delete Estimate",
+                                    splashRadius: 29,
+                                    onPressed: () async {
+                                      await confirmationDialog(
+                                        context,
+                                        title: "Alert",
+                                        message: "Do you want delete estimate?",
+                                      ).then((value) {
+                                        if (value != null && value == true) {
+                                          deleteEnquiry();
+                                        }
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "Estimate Details",
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Table(
-                                  children: [
-                                    tableRow(
-                                        "Estimate No",
-                                        estimateData.estimateid ??
-                                            estimateData.referenceId,
-                                        true,
-                                        () {}),
-                                    tableRow(
-                                        "Estimate Date",
-                                        DateFormat('dd-MM-yyyy HH:mm a')
-                                            .format(estimateData.createddate!),
-                                        false,
-                                        () {}),
-                                  ],
-                                ),
-                                if (connectionProvider.isConnected)
-                                  Visibility(
-                                    visible: invoiceEntry,
-                                    child: Center(
-                                      child: TextButton(
-                                        onPressed: () async {
-                                          await confirmationDialog(
-                                            context,
-                                            title: "Alert",
-                                            message:
-                                                "Do you want Convert the Bill of Supply?",
-                                          ).then((value) {
-                                            if (value != null &&
-                                                value == true) {
-                                              InvoiceModel model =
-                                                  InvoiceModel();
-                                              model.state =
-                                                  estimateData.customer?.state!;
-                                              model.city =
-                                                  estimateData.customer?.city!;
-                                              model.gstType = null;
-                                              model.isEstimateConverted = true;
-                                              model.address = estimateData
-                                                      .customer?.address ??
-                                                  "";
-                                              model.deliveryaddress =
-                                                  estimateData
-                                                          .customer?.address ??
-                                                      "";
-                                              model.partyName = estimateData
-                                                      .customer?.customerName ??
-                                                  "";
-                                              model.phoneNumber = estimateData
-                                                      .customer?.mobileNo ??
-                                                  "";
-                                              model.totalBillAmount =
-                                                  estimateData.price?.total
-                                                          ?.toStringAsFixed(
-                                                              2) ??
-                                                      "";
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "Estimate Details",
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Table(
+                                children: [
+                                  tableRow(
+                                      "Estimate No",
+                                      estimateData.estimateid ??
+                                          estimateData.referenceId,
+                                      true,
+                                      () {}),
+                                  tableRow(
+                                      "Estimate Date",
+                                      DateFormat('dd-MM-yyyy HH:mm a')
+                                          .format(estimateData.createddate!),
+                                      false,
+                                      () {}),
+                                ],
+                              ),
+                              if (connectionProvider.isConnected)
+                                Visibility(
+                                  visible: invoiceEntry,
+                                  child: Center(
+                                    child: TextButton(
+                                      onPressed: () async {
+                                        await confirmationDialog(
+                                          context,
+                                          title: "Alert",
+                                          message:
+                                              "Do you want Convert the Bill of Supply?",
+                                        ).then((value) {
+                                          if (value != null && value == true) {
+                                            InvoiceModel model = InvoiceModel();
+                                            model.state =
+                                                estimateData.customer?.state!;
+                                            model.city =
+                                                estimateData.customer?.city!;
+                                            model.gstType = null;
+                                            model.isEstimateConverted = true;
+                                            model.address = estimateData
+                                                    .customer?.address ??
+                                                "";
+                                            model.deliveryaddress = estimateData
+                                                    .customer?.address ??
+                                                "";
+                                            model.partyName = estimateData
+                                                    .customer?.customerName ??
+                                                "";
+                                            model.phoneNumber = estimateData
+                                                    .customer?.mobileNo ??
+                                                "";
+                                            model.totalBillAmount = estimateData
+                                                    .price?.total
+                                                    ?.toStringAsFixed(2) ??
+                                                "";
 
-                                              model.price = estimateData.price;
-                                              model.listingProducts = [];
-                                              for (var element
-                                                  in estimateData.products!) {
-                                                InvoiceProductModel
-                                                    productElement =
-                                                    InvoiceProductModel();
-                                                productElement.productID =
-                                                    element.productId;
-                                                productElement.productName =
-                                                    element.productName;
-                                                productElement.qty =
-                                                    element.qty;
-                                                productElement.rate =
-                                                    element.price;
-                                                productElement.hsnCode =
-                                                    element.hsnCode;
-                                                productElement.taxValue =
-                                                    element.taxValue;
-                                                productElement.productType =
-                                                    element.productType;
-                                                productElement.total =
-                                                    element.qty!.toDouble() *
-                                                        element.price!;
-                                                productElement.unit =
-                                                    element.productContent;
-                                                productElement.discountLock =
-                                                    element.discountLock;
-                                                productElement.discount =
-                                                    element.discount;
+                                            model.price = estimateData.price;
+                                            model.listingProducts = [];
+                                            for (var element
+                                                in estimateData.products!) {
+                                              InvoiceProductModel
+                                                  productElement =
+                                                  InvoiceProductModel();
+                                              productElement.productID =
+                                                  element.productId;
+                                              productElement.productName =
+                                                  element.productName;
+                                              productElement.qty = element.qty;
+                                              productElement.rate =
+                                                  element.price;
+                                              productElement.hsnCode =
+                                                  element.hsnCode;
+                                              productElement.taxValue =
+                                                  element.taxValue;
+                                              productElement.productType =
+                                                  element.productType;
+                                              productElement.total =
+                                                  element.qty!.toDouble() *
+                                                      element.price!;
+                                              productElement.unit =
+                                                  element.productContent;
+                                              productElement.discountLock =
+                                                  element.discountLock;
+                                              productElement.discount =
+                                                  element.discount;
 
-                                                productElement.categoryID =
-                                                    element.categoryid;
-                                                model.listingProducts!
-                                                    .add(productElement);
-                                              }
-                                              Navigator.push(
-                                                context,
-                                                CupertinoPageRoute(
-                                                  builder: (context) =>
-                                                      InvoiceCreation(
-                                                    fromEstimate: true,
-                                                    estimateNo:
-                                                        estimateData.estimateid,
-                                                    invoice: model,
-                                                  ),
-                                                ),
-                                              );
+                                              productElement.categoryID =
+                                                  element.categoryid;
+                                              model.listingProducts!
+                                                  .add(productElement);
                                             }
-                                          });
-                                        },
-                                        child: const Text(
-                                            "Convert to Bill of Supply"),
-                                      ),
+                                            Navigator.push(
+                                              context,
+                                              CupertinoPageRoute(
+                                                builder: (context) =>
+                                                    InvoiceCreation(
+                                                  fromEstimate: true,
+                                                  estimateNo:
+                                                      estimateData.estimateid,
+                                                  invoice: model,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        });
+                                      },
+                                      child: const Text(
+                                          "Convert to Bill of Supply"),
                                     ),
                                   ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "Price",
-                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
-                                const SizedBox(
-                                  height: 10,
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        estimateData.customer != null
+                            ? Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                Table(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    tableRow(
-                                        "Sub Total",
-                                        "Rs.${estimateData.price!.subTotal}",
-                                        false,
-                                        () {}),
-                                    tableRow(
-                                        "Discount",
-                                        "Rs.${estimateData.price!.discountValue}",
-                                        false, () async {
-                                      await showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return DiscountDetailProduct(
-                                              productData:
-                                                  estimateData.products!);
-                                        },
-                                      );
-                                    }),
-                                    tableRow(
-                                        "Extra Discount (${estimateData.price!.extraDiscountsys == "%" ? '${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}'})",
-                                        "Rs.${estimateData.price!.extraDiscountValue}",
-                                        false,
-                                        () {}),
-                                    tableRow(
-                                        "Package Charge (${estimateData.price!.packagesys == "%" ? '${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}%' : 'Rs ${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}'})",
-                                        "Rs.${estimateData.price!.packageValue}",
-                                        false,
-                                        () {}),
-                                    tableRow(
-                                        "Round Off",
-                                        "Rs.${estimateData.price!.roundOff}",
-                                        false,
-                                        () {}),
-                                    tableRow(
-                                        "Total",
-                                        "Rs.${estimateData.price!.total}",
-                                        true,
-                                        () {}),
+                                    Text(
+                                      "Customer",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge,
+                                    ),
+                                    const SizedBox(
+                                      height: 10,
+                                    ),
+                                    Table(
+                                      children: [
+                                        tableRow(
+                                            "Customer Name",
+                                            estimateData.customer!.customerName,
+                                            true,
+                                            () {}),
+                                        tableRow(
+                                            "City",
+                                            estimateData.customer!.city,
+                                            false,
+                                            () {}),
+                                        tableRow(
+                                            "Address",
+                                            estimateData.customer!.address,
+                                            false,
+                                            () {}),
+                                        tableRow(
+                                            "Email",
+                                            estimateData.customer!.email,
+                                            false,
+                                            () {}),
+                                        tableRow(
+                                            "Mobile No",
+                                            estimateData.customer!.mobileNo,
+                                            false,
+                                            () {}),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              )
+                            : const SizedBox(),
+                        estimateData.customer != null
+                            ? const SizedBox(
+                                height: 10,
+                              )
+                            : const SizedBox(),
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          estimateData.customer != null
-                              ? Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Products(${estimateData.products!.length})",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge!
+                                        .copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
+                                  Text(
+                                    "Items(${itemCount()})",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall!
+                                        .copyWith(
+                                          color: Colors.grey,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Table(
+                                columnWidths: const {
+                                  0: FlexColumnWidth(1.5),
+                                  1: FlexColumnWidth(7),
+                                  2: FlexColumnWidth(1.5),
+                                  3: FlexColumnWidth(4),
+                                  4: FlexColumnWidth(4),
+                                },
+                                children: [
+                                  TableRow(
                                     children: [
-                                      Text(
-                                        "Customer",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge,
+                                      Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 2, vertical: 5),
+                                          child: Text(
+                                            "#",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ),
                                       ),
-                                      const SizedBox(
-                                        height: 10,
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 2, vertical: 5),
+                                        child: Text(
+                                          "Name",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
                                       ),
-                                      Table(
-                                        children: [
-                                          tableRow(
-                                              "Customer Name",
-                                              estimateData
-                                                  .customer!.customerName,
-                                              true,
-                                              () {}),
-                                          tableRow(
-                                              "City",
-                                              estimateData.customer!.city,
-                                              false,
-                                              () {}),
-                                          tableRow(
-                                              "Address",
-                                              estimateData.customer!.address,
-                                              false,
-                                              () {}),
-                                          tableRow(
-                                              "Email",
-                                              estimateData.customer!.email,
-                                              false,
-                                              () {}),
-                                          tableRow(
-                                              "Mobile No",
-                                              estimateData.customer!.mobileNo,
-                                              false,
-                                              () {}),
-                                        ],
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 2, vertical: 5),
+                                        child: Text(
+                                          "Qty",
+                                          textAlign: TextAlign.center,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 2, vertical: 5),
+                                        child: Text(
+                                          "Rate",
+                                          textAlign: TextAlign.right,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 2, vertical: 5),
+                                        child: Text(
+                                          "Total",
+                                          textAlign: TextAlign.right,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
                                       ),
                                     ],
                                   ),
-                                )
-                              : const SizedBox(),
-                          estimateData.customer != null
-                              ? const SizedBox(
-                                  height: 10,
-                                )
-                              : const SizedBox(),
-                          Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Products(${estimateData.products!.length})",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge!
-                                          .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    Text(
-                                      "Items(${itemCount()})",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall!
-                                          .copyWith(
-                                            color: Colors.grey,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Table(
-                                  columnWidths: const {
-                                    0: FlexColumnWidth(1.5),
-                                    1: FlexColumnWidth(7),
-                                    2: FlexColumnWidth(1.5),
-                                    3: FlexColumnWidth(4),
-                                    4: FlexColumnWidth(4),
-                                  },
-                                  children: [
+                                  for (int index = 0;
+                                      index < estimateData.products!.length;
+                                      index++)
                                     TableRow(
+                                      decoration: BoxDecoration(
+                                        border: estimateData.products!.length !=
+                                                (index + 1)
+                                            ? Border(
+                                                bottom: BorderSide(
+                                                  color: Colors.grey.shade300,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
                                       children: [
                                         Center(
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 2, vertical: 5),
+                                            padding: const EdgeInsets.all(2),
                                             child: Text(
-                                              "#",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyLarge!
-                                                  .copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
+                                              (index + 1).toString(),
+                                              textAlign: TextAlign.center,
                                             ),
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 2, vertical: 5),
-                                          child: Text(
-                                            "Name",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
+                                          padding: const EdgeInsets.all(2),
+                                          child: Text(estimateData
+                                                  .products![index]
+                                                  .productName ??
+                                              ""),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 2, vertical: 5),
+                                          padding: const EdgeInsets.all(2),
                                           child: Text(
-                                            "Qty",
+                                            estimateData.products![index].qty
+                                                .toString(),
                                             textAlign: TextAlign.center,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 2, vertical: 5),
+                                          padding: const EdgeInsets.all(2),
                                           child: Text(
-                                            "Rate",
+                                            double.parse(estimateData
+                                                    .products![index].price
+                                                    .toString())
+                                                .toStringAsFixed(2),
                                             textAlign: TextAlign.right,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 2, vertical: 5),
+                                          padding: const EdgeInsets.all(2),
                                           child: Text(
-                                            "Total",
+                                            double.parse((estimateData
+                                                            .products![index]
+                                                            .qty! *
+                                                        estimateData
+                                                            .products![index]
+                                                            .price!)
+                                                    .toString())
+                                                .toStringAsFixed(2),
                                             textAlign: TextAlign.right,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    for (int index = 0;
-                                        index < estimateData.products!.length;
-                                        index++)
-                                      TableRow(
-                                        decoration: BoxDecoration(
-                                          border: estimateData
-                                                      .products!.length !=
-                                                  (index + 1)
-                                              ? Border(
-                                                  bottom: BorderSide(
-                                                    color: Colors.grey.shade300,
-                                                  ),
-                                                )
-                                              : null,
-                                        ),
-                                        children: [
-                                          Center(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(2),
-                                              child: Text(
-                                                (index + 1).toString(),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(2),
-                                            child: Text(estimateData
-                                                    .products![index]
-                                                    .productName ??
-                                                ""),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(2),
-                                            child: Text(
-                                              estimateData.products![index].qty
-                                                  .toString(),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(2),
-                                            child: Text(
-                                              double.parse(estimateData
-                                                      .products![index].price
-                                                      .toString())
-                                                  .toStringAsFixed(2),
-                                              textAlign: TextAlign.right,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(2),
-                                            child: Text(
-                                              double.parse((estimateData
-                                                              .products![index]
-                                                              .qty! *
-                                                          estimateData
-                                                              .products![index]
-                                                              .price!)
-                                                      .toString())
-                                                  .toStringAsFixed(2),
-                                              textAlign: TextAlign.right,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 80),
-                        ],
-                      ));
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "Price",
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Table(
+                                children: [
+                                  tableRow(
+                                      "Sub Total",
+                                      "Rs.${estimateData.price!.subTotal}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Discount",
+                                      "Rs.${estimateData.price!.discountValue}",
+                                      false, () async {
+                                    await showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return DiscountDetailProduct(
+                                            productData:
+                                                estimateData.products!);
+                                      },
+                                    );
+                                  }),
+                                  tableRow(
+                                      "Extra Discount (${estimateData.price!.extraDiscountsys == "%" ? '${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}%' : 'Rs ${estimateData.price!.extraDiscount != null ? (estimateData.price!.extraDiscount)!.round() : ""}'})",
+                                      "Rs.${estimateData.price!.extraDiscountValue}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Package Charge (${estimateData.price!.packagesys == "%" ? '${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}%' : 'Rs ${estimateData.price!.package != null ? (estimateData.price!.package)!.round() : ""}'})",
+                                      "Rs.${estimateData.price!.packageValue}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Round Off",
+                                      "Rs.${estimateData.price!.roundOff}",
+                                      false,
+                                      () {}),
+                                  tableRow(
+                                      "Total",
+                                      "Rs.${estimateData.price!.total}",
+                                      true,
+                                      () {}),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+                  );
                 }
               }),
         ));

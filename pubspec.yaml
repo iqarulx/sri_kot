@@ -6,7 +6,7 @@ publish_to: 'none'
 # Testing Environtment. Version starts with 0
 # Production Environment. Version starts with 1
 # Previous Test version 0.0.1
-version: 0.0.4
+version: 1.0.12
 
 environment:
   sdk: '>=3.4.3 <4.0.0'

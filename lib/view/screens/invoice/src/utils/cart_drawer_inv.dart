@@ -1037,7 +1037,6 @@ class _CartDrawerInvState extends State<CartDrawerInv> {
                 invoice.unit = i.productContent;
                 invoice.taxValue = i.taxValue;
                 invoice.hsnCode = i.hsnCode;
-                invoice.qty = 1;
                 invoice.discount = i.discount;
                 invoice.qty = i.qty;
                 invoice.productType = i.discountLock! || i.discount == null

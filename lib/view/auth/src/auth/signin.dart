@@ -10,7 +10,6 @@ import '/provider/provider.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/view/screens/screens.dart';
-import '../register/register.dart';
 
 class Signin extends StatefulWidget {
   const Signin({super.key});

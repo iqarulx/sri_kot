@@ -128,6 +128,8 @@ class _EstimateListingState extends State<EstimateListing> {
                 .then((products) {
               if (products != null && products.docs.isNotEmpty) {
                 for (var product in products.docs) {
+                  Map<String, dynamic> p =
+                      product.data() as Map<String, dynamic>;
                   var productDataModel = ProductDataModel();
                   productDataModel.categoryid = product["category_id"];
                   productDataModel.categoryName = product["category_name"];
@@ -136,13 +138,18 @@ class _EstimateListingState extends State<EstimateListing> {
                   productDataModel.productName = product["product_name"];
                   productDataModel.qty = product["qty"];
                   productDataModel.productCode = product["product_code"] ?? "";
-                  productDataModel.productType =
-                      product["discount_lock"] || product["discount"] == null
-                          ? ProductType.netRated
-                          : ProductType.discounted;
+                  productDataModel.productType = product["discount_lock"] ||
+                          (p.containsKey('discount')
+                              ? product["discount"] != null
+                              : false)
+                      ? ProductType.netRated
+                      : ProductType.discounted;
+                  productDataModel.hsnCode =
+                      (p.containsKey('hsn_code') ? product["hsn_code"] : null);
+                  productDataModel.taxValue =
+                      (p.containsKey('tax_value') ? product["hsn_code"] : null);
+
                   productDataModel.discountLock = product["discount_lock"];
-                  productDataModel.hsnCode = product["hsn_code"];
-                  productDataModel.taxValue = product["tax_value"];
                   if (productDataModel.categoryid != null &&
                       productDataModel.categoryid!.isNotEmpty) {
                     var getCategoryid = categoryList.indexWhere((elements) =>
@@ -289,7 +296,106 @@ class _EstimateListingState extends State<EstimateListing> {
   downloadExcelData() async {
     try {
       loading(context);
-      await EnquiryExcel(enquiryData: enquiryList, isEstimate: true)
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+
+      var enquiry = await FireStore().getAllEstimate(cid: cid);
+      for (var enquiryData in enquiry) {
+        var calc = BillingCalCulationModel();
+        calc.discountValue = enquiryData["price"]["discount_value"];
+        calc.extraDiscount = enquiryData["price"]["extra_discount"];
+        calc.roundOff = enquiryData["price"]["round_off"];
+        calc.extraDiscountValue = enquiryData["price"]["extra_discount_value"];
+        calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+        calc.package = enquiryData["price"]["package"];
+        calc.packageValue = enquiryData["price"]["package_value"];
+        calc.packagesys = enquiryData["price"]["package_sys"];
+        calc.subTotal = enquiryData["price"]["sub_total"];
+        calc.total = enquiryData["price"]["total"];
+        calc.netratedTotal = enquiryData["price"]["netrated_total"];
+        calc.discountedTotal = enquiryData["price"]["discounted_total"];
+        calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+        calc.discounts = enquiryData["price"]["discounts"];
+
+        CustomerDataModel? customer = CustomerDataModel();
+        if (enquiryData["customer"] != null) {
+          customer.docID = enquiryData["customer"]["customer_id"];
+          customer.address = enquiryData["customer"]["address"];
+          customer.state = enquiryData["customer"]["state"];
+          customer.city = enquiryData["customer"]["city"];
+          customer.customerName = enquiryData["customer"]["customer_name"];
+          customer.email = enquiryData["customer"]["email"];
+          customer.mobileNo = enquiryData["customer"]["mobile_no"];
+        } else {
+          customer = null;
+        }
+
+        List<ProductDataModel> tmpProducts = [];
+
+        setState(() {
+          tmpProducts.clear();
+        });
+
+        await FireStore()
+            .getEstimateProducts(docid: enquiryData.id)
+            .then((products) {
+          if (products != null && products.docs.isNotEmpty) {
+            for (var product in products.docs) {
+              var productDataModel = ProductDataModel();
+              productDataModel.categoryid = product["category_id"];
+              productDataModel.categoryName = product["category_name"];
+              productDataModel.price = product["price"];
+
+              productDataModel.productId = product["product_id"];
+              productDataModel.productName = product["product_name"];
+              productDataModel.qty = product["qty"];
+              productDataModel.productCode = product["product_code"] ?? "";
+              productDataModel.discountLock = product["discount_lock"];
+              productDataModel.docid = product.id;
+              productDataModel.name = product["name"];
+              productDataModel.productContent = product["product_content"];
+              productDataModel.productImg = product["product_img"];
+              productDataModel.qrCode = product["qr_code"];
+              productDataModel.productType =
+                  product["discount_lock"] || product["discount"] == null
+                      ? ProductType.netRated
+                      : ProductType.discounted;
+              if (productDataModel.productType == ProductType.discounted) {
+                productDataModel.discountedPrice =
+                    double.parse(product["price"].toString()) -
+                        (double.parse(product["price"].toString()) *
+                            product["discount"] /
+                            100);
+              } else {
+                productDataModel.discountedPrice =
+                    double.parse(product["price"].toString());
+              }
+
+              setState(() {
+                tmpProducts.add(productDataModel);
+              });
+            }
+          }
+        });
+
+        setState(() {
+          tmpEnquiryList.add(
+            EstimateDataModel(
+              docID: enquiryData.id,
+              createddate: DateTime.parse(
+                enquiryData["created_date"].toDate().toString(),
+              ),
+              enquiryid: enquiryData['estimate_id'],
+              estimateid: enquiryData["estimate_id"],
+              price: calc,
+              customer: customer,
+              products: tmpProducts,
+              dataType: DataTypes.cloud,
+            ),
+          );
+        });
+      }
+
+      await EnquiryExcel(enquiryData: tmpEnquiryList, isEstimate: true)
           .createCustomerExcel()
           .then((value) async {
         Navigator.pop(context);
