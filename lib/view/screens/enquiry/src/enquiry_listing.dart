@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_date_range_picker/flutter_date_range_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
@@ -156,13 +157,14 @@ class _EnquiryListingState extends State<EnquiryListing> {
                   productDataModel.discountLock = product["discount_lock"];
                   productDataModel.docid = product.id;
                   productDataModel.name = product["name"];
-                 
+
                   productDataModel.productType = product["discount_lock"] ||
                           (p.containsKey('discount')
                               ? product["discount"] != null
                               : false)
                       ? ProductType.netRated
                       : ProductType.discounted;
+
                   productDataModel.hsnCode =
                       (p.containsKey('hsn_code') ? product["hsn_code"] : null);
                   productDataModel.taxValue =
@@ -200,6 +202,13 @@ class _EnquiryListingState extends State<EnquiryListing> {
         setState(() {
           tmpEnquiryList.addAll(enquiryList);
         });
+
+        enquiryList.sort((a, b) {
+          int numA = int.parse(a.enquiryid.toString().substring(7));
+          int numB = int.parse(b.enquiryid.toString().substring(7));
+          return numB.compareTo(numA);
+        });
+
         return enquiry;
       }
     } catch (e) {
@@ -426,13 +435,116 @@ class _EnquiryListingState extends State<EnquiryListing> {
   downloadExcelData() async {
     try {
       loading(context);
-      await EnquiryExcel(enquiryData: enquiryList, isEstimate: false)
+
+      List<EstimateDataModel> tmpList = [];
+
+      var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
+
+      if (cid != null) {
+        var enquiry = await FireStore().getAllEnquiry(cid: cid);
+        for (var enquiryData in enquiry) {
+          var calc = BillingCalCulationModel();
+          calc.discountValue = enquiryData["price"]["discount_value"];
+          calc.extraDiscount = enquiryData["price"]["extra_discount"];
+          calc.roundOff = enquiryData["price"]["round_off"];
+          calc.extraDiscountValue =
+              enquiryData["price"]["extra_discount_value"];
+          calc.extraDiscountsys = enquiryData["price"]["extra_discount_sys"];
+          calc.package = enquiryData["price"]["package"];
+          calc.packageValue = enquiryData["price"]["package_value"];
+          calc.packagesys = enquiryData["price"]["package_sys"];
+          calc.subTotal = enquiryData["price"]["sub_total"];
+          calc.total = enquiryData["price"]["total"];
+          calc.netratedTotal = enquiryData["price"]["netrated_total"];
+          calc.discountedTotal = enquiryData["price"]["discounted_total"];
+          calc.netPlusDisTotal = enquiryData["price"]["net_plus_dis_total"];
+          calc.discounts = enquiryData["price"]["discounts"];
+
+          CustomerDataModel? customer = CustomerDataModel();
+          if (enquiryData["customer"] != null) {
+            customer.docID = enquiryData["customer"]["customer_id"];
+            customer.address = enquiryData["customer"]["address"];
+            customer.state = enquiryData["customer"]["state"];
+            customer.city = enquiryData["customer"]["city"];
+            customer.customerName = enquiryData["customer"]["customer_name"];
+            customer.email = enquiryData["customer"]["email"];
+            customer.mobileNo = enquiryData["customer"]["mobile_no"];
+          }
+
+          List<ProductDataModel> tmpProducts = [];
+
+          setState(() {
+            tmpProducts.clear();
+          });
+
+          await FireStore()
+              .getEnquiryProducts(docid: enquiryData.id)
+              .then((products) {
+            if (products != null && products.docs.isNotEmpty) {
+              for (var product in products.docs) {
+                var productDataModel = ProductDataModel();
+                productDataModel.categoryid = product["category_id"];
+                productDataModel.categoryName = product["category_name"];
+                productDataModel.price = product["price"];
+
+                productDataModel.productId = product["product_id"];
+                productDataModel.productName = product["product_name"];
+                productDataModel.qty = product["qty"];
+                productDataModel.productCode = product["product_code"] ?? "";
+                productDataModel.discountLock = product["discount_lock"];
+                productDataModel.docid = product.id;
+                productDataModel.name = product["name"];
+                productDataModel.productContent = product["product_content"];
+                productDataModel.productImg = product["product_img"];
+                productDataModel.qrCode = product["qr_code"];
+                productDataModel.productType =
+                    product["discount_lock"] || product["discount"] == null
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+                if (productDataModel.productType == ProductType.discounted) {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString()) -
+                          (double.parse(product["price"].toString()) *
+                              product["discount"] /
+                              100);
+                } else {
+                  productDataModel.discountedPrice =
+                      double.parse(product["price"].toString());
+                }
+
+                setState(() {
+                  tmpProducts.add(productDataModel);
+                });
+              }
+            }
+          });
+
+          setState(() {
+            tmpList.add(
+              EstimateDataModel(
+                docID: enquiryData.id,
+                createddate: DateTime.parse(
+                  enquiryData["created_date"].toDate().toString(),
+                ),
+                enquiryid: enquiryData['enquiry_id'],
+                estimateid: enquiryData["estimate_id"],
+                price: calc,
+                customer: customer,
+                products: tmpProducts,
+                dataType: DataTypes.cloud,
+              ),
+            );
+          });
+        }
+      }
+
+      await EnquiryExcel(enquiryData: tmpList, isEstimate: false)
           .createCustomerExcel()
           .then((value) async {
         if (value != null) {
           Uint8List fileData = Uint8List.fromList(value);
           Navigator.pop(context);
-          await helper.saveAndLaunchFile(fileData, 'Estimate Listing.xlsx');
+          await helper.saveAndLaunchFile(fileData, 'Estimate List.xlsx');
         } else {
           Navigator.pop(context);
         }
@@ -1508,72 +1620,158 @@ class _EnquiryListingState extends State<EnquiryListing> {
     );
   }
 
+  bool filterEnabled = false;
+
   AppBar appbar(BuildContext context) {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
         onPressed: () => Navigator.of(context).pop(),
       ),
-      title: const Text("Enquiry"),
+      title: !filterEnabled
+          ? const Text("Enquiry")
+          : Form(
+              key: searchKey,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: search,
+                      keyboardType: TextInputType.text,
+                      autofocus: false,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.normal, color: Colors.black),
+                      decoration: InputDecoration(
+                        hintText: 'Search by bill no, name, city, mobile no',
+                        contentPadding:
+                            const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                    child: DateRangeFormField(
+                      decoration: InputDecoration(
+                        hintText: "Select Date",
+                        suffixIcon: const Icon(
+                          Icons.date_range,
+                          color: Color(0xff7099c2),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                      pickerBuilder: (x, y) => datePickerBuilder(x, y, false),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                    child: TextFormField(
+                      controller: search,
+                      keyboardType: TextInputType.text,
+                      autofocus: false,
+                      readOnly: true,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.normal, color: Colors.black),
+                      onTap: () {
+                        chooseCustomer();
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Customer',
+                        contentPadding:
+                            const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
       actions: [
-        IconButton(
-          tooltip: "Add Enquiry",
-          onPressed: () async {
-            Navigator.pop(context);
-            await LocalDB.getBillingIndex().then((value) async {
-              if (value != null) {
-                final result = await Navigator.push(
-                  context,
-                  CupertinoPageRoute(builder: (context) {
-                    if (value == 1) {
-                      return const BillingOne();
-                    } else {
-                      return const BillingTwo();
+        if (!filterEnabled)
+          Row(
+            children: [
+              IconButton(
+                tooltip: "Add Enquiry",
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await LocalDB.getBillingIndex().then((value) async {
+                    if (value != null) {
+                      final result = await Navigator.push(
+                        context,
+                        CupertinoPageRoute(builder: (context) {
+                          if (value == 1) {
+                            return const BillingOne();
+                          } else {
+                            return const BillingTwo();
+                          }
+                        }),
+                      );
                     }
-                  }),
-                );
-              }
-            });
-          },
-          icon: const Icon(Icons.add),
-        ),
-        IconButton(
-          onPressed: () {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final connectionProvider =
-                  Provider.of<ConnectionProvider>(context, listen: false);
-              if (connectionProvider.isConnected) {
-                AccountValid.accountValid(context);
+                  });
+                },
+                icon: const Icon(Icons.add),
+              ),
+              IconButton(
+                onPressed: () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    final connectionProvider =
+                        Provider.of<ConnectionProvider>(context, listen: false);
+                    if (connectionProvider.isConnected) {
+                      AccountValid.accountValid(context);
 
-                enquiryHandler = getEnquiryInfo();
-              } else {
-                enquiryHandler = getOfflineEnquiryInfo();
-              }
-            });
+                      enquiryHandler = getEnquiryInfo();
+                    } else {
+                      enquiryHandler = getOfflineEnquiryInfo();
+                    }
+                  });
 
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final connectionProvider =
-                  Provider.of<ConnectionProvider>(context, listen: false);
-              connectionProvider.addListener(() {
-                if (connectionProvider.isConnected) {
-                  AccountValid.accountValid(context);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    final connectionProvider =
+                        Provider.of<ConnectionProvider>(context, listen: false);
+                    connectionProvider.addListener(() {
+                      if (connectionProvider.isConnected) {
+                        AccountValid.accountValid(context);
 
-                  enquiryHandler = getEnquiryInfo();
-                } else {
-                  enquiryHandler = getOfflineEnquiryInfo();
-                }
-              });
-            });
-          },
-          icon: const Icon(Icons.refresh),
-        ),
-        IconButton(
-          tooltip: "Download Excel File",
-          onPressed: () {
-            downloadExcelData();
-          },
-          icon: const Icon(Icons.file_download_outlined),
-        ),
+                        enquiryHandler = getEnquiryInfo();
+                      } else {
+                        enquiryHandler = getOfflineEnquiryInfo();
+                      }
+                    });
+                  });
+                },
+                icon: const Icon(Icons.refresh),
+              ),
+              IconButton(
+                tooltip: "Download Excel File",
+                onPressed: () {
+                  downloadExcelData();
+                },
+                icon: const Icon(Icons.file_download_outlined),
+              ),
+              // IconButton(
+              //   tooltip: "Filter",
+              //   onPressed: () {
+              //     if (MediaQuery.of(context).size.width > 600) {
+              //       filterEnabled = true;
+              //       setState(() {});
+              //     } else {
+              //       billFilters();
+              //     }
+              //   },
+              //   icon: const Icon(Icons.filter_list_outlined),
+              // ),
+            ],
+          ),
       ],
     );
   }
@@ -1600,6 +1798,43 @@ class _EnquiryListingState extends State<EnquiryListing> {
       child: Text("100"),
     ),
   ];
+  TextEditingController search = TextEditingController();
+  TextEditingController customer = TextEditingController();
+  CustomerDataModel customerInfo = CustomerDataModel();
+  DateRange? selectedDateRange;
+  final searchKey = GlobalKey<FormState>();
+
+  chooseCustomer() async {
+    await showModalBottomSheet(
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (builder) {
+        return const FractionallySizedBox(
+          heightFactor: 0.9,
+          child: CustomerSearchView(),
+        );
+      },
+    ).then(
+      (value) {
+        if (value != null) {
+          customerInfo = value;
+          customer.text =
+              "${customerInfo.customerName} - ${customerInfo.mobileNo}";
+          setState(() {});
+        }
+      },
+    );
+  }
 
   billOptions(String title, int index) async {
     await showModalBottomSheet(
@@ -1655,5 +1890,38 @@ class _EnquiryListingState extends State<EnquiryListing> {
         });
       }
     });
+  }
+
+  Widget datePickerBuilder(
+      BuildContext context, dynamic Function(DateRange?) onDateRangeChanged,
+      [bool doubleMonth = true]) {
+    return DateRangePickerWidget(
+      doubleMonth: doubleMonth,
+      minimumDateRangeLength: 1,
+      initialDateRange: selectedDateRange,
+      initialDisplayedDate: selectedDateRange?.start ?? DateTime.now(),
+      onDateRangeChanged: (DateRange? newRange) {
+        setState(() {
+          selectedDateRange = newRange;
+        });
+        onDateRangeChanged(newRange);
+      },
+      height: 350,
+      theme: const CalendarTheme(
+        selectedColor: Colors.blue,
+        dayNameTextStyle: TextStyle(color: Colors.black, fontSize: 10),
+        inRangeColor: Color(0xFFD9EDFA),
+        inRangeTextStyle: TextStyle(color: Colors.black),
+        selectedTextStyle: TextStyle(color: Colors.black),
+        todayTextStyle:
+            TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        defaultTextStyle: TextStyle(color: Colors.black, fontSize: 12),
+        radius: 10,
+        tileSize: 40,
+        disabledTextStyle: TextStyle(color: Colors.grey),
+        quickDateRangeBackgroundColor: Color(0xFFFFF9F9),
+        selectedQuickDateRangeColor: Colors.blue,
+      ),
+    );
   }
 }

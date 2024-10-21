@@ -957,7 +957,7 @@ class _StaffDetailsState extends State<StaffDetails> {
     loading(context);
     try {
       await Storage()
-          .deleteImage(widget.staffDetails.profileImg ?? '')
+          .deleteImage(widget.staffDetails.profileImg)
           .then((value) async {
         var downloadLink = await Storage().uploadImage(
           fileData: image,
@@ -996,7 +996,7 @@ class _StaffDetailsState extends State<StaffDetails> {
         if (value != null && value == true) {
           loading(context);
           await Storage()
-              .deleteImage(widget.staffDetails.profileImg ?? '')
+              .deleteImage(widget.staffDetails.profileImg)
               .then((value) async {
             await FireStore()
                 .deleteStaff(docID: widget.staffDetails.docID!)

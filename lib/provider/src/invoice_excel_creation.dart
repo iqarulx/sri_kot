@@ -26,6 +26,14 @@ class InvoiceExcel {
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 0)).value =
         TextCellValue('Invoice Date');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: 0)).value =
+        TextCellValue('Subtotal');
+    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: 0)).value =
+        TextCellValue('Discount');
+    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: 0)).value =
+        TextCellValue('Extra Discount');
+    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: 0)).value =
+        TextCellValue('Packing Charges');
+    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 9, rowIndex: 0)).value =
         TextCellValue('Total Amount');
 
     for (var i = 0; i < inviceData.length; i++) {
@@ -48,6 +56,34 @@ class InvoiceExcel {
           .format(inviceData[i].billDate!));
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: (i + 1)))
+          .value = TextCellValue(inviceData[
+              i]
+          .price!
+          .subTotal!
+          .toStringAsFixed(2));
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: (i + 1)))
+          .value = TextCellValue(inviceData[
+              i]
+          .price!
+          .discountValue!
+          .toStringAsFixed(2));
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: (i + 1)))
+          .value = TextCellValue(inviceData[
+              i]
+          .price!
+          .extraDiscountValue!
+          .toStringAsFixed(2));
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: (i + 1)))
+          .value = TextCellValue(inviceData[
+              i]
+          .price!
+          .packageValue!
+          .toStringAsFixed(2));
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 9, rowIndex: (i + 1)))
           .value = TextCellValue(inviceData[i].totalBillAmount ?? "");
     }
 

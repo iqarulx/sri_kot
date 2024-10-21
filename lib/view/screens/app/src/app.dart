@@ -63,6 +63,8 @@ class _UserHomeState extends State<UserHome> {
     });
   }
 
+  bool invoiceEntry = false;
+
   Future<void> initFunction() async {
     await getinfo();
     await Future.wait([
@@ -70,8 +72,18 @@ class _UserHomeState extends State<UserHome> {
       getEnquiryCount(),
       getEstimateCount(),
       getProductCount(),
-      profileImage()
+      profileImage(),
+      getInvoiceEntry(),
     ]);
+  }
+
+  Future getInvoiceEntry() async {
+    var fireStore = FireStore();
+    var result = await fireStore.getInvoiceAvailable(
+        uid: await LocalDB.fetchInfo(type: LocalData.companyid) ?? '');
+    setState(() {
+      invoiceEntry = result ?? false;
+    });
   }
 
   Future<void> initFunctionOffline() async {
@@ -499,46 +511,47 @@ class _UserHomeState extends State<UserHome> {
                           ],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const InvoiceListing(),
-                            ),
-                          );
-                        },
-                        child: Column(
-                          children: [
-                            Container(
-                              constraints: const BoxConstraints(
-                                maxHeight: 50,
-                                maxWidth: 50,
+                      if (invoiceEntry)
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const InvoiceListing(),
                               ),
-                              decoration: const BoxDecoration(
-                                color: Color(0xff5F6F94),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  CupertinoIcons.tags,
-                                  color: Colors.white,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                constraints: const BoxConstraints(
+                                  maxHeight: 50,
+                                  maxWidth: 50,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xff5F6F94),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    CupertinoIcons.tags,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Text(
-                              "Bill of Supply",
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 12,
+                              const SizedBox(
+                                height: 5,
                               ),
-                            )
-                          ],
+                              Text(
+                                "Bill of Supply",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                  fontSize: 12,
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                      ),
                       GestureDetector(
                         onTap: () {
                           Navigator.push(

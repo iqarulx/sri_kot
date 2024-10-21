@@ -87,12 +87,14 @@ class Storage {
     return downloadLink;
   }
 
-  Future deleteImage(String imageUrl) async {
+  Future deleteImage(String? imageUrl) async {
     try {
-      final Reference storageRef =
-          FirebaseStorage.instance.refFromURL(imageUrl);
+      if (imageUrl != null) {
+        final Reference storageRef =
+            FirebaseStorage.instance.refFromURL(imageUrl);
 
-      await storageRef.delete();
+        await storageRef.delete();
+      }
     } catch (e) {
       print("Error deleting image: ${e.toString()}");
     }

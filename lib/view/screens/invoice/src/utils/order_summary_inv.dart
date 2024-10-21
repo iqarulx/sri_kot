@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:sri_kot/services/firebase/src/bill_no.dart';
 import '/utils/src/utilities.dart';
 import '/view/ui/src/table_row.dart';
 import '/services/services.dart';
@@ -141,7 +142,7 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
 
   getBillNo() async {
     if (widget.billType == BillType.invoice) {
-      billNo = await FireStore().getLastInvoiceNumber();
+      billNo = await BillNo.genBillNo(type: BillType.invoice);
       setState(() {});
     }
   }
@@ -1214,7 +1215,7 @@ class _OrderSummaryInvState extends State<OrderSummaryInv> {
       }
       model.createdDate = DateTime.now();
       model.billDate = DateTime.now();
-      model.billNo = billNo;
+      model.billNo = null;
       model.isEstimateConverted = false;
 
       if (!calc.total!.isNegative) {

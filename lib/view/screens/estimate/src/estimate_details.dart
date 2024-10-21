@@ -111,14 +111,17 @@ class _EstimateDetailsState extends State<EstimateDetails> {
                         ? product["hsn_code"]
                         : null);
                     productDataModel.discountLock = product["discount_lock"];
+                    productDataModel.discount = (p.containsKey('discount')
+                        ? product["discount"]
+                        : null);
 
-                    if (productDataModel.categoryid != null &&
-                        productDataModel.categoryid!.isNotEmpty) {
-                      var getCategoryid = categoryList.indexWhere((elements) =>
-                          elements.tmpcatid == productDataModel.categoryid);
-                      productDataModel.discount =
-                          categoryList[getCategoryid].discount;
-                    }
+                    // if (productDataModel.categoryid != null &&
+                    //     productDataModel.categoryid!.isNotEmpty) {
+                    //   var getCategoryid = categoryList.indexWhere((elements) =>
+                    //       elements.tmpcatid == productDataModel.categoryid);
+                    //   productDataModel.discount =
+                    //       categoryList[getCategoryid].discount;
+                    // }
                     productDataModel.docid = product.id;
                     productDataModel.name = product["name"];
                     productDataModel.productContent =

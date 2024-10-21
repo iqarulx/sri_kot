@@ -754,6 +754,7 @@ class _BillingOneEditState extends State<BillingOneEdit>
               tmpProductDetails.discount!.toDouble() /
               100);
     }
+
     setState(() {
       cartDataList.add(cartDataInfo);
     });
@@ -1229,6 +1230,7 @@ class _BillingOneEditState extends State<BillingOneEdit>
             productInfo.productImg = product["product_img"];
             productInfo.discount = product["discount"];
             productInfo.price = double.parse(product["price"].toString());
+
             productInfo.productType =
                 product["discount_lock"] || product["discount"] == null
                     ? ProductType.netRated
@@ -1297,6 +1299,10 @@ class _BillingOneEditState extends State<BillingOneEdit>
 
                 if (catId != -1 && proId != -1) {
                   setState(() {
+                    elements.productType = (elements.discountLock ?? false) ||
+                            (elements.discount == null)
+                        ? ProductType.netRated
+                        : ProductType.discounted;
                     if (elements.productType == ProductType.discounted) {
                       elements.discountedPrice = double.parse(
                               billingProductList[catId]
@@ -1368,6 +1374,11 @@ class _BillingOneEditState extends State<BillingOneEdit>
                 }
                 if (catId != -1 && proId != -1) {
                   setState(() {
+                    elements.productType = (elements.discountLock ?? false) ||
+                            (elements.discount == null)
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+
                     if (elements.productType == ProductType.discounted) {
                       elements.discountedPrice = double.parse(
                               billingProductList[catId]

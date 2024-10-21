@@ -32,36 +32,39 @@ class Version1110Function {
   static Future updateCategory() async {
     try {
       // pl = profile list
-      var pl = await getCompany();
+      // var pl = await getCompany();
 
-      if (pl.isNotEmpty) {
-        for (var i in pl) {
-          // cl = category list
-          var cl = await _category.where('company_id', isEqualTo: i).get();
-          for (var j in cl.docs) {
-            Map<String, dynamic> c = j.data();
-            if (!c.containsKey('hsn_code') && !c.containsKey('tax_value')) {
-              await _category
-                  .doc(j.id)
-                  .update({'hsn_code': null, 'tax_value': null});
-              print(
-                  "Category tax updated : ${j['category_name']}${j['company_id']}");
+      // if (pl.isNotEmpty) {
+      //   for (var i in pl) {
+      // cl = category list
+      print("Hiii");
+      var cl = await _category
+          .where('company_id', isEqualTo: "PODfQhU3YvcoLpcdvGl0")
+          .get();
+      print(cl.docs.length);
+      for (var j in cl.docs) {
+        Map<String, dynamic> c = j.data();
+        if (!c.containsKey('hsn_code') && !c.containsKey('tax_value')) {
+          await _category
+              .doc(j.id)
+              .update({'hsn_code': null, 'tax_value': null});
+          print(
+              "Category tax updated : ${j['category_name']}${j['company_id']}");
 
-              productTaxUpdate(j.id);
-            }
-            // if (c.containsKey('discount')) {
-            //   //product list
-            //   var pdl =
-            //       await _products.where('category_id', isEqualTo: j.id).get();
-            //   for (var k in pdl.docs) {
-            //     await _products.doc(k.id).update({'discount': j['discount']});
-            //     print(
-            //         "Product discount updated : ${k['product_name']} ${c['discount']}");
-            //   }
-            // }
+          productTaxUpdate(j.id);
+        }
+        if (c.containsKey('discount')) {
+          //product list
+          var pdl = await _products.where('category_id', isEqualTo: j.id).get();
+          for (var k in pdl.docs) {
+            await _products.doc(k.id).update({'discount': j['discount']});
+            print(
+                "Product discount updated : ${k['product_name']} ${c['discount']}");
           }
         }
       }
+      //   }
+      // }
     } on Exception catch (e) {
       throw e.toString();
     }
@@ -322,9 +325,10 @@ class Version1110Function {
   }
 
   static Future updateInvoice() async {
-    var il = await _invoice.get();
+    var il = await _invoice
+        .where('company_id', isEqualTo: 'MgrWnHI15e4xPpHQmrah')
+        .get();
 
-    print(il.docs.length);
     for (var d = 0; d < il.docs.length; d++) {
       var i = il.docs[d];
       if (i.exists) {
@@ -463,20 +467,33 @@ class _Update1110State extends State<Update1110> {
       appBar: AppBar(
         title: const Text('1.1.10'),
       ),
-      body: const Column(
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ElevatedButton(
-            onPressed: Version1110Function.updateCategory,
-            child: Text('Category Update'),
+            onPressed: () {
+              Version1110Function.updateCategory();
+            },
+            child: const Text('Category Update'),
           ),
           ElevatedButton(
-            onPressed: Version1110Function.updateEnquiry,
-            child: Text('Enquiry Update'),
+            onPressed: () {
+              Version1110Function.updateEnquiry();
+            },
+            child: const Text('Enquiry Update'),
           ),
           ElevatedButton(
-            onPressed: Version1110Function.updateEstimate,
-            child: Text('Estimate Update'),
+            onPressed: () {
+              Version1110Function.updateEstimate();
+            },
+            child: const Text('Estimate Estimate'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Version1110Function.updateInvoice();
+            },
+            child: const Text('Estimate Invoice'),
           )
         ],
       ),

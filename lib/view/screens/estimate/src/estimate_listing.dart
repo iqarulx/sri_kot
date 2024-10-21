@@ -193,6 +193,12 @@ class _EstimateListingState extends State<EstimateListing> {
           tmpEnquiryList.addAll(enquiryList);
         });
 
+        enquiryList.sort((a, b) {
+          int numA = int.parse(a.estimateid.toString().substring(7));
+          int numB = int.parse(b.estimateid.toString().substring(7));
+          return numB.compareTo(numA);
+        });
+
         return enquiry;
       }
     } catch (e) {

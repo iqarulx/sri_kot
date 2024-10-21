@@ -159,6 +159,15 @@ class _InvoiceListingState extends State<InvoiceListing> {
           }
           tmpinvoiceList.addAll(invoiceList);
         }
+
+        invoiceList.sort((a, b) {
+          int numA = int.parse(
+              a.billNo.toString().replaceFirst(RegExp(r'/INV\d{2}-\d{2}'), ''));
+          int numB = int.parse(
+              b.billNo.toString().replaceFirst(RegExp(r'/INV\d{2}-\d{2}'), ''));
+          return numB.compareTo(numA);
+        });
+
         return invoiceList;
       });
     } catch (e) {
@@ -386,7 +395,70 @@ class _InvoiceListingState extends State<InvoiceListing> {
   downloadInvoiceOverallExcel() async {
     try {
       loading(context);
-      await InvoiceExcel(inviceData: invoiceList)
+      List<InvoiceModel> tmpList = [];
+
+      setState(() {
+        tmpList.clear();
+      });
+
+      await FireStore().getAllInvoice().then((value) {
+        if (value.isNotEmpty) {
+          for (var element in value) {
+            InvoiceModel model = InvoiceModel();
+            model.docID = element.id;
+            model.partyName = element["party_name"];
+            model.address = element["address"];
+            model.billDate = (element["bill_date"] as Timestamp).toDate();
+            model.billNo = element["bill_no"];
+            model.phoneNumber = element["phone_number"];
+            model.totalBillAmount = element["total_amount"];
+            model.transportName = element["transport_name"];
+            model.transportNumber = element["transport_number"];
+            model.listingProducts = [];
+            if (element["products"] != null) {
+              for (var productElement in element["products"]) {
+                InvoiceProductModel models = InvoiceProductModel();
+                models.productID = productElement["product_id"];
+                models.productName = productElement["product_name"];
+                models.qty = productElement["qty"];
+                models.rate = productElement["rate"].toDouble();
+                models.total = productElement["total"].toDouble();
+                models.unit = productElement["unit"];
+                models.categoryID = productElement["category_id"];
+                models.discountLock = productElement["discount_lock"];
+                models.discount = productElement["discount"];
+
+                setState(() {
+                  model.listingProducts!.add(models);
+                });
+              }
+            }
+            model.deliveryaddress = element["delivery_address"] ?? "";
+
+            if (element.data().containsKey('price') &&
+                element["price"] != null) {
+              var calcula = BillingCalCulationModel();
+              calcula.discountValue = element["price"]["discount_value"];
+              calcula.extraDiscount = element["price"]["extra_discount"];
+              calcula.extraDiscountValue =
+                  element["price"]["extra_discount_value"];
+              calcula.extraDiscountsys = element["price"]["extra_discount_sys"];
+              calcula.package = element["price"]["package"];
+              calcula.packageValue = element["price"]["package_value"];
+              calcula.packagesys = element["price"]["package_sys"];
+              calcula.subTotal = element["price"]["sub_total"];
+              calcula.roundOff = element["price"]["round_off"];
+              calcula.total = element["price"]["total"];
+              model.price = calcula;
+            }
+            setState(() {
+              tmpList.add(model);
+            });
+          }
+        }
+      });
+
+      await InvoiceExcel(inviceData: tmpList)
           .createInvoiceExcel()
           .then((value) async {
         if (value != null) {

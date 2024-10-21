@@ -555,7 +555,7 @@ class _ProductDetailsState extends State<ProductDetails> {
       if (result != null && result == true) {
         loading(context);
         try {
-          await Storage().deleteImage(imageUrl ?? '').then((value) async {
+          await Storage().deleteImage(imageUrl).then((value) async {
             await FireStore()
                 .deleteProduct(docId: widget.productData!.productId!)
                 .then((value) {
@@ -599,7 +599,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                     docid: widget.productData!.productId!, product: productData)
                 .then((value) async {
               if (productImage != null) {
-                await Storage().deleteImage(imageUrl ?? '').then((value) async {
+                await Storage().deleteImage(imageUrl).then((value) async {
                   var downloadLink = await Storage().uploadImage(
                     fileData: productImage!,
                     fileName: DateTime.now().millisecondsSinceEpoch.toString(),

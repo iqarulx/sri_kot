@@ -48,7 +48,6 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
               throw onError;
             });
 
-            print(product.productname);
             productsData.active = true;
             productsData.categoryName = element.categoryname;
             productsData.companyId = cid;
@@ -60,6 +59,10 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
             productsData.productContent = product.content;
             productsData.productName = product.productname;
             productsData.qrCode = product.qrcode;
+            productsData.taxValue = null;
+            productsData.discount = null;
+            productsData.hsnCode = null;
+
             productsData.name =
                 product.productname.replaceAll(' ', '').trim().toLowerCase();
             setState(() {
@@ -70,7 +73,6 @@ class _ExcelResultUIState extends State<ExcelResultUI> {
         for (var element in tmpProducts) {
           print(element.toMap().toString());
         }
-
         await FireStore()
             .excelMultiProduct(productsData: tmpProducts, cid: cid)
             .then((value) {

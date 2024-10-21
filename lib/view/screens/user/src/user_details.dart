@@ -584,7 +584,7 @@ class _UserDetailsState extends State<UserDetails> {
     loading(context);
     try {
       await Storage()
-          .deleteImage(widget.userAdminModel.imageUrl ?? '')
+          .deleteImage(widget.userAdminModel.imageUrl)
           .then((value) async {
         var downloadLink = await Storage().uploadImage(
           fileData: image,
@@ -650,9 +650,7 @@ class _UserDetailsState extends State<UserDetails> {
       ).then((value) async {
         if (value != null && value == true) {
           loading(context);
-          await Storage()
-              .deleteImage(adminProfileImage ?? '')
-              .then((value) async {
+          await Storage().deleteImage(adminProfileImage).then((value) async {
             await FireStore()
                 .deleteAdmin(docID: docid ?? "")
                 .then((firestoreResult) async {

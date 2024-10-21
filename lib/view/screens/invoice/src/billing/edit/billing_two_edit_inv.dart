@@ -135,6 +135,10 @@ class _BillingTwoEditInvState extends State<BillingTwoEditInv> {
 
               if (catId != -1 && proId != -1) {
                 setState(() {
+                  elements.productType = (elements.discountLock ?? false) ||
+                          (elements.discount == null)
+                      ? ProductType.netRated
+                      : ProductType.discounted;
                   if (elements.productType == ProductType.discounted) {
                     elements.discountedPrice = double.parse(
                             billingProductList[catId]

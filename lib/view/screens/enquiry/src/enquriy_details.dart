@@ -123,6 +123,9 @@ class _EnquiryDetailsState extends State<EnquiryDetails> {
                       productDataModel.productImg = product["product_img"];
                       productDataModel.qrCode = product["qr_code"];
                       productDataModel.videoUrl = product["video_url"];
+                      productDataModel.discount = (p.containsKey('discount')
+                          ? product["discount"]
+                          : null);
 
                       setState(() {
                         tmpProducts.add(productDataModel);

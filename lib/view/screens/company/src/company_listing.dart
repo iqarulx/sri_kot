@@ -109,56 +109,46 @@ class _CompanyListingState extends State<CompanyListing> {
               profileModel.userLoginId = userid.text;
               profileModel.password = password.text;
               profileModel.taxType = taxType;
+
               await FireStore()
                   .updateCompany(docId: cid, companyData: profileModel)
                   .then((value) async {
-                await FirebaseAuthProvider()
-                    .updateUserLogin(
-                  email: userid.text,
-                  password: password.text,
-                  oldEmail: oldEmail ?? "",
-                  oldPassword: oldPassword ?? "",
-                )
-                    .then((value) async {
-                  if (uploadCompanyPic != null) {
+                if (uploadCompanyPic != null) {
+                  await Storage().deleteImage(companyLogo).then((value) async {
                     await Storage()
-                        .deleteImage(companyLogo ?? '')
-                        .then((value) async {
-                      await Storage()
-                          .uploadImage(
-                        fileData: uploadCompanyPic!,
-                        fileName:
-                            DateTime.now().millisecondsSinceEpoch.toString(),
-                        filePath: "company",
-                      )
-                          .then((downloadLink) async {
-                        if (downloadLink != null && downloadLink.isNotEmpty) {
-                          await FireStore()
-                              .updateCompanyPic(
-                                  docId: cid, imageLink: downloadLink)
-                              .then((value) async {
-                            Navigator.pop(context);
-                            snackbar(
-                              context,
-                              true,
-                              "Successfully Updated Company Information",
-                            );
-                          });
-                        } else {
+                        .uploadImage(
+                      fileData: uploadCompanyPic!,
+                      fileName:
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      filePath: "company",
+                    )
+                        .then((downloadLink) async {
+                      if (downloadLink != null && downloadLink.isNotEmpty) {
+                        await FireStore()
+                            .updateCompanyPic(
+                                docId: cid, imageLink: downloadLink)
+                            .then((value) async {
                           Navigator.pop(context);
-                          snackbar(context, false, "Something went Wrong");
-                        }
-                      });
+                          snackbar(
+                            context,
+                            true,
+                            "Successfully Updated Company Information",
+                          );
+                        });
+                      } else {
+                        Navigator.pop(context);
+                        snackbar(context, false, "Something went Wrong");
+                      }
                     });
-                  } else {
-                    Navigator.pop(context);
-                    snackbar(
-                      context,
-                      true,
-                      "Successfully Updated Company Information",
-                    );
-                  }
-                });
+                  });
+                } else {
+                  Navigator.pop(context);
+                  snackbar(
+                    context,
+                    true,
+                    "Successfully Updated Company Information",
+                  );
+                }
               });
             } else {
               Navigator.pop(context);
@@ -187,44 +177,35 @@ class _CompanyListingState extends State<CompanyListing> {
             await FireStore()
                 .updateCompany(docId: cid, companyData: profileModel)
                 .then((value) async {
-              await FirebaseAuthProvider()
-                  .updateUserLogin(
-                email: userid.text,
-                password: password.text,
-                oldEmail: oldEmail ?? "",
-                oldPassword: oldPassword ?? "",
-              )
-                  .then((value) async {
-                if (uploadProfilePic != null) {
-                  if (profileImg != null) {
-                    await Storage().deleteImage(profileImg ?? '');
-                  }
-                  await Storage()
-                      .uploadImage(
-                    fileData: uploadProfilePic!,
-                    fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-                    filePath: "company",
-                  )
-                      .then((downloadLink) async {
-                    if (downloadLink != null && downloadLink.isNotEmpty) {
-                      print(cid);
-                      await FireStore().updateProfilePic(
-                          docId: cid, imageLink: downloadLink);
-                    } else {
-                      Navigator.pop(context);
-                      snackbar(context, false, "Something went Wrong");
-                    }
-                  });
+              if (uploadProfilePic != null) {
+                if (profileImg != null) {
+                  await Storage().deleteImage(profileImg);
                 }
-                Navigator.pop(context);
-                snackbar(
-                  context,
-                  true,
-                  "Successfully Updated Company Information",
-                );
-                setState(() {
-                  companyHandler = getCompanyInfo();
+                await Storage()
+                    .uploadImage(
+                  fileData: uploadProfilePic!,
+                  fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+                  filePath: "company",
+                )
+                    .then((downloadLink) async {
+                  if (downloadLink != null && downloadLink.isNotEmpty) {
+                    print(cid);
+                    await FireStore()
+                        .updateProfilePic(docId: cid, imageLink: downloadLink);
+                  } else {
+                    Navigator.pop(context);
+                    snackbar(context, false, "Something went Wrong");
+                  }
                 });
+              }
+              Navigator.pop(context);
+              snackbar(
+                context,
+                true,
+                "Successfully Updated Company Information",
+              );
+              setState(() {
+                companyHandler = getCompanyInfo();
               });
             });
           } else {

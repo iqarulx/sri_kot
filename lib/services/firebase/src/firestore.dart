@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '/services/firebase/src/bill_no.dart';
 import '../../services.dart';
 import '/constants/src/enum.dart';
 import '/constants/constants.dart';
@@ -1117,54 +1118,47 @@ class FireStore {
     }
   }
 
-  Future categoryDiscountCreate(
-      {required List<CategoryDataModel> unselectedCategory,
-      required List<CategoryDataModel> uploadCategory}) async {
+  Future categoryDiscountCreate({
+    required List<CategoryDataModel> unselectedCategory,
+    required List<CategoryDataModel> uploadCategory,
+  }) async {
     try {
       var uid = await LocalDB.fetchInfo(type: LocalData.companyid);
-      var categoryBatch = FirebaseFirestore.instance.batch();
-      for (var element in uploadCategory) {
-        var document = _category.doc(element.tmpcatid);
-        categoryBatch.update(document, element.toDiscountUpdate());
 
-        var productBatch = FirebaseFirestore.instance.batch();
+      for (var category in uploadCategory) {
+        var categoryDocument = _category.doc(category.tmpcatid);
+        await categoryDocument
+            .update(category.toDiscountUpdate())
+            .catchError((error) => throw ('Failed to update category: $error'));
+
         var products = await _products
             .where('company_id', isEqualTo: uid)
-            .where('category_id', isEqualTo: element.tmpcatid)
+            .where('category_id', isEqualTo: category.tmpcatid)
             .get();
-        for (var element in products.docs) {
-          var document = _products.doc(element.id);
-          productBatch
-              .update(document, {"discount": uploadCategory.first.discount});
-        }
 
-        await productBatch.commit().catchError(
-            (error) => throw ('Failed to execute batch write: $error'));
+        for (var product in products.docs) {
+          var productDocument = _products.doc(product.id);
+          await productDocument
+              .update({"discount": uploadCategory.first.discount}).catchError(
+                  (error) => throw ('Failed to update product: $error'));
+        }
       }
 
-      await categoryBatch.commit().catchError(
-          (error) => throw ('Failed to execute batch write: $error'));
+      for (var category in unselectedCategory) {
+        var categoryDocument = _category.doc(category.tmpcatid);
+        await categoryDocument.update({"discount": null}).catchError((error) =>
+            throw ('Failed to update category discount to null: $error'));
 
-      var unselectedCategoryBatch = FirebaseFirestore.instance.batch();
-      for (var element in unselectedCategory) {
-        var document = _category.doc(element.tmpcatid);
-        unselectedCategoryBatch.update(document, {"discount": null});
-
-        await unselectedCategoryBatch.commit().catchError(
-            (error) => throw ('Failed to execute batch write: $error'));
-
-        var unselectedProductBatch = FirebaseFirestore.instance.batch();
         var unselectedProducts = await _products
             .where('company_id', isEqualTo: uid)
-            .where('category_id', isEqualTo: element.tmpcatid)
+            .where('category_id', isEqualTo: category.tmpcatid)
             .get();
-        for (var element in unselectedProducts.docs) {
-          var document = _products.doc(element.id);
-          unselectedProductBatch.update(document, {"discount": null});
-        }
 
-        await unselectedProductBatch.commit().catchError(
-            (error) => throw ('Failed to execute batch write: $error'));
+        for (var product in unselectedProducts.docs) {
+          var productDocument = _products.doc(product.id);
+          await productDocument.update({"discount": null}).catchError((error) =>
+              throw ('Failed to update product discount to null: $error'));
+        }
       }
     } catch (e) {
       throw e.toString();
@@ -1222,8 +1216,10 @@ class FireStore {
     required String docID,
   }) async {
     try {
-      // return await _estimate.doc(docID).update({"delete_at": true});
-      return await _estimate.doc(docID).delete();
+      var est = await _estimate.doc(docID).get();
+      if (est.exists) {
+        return await _estimate.doc(docID).delete();
+      }
     } catch (e) {
       throw e.toString();
     }
@@ -1314,10 +1310,8 @@ class FireStore {
     }
   }
 
-  Future orderToConvertEstimate({
-    required String cid,
-    required String docID,
-  }) async {
+  Future orderToConvertEstimate(
+      {required String cid, required String docID}) async {
     try {
       await _enquiry.doc(docID).get().catchError((onError) {
         throw onError;
@@ -1415,10 +1409,8 @@ class FireStore {
     return resultData;
   }
 
-  Future updateEnquiryEstimateId({
-    required String enquirdDocId,
-    required String estimateId,
-  }) async {
+  Future updateEnquiryEstimateId(
+      {required String enquirdDocId, required String estimateId}) async {
     try {
       await getEstimateId(docid: estimateId).then((value) async {
         if (value != null && value.exists) {
@@ -1432,9 +1424,7 @@ class FireStore {
     }
   }
 
-  Future<String?> getNextEnquiryId({
-    required String cid,
-  }) async {
+  Future<String?> getNextEnquiryId({required String cid}) async {
     int? resultValue;
     try {
       var count = await _getLastId(cid: cid);
@@ -1449,10 +1439,8 @@ class FireStore {
     return null;
   }
 
-  Future<int?> updateEnquiryId({
-    required String cid,
-    required String docID,
-  }) async {
+  Future<int?> updateEnquiryId(
+      {required String cid, required String docID}) async {
     int? resultValue;
     try {
       var count = await _getLastId(cid: cid);
@@ -1477,41 +1465,46 @@ class FireStore {
     }
   }
 
-  Future<DocumentReference?> createnewEnquiry({
-    required List<CartDataModel> productList,
-    CustomerDataModel? customerInfo,
-    required BillingCalCulationModel calCulation,
-    required String cid,
-    required String billNo,
-  }) async {
-    DocumentReference? resultDocument;
+  Future<bool?> createnewEnquiry(
+      {required List<CartDataModel> productList,
+      CustomerDataModel? customerInfo,
+      required BillingCalCulationModel calCulation,
+      required String cid}) async {
+    String? resultDocumentId;
     try {
       var data = {
         "customer": customerInfo?.toOrderMap(),
         "price": calCulation.toMap(),
-        "enquiry_id": billNo,
+        "enquiry_id": null,
         "estimate_id": null,
         "company_id": cid,
         "created_date": DateTime.now(),
         "delete_at": false,
       };
-      resultDocument = await _enquiry.add(data);
+      var resultDocument = await _enquiry.add(data);
+      resultDocumentId = resultDocument.id;
       if (resultDocument.id.isNotEmpty) {
         await insertEnquiryProduct(
-          productList: productList,
-          docID: resultDocument.id,
-        );
+            productList: productList, docID: resultDocument.id);
+        try {
+          var estNo = await BillNo.genBillNo(type: BillType.enquiry);
+          if (estNo != null) {
+            await _enquiry.doc(resultDocument.id).update({'enquiry_id': estNo});
+            return true;
+          }
+        } catch (e) {
+          throw e.toString();
+        }
       }
     } catch (e) {
       throw e.toString();
     }
-    return resultDocument;
+    deleteEnquiry(docID: resultDocumentId);
+    return false;
   }
 
-  Future insertEnquiryProduct({
-    required List<CartDataModel> productList,
-    required String docID,
-  }) async {
+  Future insertEnquiryProduct(
+      {required List<CartDataModel> productList, required String docID}) async {
     try {
       for (var product in productList) {
         await _enquiry.doc(docID).collection('products').add(
@@ -1528,6 +1521,7 @@ class FireStore {
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _enquiry
           .where('company_id', isEqualTo: cid)
+          .where('enquiry_id', isNull: false)
           .where('delete_at', isEqualTo: false)
           .orderBy('created_date', descending: true)
           .limit(end)
@@ -1553,6 +1547,7 @@ class FireStore {
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _enquiry
           .where('company_id', isEqualTo: cid)
+          .where('enquiry_id', isNull: false)
           .where('delete_at', isEqualTo: false)
           .get();
       var total = 0.0;
@@ -1575,6 +1570,7 @@ class FireStore {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _estimate
           .where('company_id', isEqualTo: cid)
           .where('delete_at', isEqualTo: false)
+          .where('estimate_id', isNull: false)
           .orderBy('created_date', descending: true)
           .limit(end)
           .get();
@@ -1601,6 +1597,7 @@ class FireStore {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _estimate
           .where('company_id', isEqualTo: cid)
           .where('delete_at', isEqualTo: false)
+          .where('estimate_id', isNull: false)
           .orderBy('created_date', descending: true)
           .get();
 
@@ -1616,6 +1613,7 @@ class FireStore {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _enquiry
           .where('company_id', isEqualTo: cid)
           .where('delete_at', isEqualTo: false)
+          .where('enquiry_id', isNull: false)
           .orderBy('created_date', descending: true)
           .get();
 
@@ -1629,13 +1627,12 @@ class FireStore {
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot = await _estimate
           .where('company_id', isEqualTo: cid)
+          .where('estimate_id', isNull: false)
           .where('delete_at', isEqualTo: false)
           .get();
       var total = 0.0;
       for (var i = 0; i < snapshot.docs.length; i++) {
         var j = snapshot.docs[i];
-        print("$i.${j["price"]["total"].toDouble()}");
-
         total += j["price"]["total"].toDouble();
       }
 
@@ -1732,34 +1729,45 @@ class FireStore {
     return resultData;
   }
 
-  Future<DocumentReference?> createNewEstimate({
-    required List<CartDataModel> productList,
-    CustomerDataModel? customerInfo,
-    required BillingCalCulationModel calCulation,
-    required String cid,
-    required String billNo,
-  }) async {
-    DocumentReference? resultDocument;
+  Future<bool?> createNewEstimate(
+      {required List<CartDataModel> productList,
+      CustomerDataModel? customerInfo,
+      required BillingCalCulationModel calCulation,
+      required String cid}) async {
+    String? resultDocumentId;
+
     try {
       var data = {
         "customer": customerInfo?.toOrderMap(),
         "price": calCulation.toMap(),
-        "estimate_id": billNo,
+        "estimate_id": null,
         "company_id": cid,
         "created_date": DateTime.now(),
         "delete_at": false,
       };
-      resultDocument = await _estimate.add(data);
+
+      var resultDocument = await _estimate.add(data);
+      resultDocumentId = resultDocument.id;
       if (resultDocument.id.isNotEmpty) {
         await insertEstimateProduct(
-          productList: productList,
-          docID: resultDocument.id,
-        );
+            productList: productList, docID: resultDocument.id);
+        try {
+          var estNo = await BillNo.genBillNo(type: BillType.estimate);
+          if (estNo != null) {
+            await _estimate
+                .doc(resultDocument.id)
+                .update({'estimate_id': estNo});
+            return true;
+          }
+        } catch (e) {
+          throw e.toString();
+        }
       }
     } catch (e) {
       throw e.toString();
     }
-    return resultDocument;
+    deleteEstimate(docID: resultDocumentId);
+    return false;
   }
 
   Future insertEstimateProduct({
@@ -1792,10 +1800,8 @@ class FireStore {
     return null;
   }
 
-  Future<int?> updateEstimateId({
-    required String cid,
-    required String docID,
-  }) async {
+  Future<int?> updateEstimateId(
+      {required String cid, required String docID}) async {
     int? resultValue;
     try {
       await getLastEstimateId(cid: cid).then((count) async {
@@ -1869,9 +1875,32 @@ class FireStore {
     return null;
   }
 
-  Future<AggregateQuerySnapshot?> getCustomerCount({
-    required String cid,
-  }) async {
+  Future deleteCategoryDiscount({required int discount}) async {
+    try {
+      var c = await LocalDB.fetchInfo(type: LocalData.companyid);
+      var cl = await _category
+          .where('company_id', isEqualTo: c)
+          .where('discount', isEqualTo: discount)
+          .get();
+
+      for (var d in cl.docs) {
+        await _category.doc(d.id).update({'discount': null});
+
+        var pl = await _products
+            .where('company_id', isEqualTo: c)
+            .where('category_id', isEqualTo: d.id)
+            .get();
+        for (var p in pl.docs) {
+          await _products.doc(p.id).update({'discount': null});
+        }
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AggregateQuerySnapshot?> getCustomerCount(
+      {required String cid}) async {
     AggregateQuerySnapshot? result;
 
     try {
@@ -1883,10 +1912,8 @@ class FireStore {
     return result;
   }
 
-  Future updateCustomer({
-    required String docID,
-    required CustomerDataModel customerData,
-  }) async {
+  Future updateCustomer(
+      {required String docID, required CustomerDataModel customerData}) async {
     var result = await _customer.doc(docID).get();
     try {
       var customer = await _customer.doc(docID).get();
@@ -1898,13 +1925,12 @@ class FireStore {
     }
   }
 
-  Future<AggregateQuerySnapshot?> getEnquiryCount({
-    required String cid,
-  }) async {
+  Future<AggregateQuerySnapshot?> getEnquiryCount({required String cid}) async {
     AggregateQuerySnapshot? result;
     try {
       result = await _enquiry
           .where('company_id', isEqualTo: cid)
+          .where('enquiry_id', isNull: false)
           .where("delete_at", isEqualTo: false)
           .count()
           .get();
@@ -1914,13 +1940,13 @@ class FireStore {
     return result;
   }
 
-  Future<AggregateQuerySnapshot?> getEstimateCount({
-    required String cid,
-  }) async {
+  Future<AggregateQuerySnapshot?> getEstimateCount(
+      {required String cid}) async {
     AggregateQuerySnapshot? result;
     try {
       result = await _estimate
           .where('company_id', isEqualTo: cid)
+          .where('estimate_id', isNull: false)
           .where("delete_at", isEqualTo: false)
           .count()
           .get();
@@ -1930,9 +1956,7 @@ class FireStore {
     return result;
   }
 
-  Future<AggregateQuerySnapshot?> getProductCount({
-    required String cid,
-  }) async {
+  Future<AggregateQuerySnapshot?> getProductCount({required String cid}) async {
     AggregateQuerySnapshot? result;
     try {
       result = await _products
@@ -1986,10 +2010,8 @@ class FireStore {
     }
   }
 
-  Future updateProduct({
-    required String docid,
-    required ProductDataModel product,
-  }) async {
+  Future updateProduct(
+      {required String docid, required ProductDataModel product}) async {
     try {
       await _products.doc(docid).update(product.updateMap()).catchError(
         (onError) {
@@ -2024,12 +2046,11 @@ class FireStore {
     }
   }
 
-  Future updateEnquiryDetails({
-    required String docID,
-    required List<CartDataModel> productList,
-    CustomerDataModel? customerInfo,
-    required BillingCalCulationModel calCulation,
-  }) async {
+  Future updateEnquiryDetails(
+      {required String docID,
+      required List<CartDataModel> productList,
+      CustomerDataModel? customerInfo,
+      required BillingCalCulationModel calCulation}) async {
     try {
       await _enquiry
           .doc(docID)
@@ -2049,10 +2070,8 @@ class FireStore {
     }
   }
 
-  Future updateEnquiryProduct({
-    required List<CartDataModel> productList,
-    required String docID,
-  }) async {
+  Future updateEnquiryProduct(
+      {required List<CartDataModel> productList, required String docID}) async {
     try {
       var productData = await _enquiry.doc(docID).collection('products').get();
       for (var i in productData.docs) {
@@ -2070,12 +2089,11 @@ class FireStore {
   }
 
   // Estimate Update
-  Future updateEstimateDetails({
-    required String docID,
-    required List<CartDataModel> productList,
-    CustomerDataModel? customerInfo,
-    required BillingCalCulationModel calCulation,
-  }) async {
+  Future updateEstimateDetails(
+      {required String docID,
+      required List<CartDataModel> productList,
+      CustomerDataModel? customerInfo,
+      required BillingCalCulationModel calCulation}) async {
     try {
       await _estimate
           .doc(docID)
@@ -2129,10 +2147,8 @@ class FireStore {
     return resultData;
   }
 
-  Future<QuerySnapshot?> adminLogin({
-    required String email,
-    required String password,
-  }) async {
+  Future<QuerySnapshot?> adminLogin(
+      {required String email, required String password}) async {
     QuerySnapshot? resultData;
     try {
       resultData = await _admin
@@ -2262,38 +2278,6 @@ class FireStore {
     }
   }
 
-  /*
-   String option = "new";
-      await getCurrentFinType(finYear: result["fnYr"]!).then((value) {
-        if (value.id.isNotEmpty) {
-          option = value["bill_type"];
-        }
-      });
-      int queryYear = 0;
-      if (option == "new") {
-        queryYear = int.parse(result["currentYearFull"]!);
-      } else {
-        queryYear = int.parse(result["currentYearFull"]!) - 1;
-      }
-      await _invoice
-          .where('bill_date',
-              isGreaterThanOrEqualTo: DateTime(queryYear, 04, 01))
-          .where('bill_date', isLessThanOrEqualTo: DateTime.now())
-          .where('delete_at', isEqualTo: false)
-          .get()
-          .then((value) {
-        var count = value.docs.where((element) => element["bill_no"] != null);
-        invoiceNumber = (count.length + 1).toString();
-        invoiceNumber = invoiceNumber!.length == 1
-            ? "00$invoiceNumber/INV${result["fnYr"]}"
-            : invoiceNumber!.length == 2
-                ? "0$invoiceNumber/INV${result["fnYr"]}"
-                : "$invoiceNumber/INV${result["fnYr"]}";
-      });
-      return invoiceNumber;
-   
-  */
-
   Future<double> getLastInvoiceAmount(
       {required DateTime billDate, required String billNo}) async {
     try {
@@ -2348,22 +2332,6 @@ class FireStore {
     }
   }
 
-  // Future<String> createDoc() async {
-  //   try {
-  //     var year = getFinancialYear();
-  //     int count = await getCount();
-  //     var tmpID = "$count/INV${year["fnYr"]}";
-  //     var tmpResult = _invoice.doc(tmpID);
-  //     if (tmpResult.id.isNotEmpty) {
-  //       return tmpResult.id;
-  //     } else {
-  //       return createDoc();
-  //     }
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
-
   Future<String> getLastInvoiceNumber() async {
     String invoiceNumber;
     try {
@@ -2408,22 +2376,28 @@ class FireStore {
     return invoiceNumber;
   }
 
-  Future createNewInvoice({required InvoiceModel invoiceData}) async {
+  Future<bool> createNewInvoice({required InvoiceModel invoiceData}) async {
     try {
-      // String invoiceNumber = await getLastInvoiceNumber();
-      // invoiceData.billNo = invoiceNumber;
-      print(invoiceData.toCreationMap());
       var invoiceRef = await _invoice.add(invoiceData.toCreationMap());
+      try {
+        var invNo = await BillNo.genBillNo(type: BillType.invoice);
+        if (invNo != null) {
+          await _invoice.doc(invoiceRef.id).update({'bill_no': invNo});
+          return true;
+        }
+      } catch (e) {
+        throw e.toString();
+      }
     } catch (e) {
       throw 'Error creating invoice: $e';
     }
+    return false;
   }
 
-  Future updateInvoice({
-    required String docID,
-    required InvoiceModel invoiceData,
-    required List<InvoiceProductModel> cartDataList,
-  }) async {
+  Future updateInvoice(
+      {required String docID,
+      required InvoiceModel invoiceData,
+      required List<InvoiceProductModel> cartDataList}) async {
     try {
       return await _invoice.doc(docID).update(invoiceData.toUpdateMap());
     } catch (e) {
@@ -2431,10 +2405,8 @@ class FireStore {
     }
   }
 
-  Future<QuerySnapshot<Map<String, dynamic>>> filterInvoice({
-    required DateTime fromDate,
-    required DateTime toDate,
-  }) async {
+  Future<QuerySnapshot<Map<String, dynamic>>> filterInvoice(
+      {required DateTime fromDate, required DateTime toDate}) async {
     var companyId = await LocalDB.fetchInfo(type: LocalData.companyid);
     try {
       return await _invoice
@@ -2646,9 +2618,7 @@ class FireStore {
     }
   }
 
-  Future<bool> checkProductCode({
-    required String code,
-  }) async {
+  Future<bool> checkProductCode({required String code}) async {
     var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 
     try {
@@ -2666,9 +2636,7 @@ class FireStore {
     }
   }
 
-  Future<bool> checkQrCode({
-    required String code,
-  }) async {
+  Future<bool> checkQrCode({required String code}) async {
     try {
       var cid = await LocalDB.fetchInfo(type: LocalData.companyid);
 

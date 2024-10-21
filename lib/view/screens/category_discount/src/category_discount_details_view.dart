@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sri_kot/view/ui/src/commonwidget.dart';
 
 import '/model/model.dart';
 import '/services/services.dart';
@@ -25,6 +26,17 @@ class _CategoryDiscountDetailsViewState
   TextEditingController discount = TextEditingController();
   List<CategoryDataModel> uploadCategory = [];
   List<CategoryDataModel> unselectedCategory = [];
+
+  deleteDisount() async {
+    loading(context);
+    await FireStore()
+        .deleteCategoryDiscount(discount: widget.discount ?? 0)
+        .then((value) {
+      Navigator.pop(context);
+      Navigator.pop(context, true);
+      snackbar(context, true, "Discount deleted");
+    });
+  }
 
   addDiscount() async {
     try {
@@ -119,6 +131,23 @@ class _CategoryDiscountDetailsViewState
               const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          widget.discount != null
+              ? IconButton(
+                  icon: const Icon(Icons.delete_rounded),
+                  onPressed: () {
+                    confirmationDialog(context,
+                            title: "Delete Discount",
+                            message: "Are you sure want to delete discount?")
+                        .then((v) {
+                      if (v != null && v) {
+                        deleteDisount();
+                      }
+                    });
+                  },
+                )
+              : Container()
+        ],
       ),
       bottomNavigationBar: BottomAppBar(
         child: GestureDetector(

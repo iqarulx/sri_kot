@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import '/services/firebase/src/bill_no.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '../../../screens.dart';
@@ -61,9 +62,6 @@ class _OrderSummaryState extends State<OrderSummary> {
 
   @override
   void initState() {
-    print(widget.billType);
-    print(widget.saveType);
-    print(widget.billNo);
     if (widget.saveType == SaveType.create) {
       billNoHandler = getBillNo();
     }
@@ -94,10 +92,10 @@ class _OrderSummaryState extends State<OrderSummary> {
 
   getBillNo() async {
     if (widget.billType == BillType.enquiry) {
-      billNo = await FireStore().getNextEnquiryId(cid: widget.cid);
+      billNo = await BillNo.genBillNo(type: BillType.enquiry);
       setState(() {});
     } else if (widget.billType == BillType.estimate) {
-      billNo = await FireStore().nextEstimateId(cid: widget.cid);
+      billNo = await BillNo.genBillNo(type: BillType.estimate);
       setState(() {});
     } else if (widget.billType == BillType.invoice) {}
   }
@@ -130,15 +128,16 @@ class _OrderSummaryState extends State<OrderSummary> {
       customerInfo.customerName = customerName.text;
     }
 
-    if (billNo != null) {
-      try {
-        loading(context);
-        await FireStore().createnewEnquiry(
-            cid: widget.cid,
-            productList: widget.cart,
-            customerInfo: customerInfo,
-            calCulation: widget.calc,
-            billNo: billNo!);
+    try {
+      loading(context);
+
+      var result = await FireStore().createnewEnquiry(
+          cid: widget.cid,
+          productList: widget.cart,
+          customerInfo: customerInfo,
+          calCulation: widget.calc);
+
+      if (result != null && result) {
         if (customerInfo.docID != null) {
           await FireStore().updateCustomer(
               customerData: customerInfo, docID: customerInfo.docID ?? '');
@@ -156,12 +155,12 @@ class _OrderSummaryState extends State<OrderSummary> {
             builder: (context) => const EnquiryListing(),
           ),
         );
-      } on Exception catch (e) {
-        snackbar(context, false, e.toString());
+      } else {
+        Navigator.pop(context);
+        snackbar(context, false, "Something went wrong please try again");
       }
-    } else {
-      getBillNo();
-      snackbar(context, false, "Please wait while generating bill number");
+    } catch (e) {
+      snackbar(context, false, e.toString());
     }
   }
 
@@ -225,15 +224,15 @@ class _OrderSummaryState extends State<OrderSummary> {
     customerInfo.mobileNo = mobileNo.text;
     customerInfo.customerName = customerName.text;
 
-    if (billNo != null) {
-      try {
-        loading(context);
-        await FireStore().createNewEstimate(
-            cid: widget.cid,
-            productList: widget.cart,
-            customerInfo: customerInfo,
-            calCulation: widget.calc,
-            billNo: billNo!);
+    try {
+      loading(context);
+      var result = await FireStore().createNewEstimate(
+          cid: widget.cid,
+          productList: widget.cart,
+          customerInfo: customerInfo,
+          calCulation: widget.calc);
+
+      if (result != null && result) {
         if (customerInfo.docID != null) {
           await FireStore().updateCustomer(
               customerData: customerInfo, docID: customerInfo.docID ?? '');
@@ -251,12 +250,12 @@ class _OrderSummaryState extends State<OrderSummary> {
             builder: (context) => const EstimateListing(),
           ),
         );
-      } on Exception catch (e) {
-        snackbar(context, false, e.toString());
+      } else {
+        Navigator.pop(context);
+        snackbar(context, false, "Something went wrong please try again");
       }
-    } else {
-      getBillNo();
-      snackbar(context, false, "Please wait while generating bill number");
+    } catch (e) {
+      snackbar(context, false, e.toString());
     }
   }
 

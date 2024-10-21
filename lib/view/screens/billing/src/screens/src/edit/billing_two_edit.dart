@@ -140,6 +140,14 @@ class _BillingTwoEditState extends State<BillingTwoEdit> {
 
                 if (catId != -1 && proId != -1) {
                   setState(() {
+                    elements.productType = (elements.discountLock ?? false) ||
+                            (elements.discount == null)
+                        ? ProductType.netRated
+                        : ProductType.discounted;
+                    elements.productType = (elements.discountLock ?? false) ||
+                            (elements.discount == null)
+                        ? ProductType.netRated
+                        : ProductType.discounted;
                     if (elements.productType == ProductType.discounted) {
                       elements.discountedPrice = double.parse(
                               billingProductList[catId]
@@ -212,6 +220,10 @@ class _BillingTwoEditState extends State<BillingTwoEdit> {
 
                 if (catId != -1 && proId != -1) {
                   setState(() {
+                    elements.productType = (elements.discountLock ?? false) ||
+                            (elements.discount == null)
+                        ? ProductType.netRated
+                        : ProductType.discounted;
                     if (elements.productType == ProductType.discounted) {
                       elements.discountedPrice = double.parse(
                               billingProductList[catId]

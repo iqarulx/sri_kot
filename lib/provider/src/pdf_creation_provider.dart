@@ -341,6 +341,7 @@ class EnquiryPdf {
                               style: const pw.TextStyle(
                                 fontSize: 10,
                               ),
+                              textAlign: pw.TextAlign.center,
                             ),
                           ),
                           pw.Center(
@@ -1025,7 +1026,7 @@ class EnquiryPdf {
                             child: pw.Text(
                               overallDiscountTotal() != 0 &&
                                       overallNetRatedTotal() != 0
-                                  ? "Net Total (${overallDiscountTotal()} + ${overallNetRatedTotal()})"
+                                  ? "Net Total (${overallDiscountTotal().toStringAsFixed(2)} + ${overallNetRatedTotal().toStringAsFixed(2)})"
                                   : "Net Total",
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
@@ -1295,6 +1296,7 @@ class EnquiryPdf {
                               style: const pw.TextStyle(
                                 fontSize: 10,
                               ),
+                              textAlign: pw.TextAlign.center,
                             ),
                           ),
                           pw.Center(
@@ -2168,6 +2170,7 @@ class EnquiryPdf {
                               style: const pw.TextStyle(
                                 fontSize: 10,
                               ),
+                              textAlign: pw.TextAlign.center,
                             ),
                           ),
                           pw.Center(
@@ -3144,7 +3147,7 @@ class EnquiryPdf {
                               style: const pw.TextStyle(
                                 fontSize: 10,
                               ),
-                              textAlign: TextAlign.center,
+                              textAlign: pw.TextAlign.center,
                             ),
                           ),
                           pw.Center(
@@ -4018,7 +4021,7 @@ class EnquiryPdf {
                               style: const pw.TextStyle(
                                 fontSize: 10,
                               ),
-                              textAlign: TextAlign.center,
+                              textAlign: pw.TextAlign.center,
                             ),
                           ),
                           pw.Center(
@@ -4968,7 +4971,7 @@ class EnquiryPdf {
                               style: const pw.TextStyle(
                                 fontSize: 10,
                               ),
-                              textAlign: TextAlign.center,
+                              textAlign: pw.TextAlign.center,
                             ),
                           ),
                           pw.Center(
